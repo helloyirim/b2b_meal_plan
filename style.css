@@ -1,1 +1,252 @@
-/* Add styles here */
+/* General styles and resets */
+:root {
+    --primary-color: #4CAF50; /* Green */
+    --secondary-color: #2196F3; /* Blue */
+    --accent-color: #FFC107; /* Amber */
+    --text-color: #333;
+    --background-color: #f4f7f6;
+    --border-color: #ddd;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.app-header {
+    background-color: #fff;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.app-header h1 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.8em;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-info span {
+    font-weight: bold;
+    color: #555;
+}
+
+.action-button {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+}
+
+.action-button:hover {
+    background-color: #1976D2; /* Darker blue */
+}
+
+.primary-button {
+    background-color: var(--primary-color);
+}
+
+.primary-button:hover {
+    background-color: #388E3C; /* Darker green */
+}
+
+.guidelines {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.85em;
+    color: #666;
+}
+
+.app-main {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+.meal-plan-section,
+.menu-library-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    flex: 1;
+    min-width: 300px;
+}
+
+h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+
+.controls {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.meal-plan-config,
+.menu-search-filter {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.meal-plan-config label,
+.menu-search-filter label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.meal-plan-config input,
+.meal-plan-config select,
+.menu-search-filter input,
+.menu-search-filter select {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    flex-grow: 1;
+    max-width: 200px;
+}
+
+.config-info, .interaction-tip, .hint {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 5px;
+    flex-basis: 100%; /* Take full width */
+}
+
+/* Modals */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 30px;
+    border: 1px solid #888;
+    border-radius: 10px;
+    width: 80%; /* Could be more specific */
+    max-width: 500px;
+    box-shadow: 0 4px 10px var(--shadow-color);
+    position: relative;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.modal-content label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="password"],
+.modal-content input[type="url"],
+.modal-content select {
+    width: calc(100% - 16px); /* Adjust for padding */
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .user-info {
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .app-main {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .meal-plan-section,
+    .menu-library-section {
+        margin-bottom: 20px;
+    }
+}

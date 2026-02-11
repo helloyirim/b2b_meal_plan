@@ -1,14 +1,131 @@
-<!doctype html>
-<html lang="en">
+
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2B영업팀 정기식 식단표 편집기</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+    <header class="app-header">
+        <div class="header-content">
+            <h1>B2B영업팀 정기식 식단표 편집기</h1>
+            <div class="user-info">
+                <span>ROLE: GUEST</span>
+                <button id="login-button" class="action-button">로그인</button>
+                <button id="logout-button" class="action-button" style="display: none;">로그아웃</button>
+                <button class="action-button">식단표만 인쇄/PDF</button>
+            </div>
+        </div>
+        <p class="guidelines">
+            월~금 1식 · 1~4주 · 시작일(월요일) 기준 · 메뉴 입력 후 자동 다음칸 이동(마지막은 멈춤)
+        </p>
+    </header>
+
+    <main class="app-main">
+        <section class="meal-plan-section">
+            <h2>식단표</h2>
+            <div class="controls">
+                <button class="action-button">저장</button>
+                <button class="action-button">불러오기</button>
+                <button class="action-button">초기화</button>
+            </div>
+            <div class="meal-plan-config">
+                <label for="project-name">프로젝트명:</label>
+                <input type="text" id="project-name" placeholder="프로젝트명을 입력하세요">
+
+                <label for="week-length">주차 길이:</label>
+                <select id="week-length">
+                    <option value="1">1주</option>
+                    <option value="2">2주</option>
+                    <option value="3">3주</option>
+                    <option value="4">4주</option>
+                </select>
+
+                <label for="start-date">시작일 (월요일만):</label>
+                <input type="date" id="start-date">
+                <p class="config-info">시작일을 선택하면 날짜가 자동으로 채워집니다.</p>
+            </div>
+            <div class="meal-plan-grid">
+                <!-- Meal plan grid will be dynamically generated here -->
+                <p class="interaction-tip">
+                    키보드 이동 ← → : 좌/우 · ↑ ↓ : 주차 이동 · Delete/Backspace : 현재 칸 비우기
+                </p>
+            </div>
+        </section>
+
+        <section class="menu-library-section">
+            <h2>메뉴 라이브러리</h2>
+            <div class="controls">
+                <button id="register-menu-button" class="action-button">메뉴 등록</button>
+            </div>
+            <div class="menu-search-filter">
+                <input type="text" id="menu-search" placeholder="검색">
+                <label for="menu-category">카테고리:</label>
+                <select id="menu-category">
+                    <option value="all">전체</option>
+                    <!-- Categories will be dynamically loaded -->
+                </select>
+                <label for="menu-status">상태:</label>
+                <select id="menu-status">
+                    <option value="active">활성</option>
+                    <option value="all-including-inactive">전체(비활성 포함)</option>
+                </select>
+            </div>
+            <div class="menu-list">
+                <!-- Menu items will be dynamically loaded here -->
+            </div>
+            <p class="interaction-tip">
+                팁: 중간에 다른 칸 클릭하면 그 칸부터 다시 진행합니다.
+            </p>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>로그인</h3>
+            <label for="login-id">아이디:</label>
+            <input type="text" id="login-id" value="admin">
+            <label for="login-pw">비밀번호:</label>
+            <input type="password" id="login-pw" value="admin123">
+            <p class="hint">프로토타입용 계정: admin/admin123, editor/editor123</p>
+            <div class="modal-actions">
+                <button class="action-button">취소</button>
+                <button class="action-button primary-button">로그인</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="register-menu-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>메뉴 등록 (Admin 전용)</h3>
+            <label for="menu-name">메뉴명:</label>
+            <input type="text" id="menu-name">
+            <label for="menu-category-input">카테고리:</label>
+            <input type="text" id="menu-category-input">
+            <label for="menu-status-input">상태:</label>
+            <select id="menu-status-input">
+                <option value="active">활성</option>
+                <option value="inactive">비활성</option>
+            </select>
+            <label for="menu-option-text">기본 옵션 텍스트 (식단표에 표시됨):</label>
+            <input type="text" id="menu-option-text">
+            <label for="menu-image-url">이미지 URL (선택):</label>
+            <input type="url" id="menu-image-url">
+            <label for="menu-description-tags">설명/태그 (선택):</label>
+            <input type="text" id="menu-description-tags">
+            <p class="hint">이미지 URL이 비어 있으면 기본 플레이스홀더가 자동 생성됩니다(메뉴명 기반).</p>
+            <div class="modal-actions">
+                <button class="action-button">취소</button>
+                <button class="action-button primary-button">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
 </body>
 </html>
