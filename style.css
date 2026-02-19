@@ -1,436 +1,114 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-/* General styles and resets */
 :root {
-    --primary-color: #3b82f6; /* A shade of blue for primary actions */
-    --secondary-color: #60a5fa; /* Lighter blue for secondary actions */
-    --accent-color: #f59e0b; /* Amber remains for accents/warnings */
-    --text-color: #333;
-    --background-color: #f4f7fe; /* Very light grey */
-    --border-color: #e5e7eb; /* Light grey border */
-    --shadow-color: rgba(0, 0, 0, 0.08); /* Soft shadow */
-    --sidebar-bg: #2c3e50; /* Darker background for sidebar */
-    --sidebar-text: #e0e6ed; /* Light text for sidebar */
+    --bg-color: #f4f7fe;
+    --sidebar-color: #1a202c;
+    --card-bg: #ffffff;
+    --primary: #4318ff;
+    --primary-hover: #3311db;
+    --text-main: #2b3674;
+    --text-muted: #a3aed0;
+    --border-color: #e0e5f2;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0; padding: 0;
 }
 
 body {
     font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    line-height: 1.6;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    display: flex;
 }
 
-/* Dashboard Layout */
-.dashboard-container {
-    display: flex;
-    min-height: 100vh;
-}
+/* Layout */
+.dashboard-container { display: flex; width: 100%; }
 
 .sidebar {
-    width: 280px; /* Slightly wider sidebar */
-    background-color: var(--sidebar-bg);
-    color: var(--sidebar-text);
-    padding: 30px 20px; /* More padding */
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15); /* Stronger shadow for depth */
-    display: flex;
-    flex-direction: column;
-    border-radius: 0 10px 10px 0; /* Slightly rounded right edge */
+    width: 260px;
+    height: 100vh;
+    background: var(--sidebar-color);
+    color: white;
+    padding: 30px 20px;
+    position: fixed;
 }
 
-.sidebar-header {
-    text-align: center;
-    margin-bottom: 40px; /* More space below header */
-}
+.sidebar-header h2 { font-size: 24px; font-weight: 700; margin-bottom: 40px; }
 
-.sidebar-header h2 {
-    color: #ffffff; /* White text for header */
-    font-size: 1.8em;
-    font-weight: 700;
-    margin: 0;
-    padding: 0;
-    border-bottom: none;
-}
-
-.sidebar-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.sidebar-nav li {
-    margin-bottom: 12px; /* Increased spacing between nav items */
-}
-
-.sidebar-nav .nav-item {
+.nav-item {
     display: block;
-    color: var(--sidebar-text);
+    padding: 15px;
+    color: var(--text-muted);
     text-decoration: none;
-    padding: 12px 18px; /* More padding */
-    border-radius: 8px; /* Rounded buttons */
-    transition: background-color 0.3s ease, color 0.3s ease;
-    font-weight: 500;
-}
-
-.sidebar-nav .nav-item:hover {
-    background-color: #3e5063; /* Lighter background on hover */
-    color: #ffffff;
-}
-
-.sidebar-nav .nav-item.active {
-    background-color: var(--primary-color); /* Primary color for active item */
-    color: #ffffff;
     font-weight: 600;
+    transition: 0.3s;
 }
+
+.nav-item.active, .nav-item:hover { color: white; }
 
 .main-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--background-color);
+    margin-left: 260px;
+    width: calc(100% - 260px);
+    padding: 40px;
 }
 
-.app-header {
-    background-color: #ffffff; /* White header background */
-    padding: 20px 30px; /* More padding */
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 2px 6px var(--shadow-color); /* Soft shadow */
-    width: 100%; /* Ensure header spans full width of main-content */
-    box-sizing: border-box; /* Include padding in width calculation */
-}
+/* Header */
+.app-header { margin-bottom: 30px; }
+.header-content { display: flex; justify-content: space-between; align-items: center; }
+.header-content h1 { font-size: 28px; font-weight: 700; }
 
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 100%; /* Adjust max-width if needed */
-    margin: 0; /* Remove auto margin */
-}
-
-.app-header h1 {
-    margin: 0;
-    color: #2c3e50 !important; /* Darker color for main header */
-    font-size: 2em;
-    font-weight: 700;
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 15px; /* Increased gap */
-}
-
-.user-info span {
-    font-weight: 500;
-    color: #555;
-}
-
-.action-button {
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    padding: 10px 20px; /* More padding */
-    border-radius: 8px; /* Rounded corners */
-    cursor: pointer;
-    font-size: 0.95em;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.action-button:hover {
-    background-color: var(--primary-color); /* Darker blue on hover */
-    transform: translateY(-1px);
-}
-
-.primary-button {
-    background-color: var(--primary-color);
-}
-
-.primary-button:hover {
-    background-color: #2563eb; /* Even darker blue on hover */
-}
-
-.guidelines {
-    text-align: center;
-    margin-top: 15px; /* More margin */
-    font-size: 0.9em;
-    color: #777;
-}
-
-.dashboard-main {
-    flex-grow: 1;
-    padding: 30px; /* Ample padding for the main area */
-    display: flex;
-    flex-direction: column;
-}
-
-.card-layout {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Min card width slightly larger */
-    gap: 25px; /* Increased gap between cards */
-    flex-grow: 1;
-}
-
+/* Cards */
 .card {
-    background-color: #ffffff; /* White background for cards */
-    padding: 30px; /* Ample internal padding */
-    border-radius: 10px; /* Rounded corners */
-    box-shadow: 0 4px 12px var(--shadow-color); /* Soft shadow */
-    display: flex;
-    flex-direction: column;
-}
-
-.card h2 {
-    color: var(--primary-color) !important;
-    border-bottom: 2px solid var(--border-color); /* Lighter border for h2 */
-    padding-bottom: 15px; /* More padding below h2 */
-    margin-top: 0;
-    margin-bottom: 25px; /* More margin below h2 */
-    font-size: 1.5em;
-    font-weight: 600;
-}
-
-.controls {
-    margin-top: 30px; /* More margin above controls */
-    margin-bottom: 0; /* Remove bottom margin if inside card */
-    display: flex;
-    gap: 15px; /* Increased gap between control buttons */
-}
-
-.meal-plan-config,
-.menu-search-filter {
-    margin-bottom: 30px; /* More margin below config/filter */
-    padding: 20px;
-    background-color: #f8fafc; /* Slightly different background for config sections */
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px; /* Increased gap */
-    align-items: center;
-}
-
-.meal-plan-config label,
-.menu-search-filter label {
-    font-weight: 600;
-    margin-right: 8px;
-    color: #444;
-}
-
-.meal-plan-config input,
-.meal-plan-config select,
-.menu-search-filter input,
-.menu-search-filter select {
-    padding: 10px; /* More padding */
-    border: 1px solid var(--border-color);
-    border-radius: 6px; /* Slightly rounded */
-    flex-grow: 1;
-    max-width: 220px; /* Slightly wider inputs */
-    font-size: 0.95em;
-}
-
-.config-info, .interaction-tip, .hint {
-    font-size: 0.85em;
-    color: #888;
-    margin-top: 10px;
-    flex-basis: 100%; /* Take full width */
-    line-height: 1.4;
-}
-
-/* Specific card content adjustments */
-.meal-setting-card .controls,
-.menu-library-card .controls {
-    margin-top: auto; /* Push controls to the bottom of the card */
-    padding-top: 25px; /* More padding above controls */
-    border-top: 1px solid var(--border-color);
-}
-.meal-setting-card .meal-plan-config {
-    margin-bottom: 25px; /* Add space below config in the card */
-}
-
-/* Modals */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* High z-index to be on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.5); /* Darker overlay */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background-color: #ffffff;
-    margin: auto;
-    padding: 35px; /* More padding */
-    border: none; /* Remove border */
-    border-radius: 12px; /* More rounded corners */
-    width: 90%; /* Wider on small screens */
-    max-width: 550px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); /* Stronger, softer shadow */
-    position: relative;
-}
-
-.modal-content h3 {
-    margin-top: 0;
-    color: var(--primary-color);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 15px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0px 18px 40px rgba(112, 144, 176, 0.12);
     margin-bottom: 25px;
-    font-size: 1.6em;
 }
 
-.modal-content label {
-    display: block;
-    margin-bottom: 8px; /* More margin */
-    font-weight: 600;
-    color: #444;
-}
+.card-header h2 { font-size: 20px; margin-bottom: 20px; }
 
-.modal-content input[type="text"],
-.modal-content input[type="password"],
-.modal-content input[type="url"],
-.modal-content select {
-    width: calc(100% - 20px); /* Adjust for padding */
-    padding: 12px; /* More padding */
-    margin-bottom: 20px; /* More margin */
+/* Forms & Inputs */
+.input-field { margin-bottom: 15px; flex: 1; }
+.input-field label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: 600; }
+.input-row { display: flex; gap: 20px; }
+
+input, select {
+    width: 100%;
+    padding: 12px 16px;
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 1em;
+    border-radius: 12px;
+    outline: none;
 }
 
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 30px;
-}
-
-.close-button {
-    color: #aaa;
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 32px; /* Larger close button */
-    font-weight: normal;
+/* Buttons */
+.btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
     cursor: pointer;
-    line-height: 1; /* Adjust line-height */
+    border: none;
+    transition: 0.3s;
 }
 
-.close-button:hover,
-.close-button:focus {
-    color: #777;
+.btn-primary, .action-button.primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-hover); }
+
+.btn-outline { background: transparent; border: 1px solid var(--border-color); }
+.btn-ghost { background: transparent; color: var(--text-muted); }
+
+/* Menu Registration Inline Form */
+.menu-form-inline {
+    display: flex;
+    gap: 15px;
+    align-items: center;
 }
 
+.menu-form-inline input { flex: 1; }
 
-/* Responsive adjustments for dashboard */
+/* Responsive */
 @media (max-width: 1024px) {
-    .sidebar {
-        width: 220px;
-        padding: 20px 15px;
-    }
-    .sidebar-header h2 {
-        font-size: 1.6em;
-    }
-    .sidebar-nav .nav-item {
-        padding: 10px 15px;
-    }
-    .app-header h1 {
-        font-size: 1.6em;
-    }
-    .dashboard-main {
-        padding: 20px;
-    }
-    .card-layout {
-        gap: 20px;
-    }
-    .card {
-        padding: 25px;
-    }
-    .card h2 {
-        font-size: 1.3em;
-        margin-bottom: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    .dashboard-container {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        width: 100%;
-        height: auto;
-        padding: 20px 30px;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 0; /* No rounding on small screens */
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .sidebar-header {
-        margin-bottom: 0;
-    }
-
-    .sidebar-header h2 {
-        font-size: 1.5em;
-    }
-
-    .sidebar-nav {
-        display: none; /* Hide nav on small screens, can be toggled with JS */
-    }
-
-    .main-content {
-        width: 100%;
-    }
-
-    .app-header {
-        padding: 15px 20px;
-    }
-    .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .app-header h1 {
-        font-size: 1.5em;
-        margin-bottom: 10px;
-    }
-
-    .user-info {
-        margin-top: 0;
-        flex-wrap: wrap;
-    }
-
-    .dashboard-main {
-        padding: 15px;
-    }
-    .card-layout {
-        grid-template-columns: 1fr; /* Stack cards on small screens */
-        gap: 15px;
-    }
-    .card {
-        padding: 20px;
-    }
-    .card h2 {
-        font-size: 1.2em;
-        margin-bottom: 15px;
-    }
-    .meal-plan-config input,
-    .meal-plan-config select,
-    .menu-search-filter input,
-    .menu-search-filter select {
-        max-width: 100%; /* Full width inputs on small screens */
-    }
-    .meal-plan-config,
-    .menu-search-filter {
-        flex-direction: column;
-        align-items: stretch;
-    }
+    .sidebar { width: 80px; }
+    .sidebar h2, .version, .nav-item span { display: none; }
+    .main-content { margin-left: 80px; width: calc(100% - 80px); }
 }
