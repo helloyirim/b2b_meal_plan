@@ -1,86 +1,110 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>B2B영업팀 정기식 식단표 편집기</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.1">
 </head>
 <body>
-    <header class="app-header">
-        <div class="header-content">
-            <h1>B2B영업팀 정기식 식단표 편집기</h1>
-            <div class="user-info">
-                <span>ROLE: GUEST</span>
-                <button id="login-button" class="action-button">로그인</button>
-                <button id="logout-button" class="action-button" style="display: none;">로그아웃</button>
-                <button class="action-button">식단표만 인쇄/PDF</button>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>B2B Meal Plan</h2>
             </div>
-        </div>
-        <p class="guidelines">
-            월~금 1식 · 1~4주 · 시작일(월요일) 기준 · 메뉴 입력 후 자동 다음칸 이동(마지막은 멈춤)
-        </p>
-    </header>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-item active">대시보드</a></li>
+                    <li><a href="#" class="nav-item">식단 관리</a></li>
+                    <li><a href="#" class="nav-item">메뉴 설정</a></li>
+                </ul>
+            </nav>
+        </aside>
 
-    <main class="app-main">
-        <section class="meal-plan-section">
-            <h2>식단표</h2>
-            <div class="controls">
-                <button class="action-button">저장</button>
-                <button class="action-button">불러오기</button>
-                <button class="action-button">초기화</button>
-            </div>
-            <div class="meal-plan-config">
-                <label for="project-name">프로젝트명:</label>
-                <input type="text" id="project-name" placeholder="프로젝트명을 입력하세요">
-
-                <label for="week-length">주차 길이:</label>
-                <select id="week-length">
-                    <option value="1">1주</option>
-                    <option value="2">2주</option>
-                    <option value="3">3주</option>
-                    <option value="4">4주</option>
-                </select>
-
-                <label for="start-date">시작일 (월요일만):</label>
-                <input type="date" id="start-date">
-                <p class="config-info">시작일을 선택하면 날짜가 자동으로 채워집니다.</p>
-            </div>
-            <div class="meal-plan-grid">
-                <!-- Meal plan grid will be dynamically generated here -->
-                <p class="interaction-tip">
-                    키보드 이동 ← → : 좌/우 · ↑ ↓ : 주차 이동 · Delete/Backspace : 현재 칸 비우기
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <header class="app-header">
+                <div class="header-content">
+                    <h1>B2B영업팀 정기식 식단표 편집기</h1>
+                    <div class="user-info">
+                        <span>ROLE: GUEST</span>
+                        <button id="login-button" class="action-button">로그인</button>
+                        <button id="logout-button" class="action-button" style="display: none;">로그아웃</button>
+                        <button class="action-button">식단표만 인쇄/PDF</button>
+                    </div>
+                </div>
+                <p class="guidelines">
+                    월~금 1식 · 1~4주 · 시작일(월요일) 기준 · 메뉴 입력 후 자동 다음칸 이동(마지막은 멈춤)
                 </p>
-            </div>
-        </section>
+            </header>
 
-        <section class="menu-library-section">
-            <h2>메뉴 라이브러리</h2>
-            <div class="controls">
-                <button id="register-menu-button" class="action-button">메뉴 등록</button>
-            </div>
-            <div class="menu-search-filter">
-                <input type="text" id="menu-search" placeholder="검색">
-                <label for="menu-category">카테고리:</label>
-                <select id="menu-category">
-                    <option value="all">전체</option>
-                    <!-- Categories will be dynamically loaded -->
-                </select>
-                <label for="menu-status">상태:</label>
-                <select id="menu-status">
-                    <option value="active">활성</option>
-                    <option value="all-including-inactive">전체(비활성 포함)</option>
-                </select>
-            </div>
-            <div class="menu-list">
-                <!-- Menu items will be dynamically loaded here -->
-            </div>
-            <p class="interaction-tip">
-                팁: 중간에 다른 칸 클릭하면 그 칸부터 다시 진행합니다.
-            </p>
-        </section>
-    </main>
+            <main class="dashboard-main">
+                <div class="card-layout">
+                    <section class="card meal-setting-card">
+                        <h2>식단 설정</h2>
+                        <div class="meal-plan-config">
+                            <label for="project-name">프로젝트명:</label>
+                            <input type="text" id="project-name" placeholder="프로젝트명을 입력하세요">
+
+                            <label for="week-length">주차 길이:</label>
+                            <select id="week-length">
+                                <option value="1">1주</option>
+                                <option value="2">2주</option>
+                                <option value="3">3주</option>
+                                <option value="4">4주</option>
+                            </select>
+
+                            <label for="start-date">시작일 (월요일만):</label>
+                            <input type="date" id="start-date">
+                            <p class="config-info">시작일을 선택하면 날짜가 자동으로 채워집니다.</p>
+                        </div>
+                        <div class="controls">
+                            <button class="action-button">저장</button>
+                            <button class="action-button">불러오기</button>
+                            <button class="action-button">초기화</button>
+                        </div>
+                    </section>
+
+                    <section class="card meal-grid-card">
+                        <h2>식단표 그리드</h2>
+                        <div class="meal-plan-grid">
+                            <!-- Meal plan grid will be dynamically generated here -->
+                            <p class="interaction-tip">
+                                키보드 이동 ← → : 좌/우 · ↑ ↓ : 주차 이동 · Delete/Backspace : 현재 칸 비우기
+                            </p>
+                        </div>
+                    </section>
+
+                    <section class="card menu-library-card">
+                        <h2>메뉴 라이브러리</h2>
+                        <div class="menu-search-filter">
+                            <input type="text" id="menu-search" placeholder="검색">
+                            <label for="menu-category">카테고리:</label>
+                            <select id="menu-category">
+                                <option value="all">전체</option>
+                                <!-- Categories will be dynamically loaded -->
+                            </select>
+                            <label for="menu-status">상태:</label>
+                            <select id="menu-status">
+                                <option value="active">활성</option>
+                                <option value="all-including-inactive">전체(비활성 포함)</option>
+                            </select>
+                        </div>
+                        <div class="menu-list">
+                            <!-- Menu items will be dynamically loaded here -->
+                        </div>
+                        <div class="controls">
+                            <button id="register-menu-button" class="action-button">메뉴 등록</button>
+                        </div>
+                        <p class="interaction-tip">
+                            팁: 중간에 다른 칸 클릭하면 그 칸부터 다시 진행합니다.
+                        </p>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
 
     <!-- Modals -->
     <div id="login-modal" class="modal">
