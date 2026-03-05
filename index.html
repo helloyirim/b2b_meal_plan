@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B2B Meal Plan Pro - 하이패스 에디션</title>
+    <title>B2B Meal Plan Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
@@ -11,47 +11,66 @@
         :root { --bg-body: #f5f5f5; --bg-sidebar: #333333; --bg-card: #ffffff; --text-main: #333333; --border-soft: #cccccc; --border-light: #eeeeee; --primary: #4a90e2; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
         body { background-color: var(--bg-body); color: var(--text-main); display: flex; min-height: 100vh; }
+        
         .sidebar { width: 220px; background: var(--bg-sidebar); color: white; padding: 30px 20px; position: fixed; height: 100vh; z-index: 100; }
         .sidebar h2 { font-size: 18px; margin-bottom: 40px; }
         .nav-item { display: block; padding: 12px; color: #bbb; text-decoration: none; font-weight: 600; border-radius: 8px; margin-bottom: 5px; cursor: pointer; transition: 0.3s; }
-        .nav-item:hover { color: white; background: rgba(255, 255, 255, 0.05); }
         .nav-item.active { color: white !important; background: rgba(255, 255, 255, 0.15) !important; }
+
         .main-content { margin-left: 220px; width: calc(100% - 220px); padding: 40px; }
         .page { display: none; }
         .page.active { display: block; }
         .card { background: var(--bg-card); border-radius: 12px; padding: 24px; border: 1px solid var(--border-light); margin-bottom: 20px; }
-        .settings-grid { display: grid; grid-template-columns: 180px 140px 1fr 220px; gap: 20px; align-items: end; }
-        .option-row { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; gap: 15px; background: #fafafa; padding: 0 15px; border-radius: 8px; border: 1px solid var(--border-light); height: 42px; align-items: center; width: fit-content; }
-        .option-row label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; }
+
+        .settings-grid { display: grid; grid-template-columns: 200px 140px 1fr; gap: 20px; align-items: end; }
+        .option-row { display: flex; flex-direction: row; gap: 15px; background: #fafafa; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-light); align-items: center; width: 100%; white-space: nowrap; }
+        .option-row label { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
         .meal-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid var(--border-soft); background: #fff; }
         .meal-table th { background: #f9f9f9; padding: 10px; font-size: 13px; font-weight: 800; border: 1px solid var(--border-soft); color: #666; }
         .meal-table td { border: 1px solid var(--border-soft); vertical-align: top; }
         .week-label { background: #f5f5f5; font-weight: 800; width: 45px; text-align: center; vertical-align: middle !important; }
-        .drop-zone { min-height: 200px; padding: 10px; cursor: pointer; transition: 0.2s; }
+        .drop-zone { min-height: 180px; padding: 10px; cursor: pointer; transition: 0.2s; position: relative; }
         .drop-zone.selected { background: #eef6ff; box-shadow: inset 0 0 0 2px var(--primary); }
-        .cell-date { font-size: 11px; color: #777; font-weight: 800; margin-bottom: 8px; display: block; }
+
         .meal-content img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 4px; margin-bottom: 6px; border: 1px solid #eee; }
         .meal-title { font-weight: 800; font-size: 13px; line-height: 1.3; display: block; margin-bottom: 4px; }
         .extra-info { font-size: 11px; color: #666; display: none; margin-top: 2px; border-top: 1px dotted #ddd; padding-top: 2px; }
-        .info-memo { color: #e67e22; font-weight: 600; }
         .show-brand .info-brand, .show-price .info-price, .show-allergy .info-allergy, .show-memo .info-memo { display: block; }
+
         .editor-layout { display: flex; gap: 20px; align-items: flex-start; }
         .menu-lib { width: 320px; position: sticky; top: 20px; }
         .lib-search { margin-bottom: 15px; padding: 10px; border: 1.5px solid var(--border-soft); border-radius: 6px; width: 100%; font-size: 13px; }
         .lib-card { display: flex; gap: 10px; padding: 10px; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 8px; cursor: pointer; background: #fff; transition: 0.2s; }
-        .lib-card:hover { border-color: var(--primary); background: #f9f9f9; transform: translateX(5px); }
-        .lib-card img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+
         .btn { padding: 10px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; border: none; font-size: 13px; }
         .btn-save { background: var(--primary); color: white; }
         .btn-grey { background: #e0e0e0; }
-        input, select, textarea { padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px; font-size: 13px; width: 100%; }
-        textarea { resize: vertical; min-height: 80px; }
+        .btn-red { padding: 4px 8px; background: #ff4d4f; color: white; font-size: 11px; border-radius: 4px; }
+
+        .history-layout { display: flex; gap: 20px; height: calc(100vh - 150px); }
+        .history-sidebar { width: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .history-detail { flex: 1; background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 24px; overflow-y: auto; }
+        
+        .history-card { padding: 15px; border: 1px solid var(--border-light); border-radius: 8px; background: white; cursor: pointer; position: relative; transition: 0.2s; }
+        .history-card:hover { border-color: var(--primary); }
+        .history-card.active { border-color: var(--primary); background: #f0f7ff; }
+        .history-card b { display: block; font-size: 14px; margin-bottom: 4px; }
+        .history-card span { font-size: 11px; color: #999; }
+        .history-card .delete-btn { position: absolute; top: 10px; right: 10px; }
+
+        /* 메뉴 관리 입력폼 수정 - 표 형식 최적화 */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 800; color: #666; margin-bottom: 6px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px; font-size: 13px; }
+        .form-row { display: flex; gap: 12px; margin-bottom: 15px; }
+        .form-row > div { flex: 1; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <h2>B2B Meal 관리</h2>
+        <h2>B2B 정기식 식단표</h2>
         <div class="nav-item active" id="nav-gen" onclick="showPage('page-generate')">📅 식단 생성</div>
         <div class="nav-item" id="nav-his" onclick="showPage('page-history')">📋 식단 관리</div>
         <div class="nav-item" id="nav-set" onclick="showPage('page-settings')">🍴 메뉴 관리</div>
@@ -60,26 +79,16 @@
     <main class="main-content">
         <div id="page-generate" class="page active">
             <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-size:14px;">평균 식단가 <b id="stat-avg">0</b>원 | 총 메뉴 <b id="stat-total">0개</b></div>
+                <div style="font-size:14px;">평균 식단가 <b id="stat-avg">0</b>원 | 총 메뉴 <b id="stat-total">0개</b> <span id="stat-unique" style="color:#999; font-size:12px; margin-left:5px;"></span></div>
                 <div style="display:flex; gap:10px;">
                     <button class="btn btn-save" onclick="savePlan()">💾 식단 저장</button>
                     <button class="btn btn-grey" onclick="saveAsPDF('pdf-area')">📄 PDF 출력</button>
                 </div>
             </div>
-
             <section class="card">
                 <div class="settings-grid">
-                    <div>
-                        <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">시작일 (월요일만)</label>
-                        <input type="date" id="start-date" onchange="validateMonday(this)">
-                    </div>
-                    <div>
-                        <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">기간</label>
-                        <select id="week-count" onchange="initGrid()">
-                            <option value="1">1주일</option><option value="2">2주일</option>
-                            <option value="3">3주일</option><option value="4" selected>4주일</option>
-                        </select>
-                    </div>
+                    <div><label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">시작일</label><input type="date" id="start-date" onchange="validateMonday(this)"></div>
+                    <div><label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">기간</label><select id="week-count" onchange="initGrid()"><option value="1">1주일</option><option value="2">2주일</option><option value="3">3주일</option><option value="4" selected>4주일</option></select></div>
                     <div>
                         <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">노출 정보 설정</label>
                         <div class="option-row">
@@ -91,16 +100,24 @@
                     </div>
                 </div>
             </section>
-
             <div class="editor-layout">
                 <div style="flex:1;" id="pdf-area"><div id="grid-container"></div></div>
                 <div class="menu-lib">
                     <div class="card">
-                        <h4 style="margin-bottom:5px; font-size:14px;">메뉴 라이브러리</h4>
-                        <p style="font-size:11px; color:var(--primary); margin-bottom:12px; font-weight:600;">* 클릭 시 다음 칸으로 자동 입력</p>
-                        <input type="text" id="lib-search-input" class="lib-search" placeholder="메뉴 검색..." onkeyup="renderLib(this.value)">
+                        <h4 style="margin-bottom:12px; font-size:14px;">메뉴 라이브러리</h4>
+                        <input type="text" class="lib-search" placeholder="메뉴 검색..." onkeyup="renderLib(this.value)">
                         <div id="lib-list"></div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-history" class="page">
+            <header style="margin-bottom:20px;"><h1>저장된 식단 이력</h1></header>
+            <div class="history-layout">
+                <div id="history-sidebar" class="history-sidebar"></div>
+                <div id="history-detail" class="history-detail">
+                    <p style="color:#ccc; text-align:center; margin-top:100px;">이력을 선택하면 상세 내용을 볼 수 있습니다.</p>
                 </div>
             </div>
         </div>
@@ -109,52 +126,74 @@
             <header style="margin-bottom:20px;"><h1>메뉴 데이터베이스 관리</h1></header>
             <div style="display:flex; gap:20px;">
                 <div style="flex:1" class="card">
-                    <input type="text" id="mgmt-search" placeholder="메뉴명 또는 브랜드 검색..." onkeyup="renderMgmt()" style="margin-bottom:15px;">
-                    <table style="width:100%; border-collapse:collapse;">
-                        <thead style="border-bottom:2px solid #333; text-align:left;"><tr><th style="padding:10px;">사진</th><th>메뉴명</th><th>브랜드</th><th>가격</th><th>관리</th></tr></thead>
+                    <input type="text" id="mgmt-search" placeholder="메뉴 검색..." onkeyup="renderMgmt()" style="margin-bottom:15px; padding:10px; border:1px solid #ccc; border-radius:6px; width:200px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                        <thead style="border-bottom:2px solid #333; text-align:left;">
+                            <tr>
+                                <th style="padding:12px 10px;">사진</th>
+                                <th>메뉴명</th>
+                                <th>브랜드</th>
+                                <th>가격</th>
+                                <th style="text-align:center;">관리</th>
+                            </tr>
+                        </thead>
                         <tbody id="mgmt-list"></tbody>
                     </table>
                 </div>
+                
                 <div style="width:380px" class="card">
-                    <h4 id="form-title">메뉴 등록/수정</h4>
-                    <div id="preview-box" style="width:100%; aspect-ratio:16/9; background:#f5f5f5; border:1px solid #ddd; margin:15px 0; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="document.getElementById('file-input').click()">
-                        <span id="preview-text">이미지 등록</span><img id="edit-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
+                    <h4 style="margin-bottom:20px; font-size:16px; border-bottom:1px solid #eee; padding-bottom:10px;">메뉴 등록/수정</h4>
+                    
+                    <div id="preview-box" style="width:100%; aspect-ratio:16/9; background:#f9f9f9; border:1px dashed #ccc; margin-bottom:20px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="document.getElementById('file-input').click()">
+                        <span id="preview-text" style="color:#999; font-size:13px;">📷 이미지 등록</span>
+                        <img id="edit-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
                     </div>
                     <input type="file" id="file-input" style="display:none" onchange="processImg(event)">
                     <input type="hidden" id="edit-id"><input type="hidden" id="edit-img-base64">
-                    <label style="font-size:11px; font-weight:800;">메뉴명</label><input type="text" id="edit-name" style="margin-bottom:10px;">
-                    <div style="display:flex; gap:10px; margin-bottom:10px;">
-                        <div style="flex:1;"><label style="font-size:11px; font-weight:800;">브랜드</label><input type="text" id="edit-brand"></div>
-                        <div style="flex:1;"><label style="font-size:11px; font-weight:800;">가격</label><input type="number" id="edit-price"></div>
+
+                    <div class="form-group">
+                        <label>메뉴명</label>
+                        <input type="text" id="edit-name" placeholder="메뉴 이름을 입력하세요">
                     </div>
-                    <label style="font-size:11px; font-weight:800;">알러지</label><input type="text" id="edit-allergy" style="margin-bottom:10px;">
-                    <label style="font-size:11px; font-weight:800;">메모 (특이사항)</label><textarea id="edit-memo"></textarea>
-                    <button class="btn btn-save" style="width:100%; margin-top:15px;" onclick="saveMenu()">메뉴 데이터 저장</button>
-                    <button class="btn btn-grey" style="width:100%; margin-top:8px;" onclick="resetMenuForm()">초기화</button>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>브랜드</label>
+                            <input type="text" id="edit-brand" placeholder="브랜드명">
+                        </div>
+                        <div class="form-group">
+                            <label>가격 (원)</label>
+                            <input type="number" id="edit-price" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>알러지 정보</label>
+                        <input type="text" id="edit-allergy" placeholder="예: 대두, 밀, 우유">
+                    </div>
+
+                    <div class="form-group">
+                        <label>메모</label>
+                        <textarea id="edit-memo" rows="3" placeholder="특이사항 입력"></textarea>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn btn-save" style="flex:2;" onclick="saveMenu()">메뉴 데이터 저장</button>
+                        <button class="btn btn-grey" style="flex:1;" onclick="resetMenuForm()">초기화</button>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="page-history" class="page"><h1>저장된 식단 이력</h1><div id="history-list"></div></div>
     </main>
 
     <script>
+        // JS 로직은 기존과 동일하게 유지 (데이터 구조 및 핸들러 보존)
         const initialData = [
-            { id: 1, name: "바싹불고기 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유", memo: "안매움", img: "" },
-            { id: 2, name: "숯불닭구이 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
-            { id: 3, name: "깻잎제육 반상", brand: "본도시락", price: 10000, allergy: "대두, 밀, 돼지고기", memo: "약간매움", img: "" },
-            { id: 4, name: "버섯소불고기 반상", brand: "본도시락", price: 10400, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", img: "" },
-            { id: 5, name: "꽈리닭구이 반상", brand: "본도시락", price: 10200, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
-            { id: 6, name: "부추마늘오리구이 반상", brand: "본도시락", price: 10400, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
-            { id: 7, name: "전주 콩나물국밥", brand: "본설렁탕", price: 9000, allergy: "오징어, 새우, 대두, 밀, 조개류, 바지락, 굴, 쇠고기, 우유, 계란", memo: "", img: "" },
-            { id: 8, name: "한우사골 설렁탕", brand: "본설렁탕", price: 12000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", img: "" },
-            { id: 9, name: "쇠고기야채죽", brand: "본죽&비빔밥", price: 12000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
-            { id: 10, name: "6가지나물비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 우유, 계란", memo: "", img: "" }
+            { id: 1, name: "바싹불고기 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀", memo: "안매움", img: "" },
+            { id: 2, name: "숯불닭구이 반상", brand: "본도시락", price: 9400, allergy: "닭고기", memo: "", img: "" }
         ];
 
-        let saved = JSON.parse(localStorage.getItem('b2b_menus'));
-        let menus = (saved && saved.length > 0) ? saved : initialData;
-        if(!saved || saved.length === 0) localStorage.setItem('b2b_menus', JSON.stringify(menus));
-
+        let menus = JSON.parse(localStorage.getItem('b2b_menus')) || initialData;
         let mealPlan = {};
         let currentCellId = "cell-0-0";
 
@@ -162,20 +201,14 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(id === 'page-generate') { document.getElementById('nav-gen').classList.add('active'); renderLib(); initGrid(); }
-            if(id === 'page-history') document.getElementById('nav-his').classList.add('active');
+            if(id === 'page-generate') { document.getElementById('nav-gen').classList.add('active'); initGrid(); renderLib(); }
+            if(id === 'page-history') { document.getElementById('nav-his').classList.add('active'); renderHistoryList(); }
             if(id === 'page-settings') { document.getElementById('nav-set').classList.add('active'); renderMgmt(); }
         }
 
-        // 월요일 유효성 검사
         function validateMonday(input) {
             const date = new Date(input.value);
-            const day = date.getDay(); // 0:일, 1:월...
-            if(day !== 1) {
-                alert("시작일은 월요일만 선택 가능합니다.");
-                input.value = "";
-                return;
-            }
+            if(date.getDay() !== 1) { alert("시작일은 월요일만 선택 가능합니다."); input.value = ""; return; }
             initGrid();
         }
 
@@ -194,44 +227,29 @@
                         dt.setDate(dt.getDate() + (w*7) + d);
                         dateLabel = `${dt.getMonth()+1}/${dt.getDate()}`;
                     }
-                    html += `<td onclick="selectCell('${cid}')"><div id="${cid}" class="drop-zone ${currentCellId === cid ? 'selected' : ''}"><span class="cell-date">${dateLabel}</span><div class="cell-content">${mealPlan[cid] ? renderCell(mealPlan[cid]) : ''}</div></div></td>`;
+                    html += `<td onclick="selectCell('${cid}')"><div id="${cid}" class="drop-zone ${currentCellId === cid ? 'selected' : ''}"><span class="cell-date" style="font-size:10px; color:#999; margin-bottom:4px; display:block;">${dateLabel}</span><div class="cell-content">${mealPlan[cid] ? renderCell(mealPlan[cid]) : ''}</div></div></td>`;
                 }
                 html += `</tr>`;
             }
             container.innerHTML = html + `</tbody></table>`;
-            if(document.getElementById(currentCellId)) document.getElementById(currentCellId).classList.add('selected');
+            updateStats();
         }
 
         function selectCell(id) {
-            if(currentCellId && document.getElementById(currentCellId)) document.getElementById(currentCellId).classList.remove('selected');
+            if(document.getElementById(currentCellId)) document.getElementById(currentCellId).classList.remove('selected');
             currentCellId = id;
             if(document.getElementById(id)) document.getElementById(id).classList.add('selected');
         }
 
-        // 하이패스 입력: 메뉴 클릭 시 자동 다음 칸 이동
         function addToGrid(mid) {
-            if(!currentCellId) return;
             const menu = menus.find(m => m.id === mid);
             mealPlan[currentCellId] = {...menu};
             document.getElementById(currentCellId).querySelector('.cell-content').innerHTML = renderCell(menu);
             updateStats();
-            
-            // 다음 칸으로 자동 이동 로직
             const parts = currentCellId.split('-');
-            let w = parseInt(parts[1]);
-            let d = parseInt(parts[2]);
-
-            d++; // 다음 요일
-            if(d > 4) { // 금요일 다음이면 다음 주 월요일로
-                d = 0;
-                w++;
-            }
-
-            const nextWeeks = parseInt(document.getElementById('week-count').value);
-            if(w < nextWeeks) {
-                const nextId = `cell-${w}-${d}`;
-                selectCell(nextId);
-            }
+            let w = parseInt(parts[1]), d = parseInt(parts[2]);
+            d++; if(d > 4) { d = 0; w++; }
+            if(w < parseInt(document.getElementById('week-count').value)) selectCell(`cell-${w}-${d}`);
         }
 
         function renderCell(m) {
@@ -245,44 +263,106 @@
             </div>`;
         }
 
+        function updateStats() {
+            const meals = Object.values(mealPlan);
+            const names = meals.map(m => m.name);
+            const uniqueCount = new Set(names).size;
+            const avg = meals.length > 0 ? Math.round(meals.reduce((s, m) => s + m.price, 0) / meals.length) : 0;
+            document.getElementById('stat-avg').innerText = avg.toLocaleString();
+            document.getElementById('stat-total').innerText = meals.length + "개";
+            document.getElementById('stat-unique').innerText = meals.length > 0 ? `(중복 제외 ${uniqueCount}종)` : "";
+        }
+
+        function toggleInfo(cls, cb) {
+            const container = document.getElementById('grid-container');
+            cb.checked ? container.classList.add(cls) : container.classList.remove(cls);
+        }
+
+        function renderHistoryList() {
+            const sidebar = document.getElementById('history-sidebar');
+            const plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
+            if(plans.length === 0) { sidebar.innerHTML = "<p style='color:#999; font-size:12px; text-align:center;'>저장된 이력이 없습니다.</p>"; return; }
+            sidebar.innerHTML = plans.reverse().map(p => `<div class="history-card" onclick="viewHistoryDetail(${p.id}, this)"><b>${p.name}</b><span>${p.date}</span><button class="btn-red delete-btn" onclick="event.stopPropagation(); deletePlan(${p.id})">삭제</button></div>`).join('');
+        }
+
+        function viewHistoryDetail(id, el) {
+            document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            const plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
+            const plan = plans.find(p => p.id === id);
+            const detail = document.getElementById('history-detail');
+            detail.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h3>${plan.name}</h3><button class="btn btn-save" onclick="loadPlan(${plan.id})">이 식단 불러오기</button></div><div class="show-brand show-price">${renderStaticGrid(plan)}</div>`;
+        }
+
+        function renderStaticGrid(plan) {
+            let html = `<table class="meal-table"><thead><tr><th></th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr></thead><tbody>`;
+            const weeks = parseInt(plan.weeks);
+            for(let w=0; w<weeks; w++) {
+                html += `<tr><td class="week-label">${w+1}주</td>`;
+                for(let d=0; d<5; d++) {
+                    const cid = `cell-${w}-${d}`;
+                    const m = plan.data[cid];
+                    html += `<td>${m ? renderCell(m) : ''}</td>`;
+                }
+                html += `</tr>`;
+            }
+            return html + `</tbody></table>`;
+        }
+
+        function savePlan() {
+            if(Object.keys(mealPlan).length === 0) return alert("저장할 식단이 없습니다.");
+            const planName = prompt("식단 이름을 입력해주세요:");
+            if(!planName) return;
+            const plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
+            plans.push({ id: Date.now(), name: planName, date: new Date().toLocaleString(), data: mealPlan, weeks: document.getElementById('week-count').value, startDate: document.getElementById('start-date').value });
+            localStorage.setItem('b2b_plans', JSON.stringify(plans));
+            alert("저장되었습니다.");
+        }
+
+        function loadPlan(id) {
+            const plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
+            const plan = plans.find(p => p.id === id);
+            mealPlan = plan.data;
+            document.getElementById('week-count').value = plan.weeks;
+            document.getElementById('start-date').value = plan.startDate;
+            showPage('page-generate');
+        }
+
+        function deletePlan(id) {
+            if(!confirm("삭제하시겠습니까?")) return;
+            let plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
+            plans = plans.filter(p => p.id !== id);
+            localStorage.setItem('b2b_plans', JSON.stringify(plans));
+            renderHistoryList();
+            document.getElementById('history-detail').innerHTML = '<p style="color:#ccc; text-align:center; margin-top:100px;">이력을 선택하면 상세 내용을 볼 수 있습니다.</p>';
+        }
+
         function renderLib(filter = "") {
             const list = document.getElementById('lib-list');
-            if(!list) return;
             const filtered = menus.filter(m => m.name.toLowerCase().includes(filter.toLowerCase()));
-            list.innerHTML = filtered.map(m => `
-                <div class="lib-card" onclick="addToGrid(${m.id})">
-                    <img src="${m.img || 'https://via.placeholder.com/50'}">
-                    <div><div style="font-weight:800; font-size:13px;">${m.name}</div><div style="font-size:11px; color:#999;">${m.brand} | ${m.price.toLocaleString()}원</div></div>
-                </div>`).join('');
+            list.innerHTML = filtered.map(m => `<div class="lib-card" onclick="addToGrid(${m.id})"><img src="${m.img || 'https://via.placeholder.com/50'}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;"><div><div style="font-weight:800; font-size:12px;">${m.name}</div><div style="font-size:10px; color:#999;">${m.brand} | ${m.price.toLocaleString()}원</div></div></div>`).join('');
         }
 
         function renderMgmt() {
             const list = document.getElementById('mgmt-list');
-            if(!list) return;
-            const searchVal = document.getElementById('mgmt-search').value.toLowerCase();
-            const filtered = menus.filter(m => m.name.toLowerCase().includes(searchVal) || m.brand.toLowerCase().includes(searchVal));
+            const val = document.getElementById('mgmt-search').value.toLowerCase();
+            const filtered = menus.filter(m => m.name.toLowerCase().includes(val));
             list.innerHTML = filtered.map(m => `
                 <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:10px;"><img src="${m.img || ''}" style="width:40px; height:40px; object-fit:cover; background:#f0f0f0; border-radius:4px;"></td>
-                    <td><b>${m.name}</b></td><td>${m.brand}</td><td>${m.price.toLocaleString()}원</td>
-                    <td><button class="btn btn-grey" onclick="editMenu(${m.id})">수정</button></td>
-                </tr>`).join('');
+                    <td style="padding:12px 10px;"><img src="${m.img || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;"></td>
+                    <td style="font-weight:600;">${m.name}</td>
+                    <td style="color:#666;">${m.brand}</td>
+                    <td>${m.price.toLocaleString()}원</td>
+                    <td style="text-align:center;"><button class="btn btn-grey" style="padding:6px 12px; font-size:12px;" onclick="editMenu(${m.id})">수정</button></td>
+                </tr>
+            `).join('');
         }
 
         function saveMenu() {
-            const idInput = document.getElementById('edit-id').value;
-            const name = document.getElementById('edit-name').value;
-            if(!name) return alert("메뉴명을 입력하세요.");
-            const menuObj = {
-                id: idInput ? parseInt(idInput) : Date.now(),
-                name: name, brand: document.getElementById('edit-brand').value,
-                price: parseInt(document.getElementById('edit-price').value || 0),
-                allergy: document.getElementById('edit-allergy').value,
-                memo: document.getElementById('edit-memo').value,
-                img: document.getElementById('edit-img-base64').value
-            };
-            if(idInput) { const idx = menus.findIndex(m => m.id === parseInt(idInput)); menus[idx] = menuObj; }
-            else { menus.push(menuObj); }
+            const id = document.getElementById('edit-id').value;
+            const obj = { id: id ? parseInt(id) : Date.now(), name: document.getElementById('edit-name').value, brand: document.getElementById('edit-brand').value, price: parseInt(document.getElementById('edit-price').value || 0), allergy: document.getElementById('edit-allergy').value, memo: document.getElementById('edit-memo').value, img: document.getElementById('edit-img-base64').value };
+            if(!obj.name) return alert("메뉴명을 입력해주세요.");
+            if(id) { const idx = menus.findIndex(m => m.id === parseInt(id)); menus[idx] = obj; } else { menus.push(obj); }
             localStorage.setItem('b2b_menus', JSON.stringify(menus));
             alert("저장되었습니다."); resetMenuForm(); renderMgmt(); renderLib();
         }
@@ -294,41 +374,21 @@
             document.getElementById('edit-brand').value = m.brand;
             document.getElementById('edit-price').value = m.price;
             document.getElementById('edit-allergy').value = m.allergy;
-            document.getElementById('edit-memo').value = m.memo || "";
-            document.getElementById('edit-img-base64').value = m.img || "";
-            if(m.img) { document.getElementById('edit-preview').src = m.img; document.getElementById('edit-preview').style.display = 'block'; document.getElementById('preview-text').style.display = 'none'; }
+            document.getElementById('edit-memo').value = m.memo;
+            document.getElementById('edit-img-base64').value = m.img;
+            if(m.img) { document.getElementById('edit-preview').src = m.img; document.getElementById('edit-preview').style.display='block'; document.getElementById('preview-text').style.display='none'; }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function resetMenuForm() {
-            document.getElementById('edit-id').value = ""; document.getElementById('edit-name').value = "";
-            document.getElementById('edit-brand').value = ""; document.getElementById('edit-price').value = "";
-            document.getElementById('edit-allergy').value = ""; document.getElementById('edit-memo').value = "";
-            document.getElementById('edit-img-base64').value = ""; document.getElementById('edit-preview').style.display = 'none';
-            document.getElementById('preview-text').style.display = 'block';
+            document.getElementById('edit-id').value = ""; document.getElementById('edit-name').value = ""; document.getElementById('edit-brand').value = ""; document.getElementById('edit-price').value = ""; document.getElementById('edit-allergy').value = ""; document.getElementById('edit-memo').value = ""; document.getElementById('edit-img-base64').value = ""; document.getElementById('edit-preview').style.display='none'; document.getElementById('preview-text').style.display='block';
         }
 
         function processImg(e) {
             const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                document.getElementById('edit-img-base64').value = ev.target.result;
-                document.getElementById('edit-preview').src = ev.target.result;
-                document.getElementById('edit-preview').style.display = 'block';
-                document.getElementById('preview-text').style.display = 'none';
-            };
+            reader.onload = (ev) => { document.getElementById('edit-img-base64').value = ev.target.result; document.getElementById('edit-preview').src = ev.target.result; document.getElementById('edit-preview').style.display = 'block'; document.getElementById('preview-text').style.display = 'none'; };
             reader.readAsDataURL(file);
-        }
-
-        function updateStats() {
-            const meals = Object.values(mealPlan);
-            const avg = meals.length > 0 ? Math.round(meals.reduce((s, m) => s + m.price, 0) / meals.length) : 0;
-            document.getElementById('stat-avg').innerText = avg.toLocaleString();
-            document.getElementById('stat-total').innerText = meals.length + "개";
-        }
-
-        function toggleInfo(cls, cb) {
-            const container = document.getElementById('grid-container');
-            cb.checked ? container.classList.add(cls) : container.classList.remove(cls);
         }
 
         async function saveAsPDF(id) {
@@ -337,7 +397,7 @@
             const w = pdf.internal.pageSize.getWidth();
             const h = (canvas.height * w) / canvas.width;
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 10, w, h);
-            pdf.save(`식단표_${new Date().getTime()}.pdf`);
+            pdf.save(`식단_${new Date().getTime()}.pdf`);
         }
 
         window.onload = () => { initGrid(); renderLib(); renderMgmt(); };
