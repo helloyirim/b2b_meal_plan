@@ -187,10 +187,17 @@
     </main>
 
     <script>
-        // JS 로직은 기존과 동일하게 유지 (데이터 구조 및 핸들러 보존)
         const initialData = [
-            { id: 1, name: "바싹불고기 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀", memo: "안매움", img: "" },
-            { id: 2, name: "숯불닭구이 반상", brand: "본도시락", price: 9400, allergy: "닭고기", memo: "", img: "" }
+            { id: 1, name: "바싹불고기 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유", memo: "안매움", img: "" },
+            { id: 2, name: "숯불닭구이 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+            { id: 3, name: "깻잎제육 반상", brand: "본도시락", price: 10000, allergy: "대두, 밀, 돼지고기", memo: "약간매움", img: "" },
+            { id: 4, name: "버섯소불고기 반상", brand: "본도시락", price: 10400, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", img: "" },
+            { id: 5, name: "꽈리닭구이 반상", brand: "본도시락", price: 10200, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+            { id: 6, name: "부추마늘오리구이 반상", brand: "본도시락", price: 10400, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 7, name: "전주 콩나물국밥", brand: "본설렁탕", price: 9000, allergy: "오징어, 새우, 대두, 밀, 조개류, 바지락, 굴, 쇠고기, 우유, 계란", memo: "", img: "" },
+            { id: 8, name: "한우사골 설렁탕", brand: "본설렁탕", price: 12000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", img: "" },
+            { id: 9, name: "쇠고기야채죽", brand: "본죽&비빔밥", price: 12000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 10, name: "6가지나물비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 우유, 계란", memo: "", img: "" }
         ];
 
         let menus = JSON.parse(localStorage.getItem('b2b_menus')) || initialData;
@@ -201,7 +208,11 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(id === 'page-generate') { document.getElementById('nav-gen').classList.add('active'); initGrid(); renderLib(); }
+            if(id === 'page-generate') { 
+                document.getElementById('nav-gen').classList.add('active'); 
+                initGrid(); 
+                renderLib(); 
+            }
             if(id === 'page-history') { document.getElementById('nav-his').classList.add('active'); renderHistoryList(); }
             if(id === 'page-settings') { document.getElementById('nav-set').classList.add('active'); renderMgmt(); }
         }
