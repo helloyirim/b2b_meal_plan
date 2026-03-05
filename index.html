@@ -200,9 +200,33 @@
             { id: 10, name: "6가지나물비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 우유, 계란", memo: "", img: "" }
         ];
 
-        let menus = JSON.parse(localStorage.getItem('b2b_menus')) || initialData;
-        let mealPlan = {};
-        let currentCellId = "cell-0-0";
+        const API_URL = "https://b2b-meal-api.wispy-river-05a7.workers.dev";
+let menus = []; // 서버에서 받아올 거라 빈 배열로 시작합니다.
+let mealPlan = {};
+let currentCellId = "cell-0-0";
+
+// 페이지가 로드될 때 서버에서 데이터를 가져오는 함수
+async function loadMenusFromServer() {
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        
+        // 서버 데이터가 있으면 사용하고, 없으면 initialData를 기본값으로 사용합니다.
+        menus = (data && data.length > 0) ? data : [...initialData];
+        
+        // 데이터를 다 받았으니 화면을 그립니다.
+        if(typeof renderLib === 'function') renderLib();
+        if(typeof renderMgmt === 'function') renderMgmt();
+    } catch (e) {
+        console.error("데이터 로딩 실패:", e);
+        // 실패 시 로컬스토리지 보험
+        const local = localStorage.getItem('b2b_menus');
+        menus = local ? JSON.parse(local) : [...initialData];
+    }
+}
+
+// 윈도우 로딩 시 서버 호출 시작
+window.addEventListener('load', loadMenusFromServer);
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -375,6 +399,7 @@
             if(!obj.name) return alert("메뉴명을 입력해주세요.");
             if(id) { const idx = menus.findIndex(m => m.id === parseInt(id)); menus[idx] = obj; } else { menus.push(obj); }
             localStorage.setItem('b2b_menus', JSON.stringify(menus));
+            saveMenusToServer(); // <-- 이 줄을 꼭 넣어주세요!
             alert("저장되었습니다."); resetMenuForm(); renderMgmt(); renderLib();
         }
 
@@ -410,8 +435,23 @@
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 10, w, h);
             pdf.save(`식단_${new Date().getTime()}.pdf`);
         }
+        // --- 여기서부터 복사해서 넣으세요 ---
+        async function saveMenusToServer() {
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(menus)
+                });
+                console.log("클라우드 서버 저장 완료");
+            } catch (e) {
+                console.error("서버 저장 실패:", e);
+            }
+        }
 
-        window.onload = () => { initGrid(); renderLib(); renderMgmt(); };
+
+
+        window.onload = () => { initGrid(); };
     </script>
 </body>
 </html>
