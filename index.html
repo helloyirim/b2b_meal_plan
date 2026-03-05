@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B2B Meal Plan Pro - 데이터 강제 로드판</title>
+    <title>B2B Meal Plan Pro - 하이패스 에디션</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
@@ -14,7 +14,8 @@
         .sidebar { width: 220px; background: var(--bg-sidebar); color: white; padding: 30px 20px; position: fixed; height: 100vh; z-index: 100; }
         .sidebar h2 { font-size: 18px; margin-bottom: 40px; }
         .nav-item { display: block; padding: 12px; color: #bbb; text-decoration: none; font-weight: 600; border-radius: 8px; margin-bottom: 5px; cursor: pointer; transition: 0.3s; }
-        .nav-item.active { color: white; background: rgba(255, 255, 255, 0.1); }
+        .nav-item:hover { color: white; background: rgba(255, 255, 255, 0.05); }
+        .nav-item.active { color: white !important; background: rgba(255, 255, 255, 0.15) !important; }
         .main-content { margin-left: 220px; width: calc(100% - 220px); padding: 40px; }
         .page { display: none; }
         .page.active { display: block; }
@@ -26,7 +27,7 @@
         .meal-table th { background: #f9f9f9; padding: 10px; font-size: 13px; font-weight: 800; border: 1px solid var(--border-soft); color: #666; }
         .meal-table td { border: 1px solid var(--border-soft); vertical-align: top; }
         .week-label { background: #f5f5f5; font-weight: 800; width: 45px; text-align: center; vertical-align: middle !important; }
-        .drop-zone { min-height: 200px; padding: 10px; cursor: pointer; }
+        .drop-zone { min-height: 200px; padding: 10px; cursor: pointer; transition: 0.2s; }
         .drop-zone.selected { background: #eef6ff; box-shadow: inset 0 0 0 2px var(--primary); }
         .cell-date { font-size: 11px; color: #777; font-weight: 800; margin-bottom: 8px; display: block; }
         .meal-content img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 4px; margin-bottom: 6px; border: 1px solid #eee; }
@@ -35,10 +36,10 @@
         .info-memo { color: #e67e22; font-weight: 600; }
         .show-brand .info-brand, .show-price .info-price, .show-allergy .info-allergy, .show-memo .info-memo { display: block; }
         .editor-layout { display: flex; gap: 20px; align-items: flex-start; }
-        .menu-lib { width: 320px; }
+        .menu-lib { width: 320px; position: sticky; top: 20px; }
         .lib-search { margin-bottom: 15px; padding: 10px; border: 1.5px solid var(--border-soft); border-radius: 6px; width: 100%; font-size: 13px; }
         .lib-card { display: flex; gap: 10px; padding: 10px; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 8px; cursor: pointer; background: #fff; transition: 0.2s; }
-        .lib-card:hover { border-color: var(--primary); background: #f9f9f9; }
+        .lib-card:hover { border-color: var(--primary); background: #f9f9f9; transform: translateX(5px); }
         .lib-card img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
         .btn { padding: 10px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; border: none; font-size: 13px; }
         .btn-save { background: var(--primary); color: white; }
@@ -51,9 +52,9 @@
 
     <aside class="sidebar">
         <h2>B2B Meal 관리</h2>
-        <div class="nav-item active" onclick="showPage('page-generate')">📅 식단 생성</div>
-        <div class="nav-item" onclick="showPage('page-history')">📋 식단 관리</div>
-        <div class="nav-item" onclick="showPage('page-settings')">🍴 메뉴 관리</div>
+        <div class="nav-item active" id="nav-gen" onclick="showPage('page-generate')">📅 식단 생성</div>
+        <div class="nav-item" id="nav-his" onclick="showPage('page-history')">📋 식단 관리</div>
+        <div class="nav-item" id="nav-set" onclick="showPage('page-settings')">🍴 메뉴 관리</div>
     </aside>
 
     <main class="main-content">
@@ -68,8 +69,17 @@
 
             <section class="card">
                 <div class="settings-grid">
-                    <div><label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">시작일</label><input type="date" id="start-date" onchange="initGrid()"></div>
-                    <div><label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">기간</label><select id="week-count" onchange="initGrid()"><option value="1">1주일</option><option value="2">2주일</option><option value="3">3주일</option><option value="4" selected>4주일</option></select></div>
+                    <div>
+                        <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">시작일 (월요일만)</label>
+                        <input type="date" id="start-date" onchange="validateMonday(this)">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">기간</label>
+                        <select id="week-count" onchange="initGrid()">
+                            <option value="1">1주일</option><option value="2">2주일</option>
+                            <option value="3">3주일</option><option value="4" selected>4주일</option>
+                        </select>
+                    </div>
                     <div>
                         <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">노출 정보 설정</label>
                         <div class="option-row">
@@ -86,8 +96,9 @@
                 <div style="flex:1;" id="pdf-area"><div id="grid-container"></div></div>
                 <div class="menu-lib">
                     <div class="card">
-                        <h4 style="margin-bottom:12px; font-size:14px;">메뉴 라이브러리</h4>
-                        <input type="text" class="lib-search" placeholder="메뉴 검색..." onkeyup="renderLib(this.value)">
+                        <h4 style="margin-bottom:5px; font-size:14px;">메뉴 라이브러리</h4>
+                        <p style="font-size:11px; color:var(--primary); margin-bottom:12px; font-weight:600;">* 클릭 시 다음 칸으로 자동 입력</p>
+                        <input type="text" id="lib-search-input" class="lib-search" placeholder="메뉴 검색..." onkeyup="renderLib(this.value)">
                         <div id="lib-list"></div>
                     </div>
                 </div>
@@ -140,19 +151,32 @@
             { id: 10, name: "6가지나물비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 우유, 계란", memo: "", img: "" }
         ];
 
-        // [중요] 저장된 데이터가 비어있는 리스트([])면 기본 데이터로 덮어쓰기
         let saved = JSON.parse(localStorage.getItem('b2b_menus'));
         let menus = (saved && saved.length > 0) ? saved : initialData;
         if(!saved || saved.length === 0) localStorage.setItem('b2b_menus', JSON.stringify(menus));
 
         let mealPlan = {};
-        let currentCellId = null;
+        let currentCellId = "cell-0-0";
 
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(id === 'page-settings') renderMgmt();
-            if(id === 'page-generate') { renderLib(); initGrid(); }
+            if(id === 'page-generate') { document.getElementById('nav-gen').classList.add('active'); renderLib(); initGrid(); }
+            if(id === 'page-history') document.getElementById('nav-his').classList.add('active');
+            if(id === 'page-settings') { document.getElementById('nav-set').classList.add('active'); renderMgmt(); }
+        }
+
+        // 월요일 유효성 검사
+        function validateMonday(input) {
+            const date = new Date(input.value);
+            const day = date.getDay(); // 0:일, 1:월...
+            if(day !== 1) {
+                alert("시작일은 월요일만 선택 가능합니다.");
+                input.value = "";
+                return;
+            }
+            initGrid();
         }
 
         function initGrid() {
@@ -175,7 +199,7 @@
                 html += `</tr>`;
             }
             container.innerHTML = html + `</tbody></table>`;
-            if(!currentCellId) selectCell('cell-0-0');
+            if(document.getElementById(currentCellId)) document.getElementById(currentCellId).classList.add('selected');
         }
 
         function selectCell(id) {
@@ -184,11 +208,30 @@
             if(document.getElementById(id)) document.getElementById(id).classList.add('selected');
         }
 
+        // 하이패스 입력: 메뉴 클릭 시 자동 다음 칸 이동
         function addToGrid(mid) {
+            if(!currentCellId) return;
             const menu = menus.find(m => m.id === mid);
             mealPlan[currentCellId] = {...menu};
             document.getElementById(currentCellId).querySelector('.cell-content').innerHTML = renderCell(menu);
             updateStats();
+            
+            // 다음 칸으로 자동 이동 로직
+            const parts = currentCellId.split('-');
+            let w = parseInt(parts[1]);
+            let d = parseInt(parts[2]);
+
+            d++; // 다음 요일
+            if(d > 4) { // 금요일 다음이면 다음 주 월요일로
+                d = 0;
+                w++;
+            }
+
+            const nextWeeks = parseInt(document.getElementById('week-count').value);
+            if(w < nextWeeks) {
+                const nextId = `cell-${w}-${d}`;
+                selectCell(nextId);
+            }
         }
 
         function renderCell(m) {
@@ -215,6 +258,7 @@
 
         function renderMgmt() {
             const list = document.getElementById('mgmt-list');
+            if(!list) return;
             const searchVal = document.getElementById('mgmt-search').value.toLowerCase();
             const filtered = menus.filter(m => m.name.toLowerCase().includes(searchVal) || m.brand.toLowerCase().includes(searchVal));
             list.innerHTML = filtered.map(m => `
@@ -296,11 +340,7 @@
             pdf.save(`식단표_${new Date().getTime()}.pdf`);
         }
 
-        window.onload = () => { 
-            initGrid(); 
-            renderLib(); 
-            renderMgmt();
-        };
+        window.onload = () => { initGrid(); renderLib(); renderMgmt(); };
     </script>
 </body>
 </html>
