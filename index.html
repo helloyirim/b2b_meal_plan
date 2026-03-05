@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B2B Meal Plan Pro</title>
+    <title>B2B Meal Plan Pro - Team Leader Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -16,282 +16,348 @@
             --text-muted: #a3aed0;
             --border-color: #e0e5f2;
             --danger: #ff5c5c;
-            --tag-bg: #eef2ff;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; min-height: 100vh; }
 
-        /* 사이드바 */
-        .sidebar { width: 240px; background: var(--sidebar-color); color: white; padding: 30px 20px; position: fixed; height: 100vh; }
-        .sidebar-header h2 { font-size: 20px; margin-bottom: 40px; color: #fff; }
+        /* 레이아웃 */
+        .sidebar { width: 240px; background: var(--sidebar-color); color: white; padding: 30px 20px; position: fixed; height: 100vh; z-index: 100; }
+        .sidebar-header h2 { font-size: 20px; margin-bottom: 40px; }
         .nav-item { display: block; padding: 15px; color: var(--text-muted); text-decoration: none; font-weight: 600; border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
         .nav-item.active { color: white; background: rgba(255, 255, 255, 0.1); }
-
-        /* 메인 콘텐츠 */
         .main-content { margin-left: 240px; width: calc(100% - 240px); padding: 30px; }
         .page { display: none; }
         .page.active { display: block; }
 
-        .card { background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0px 18px 40px rgba(112, 144, 176, 0.08); border: 1px solid var(--border-color); margin-bottom: 20px; }
-        
-        /* 폼 스타일 */
-        .grid-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .input-field { margin-bottom: 12px; }
-        .input-field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 14px; }
+        .card { background: var(--card-bg); border-radius: 20px; padding: 24px; box-shadow: 0px 18px 40px rgba(112, 144, 176, 0.08); border: 1px solid var(--border-color); margin-bottom: 20px; }
+        .section-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
 
-        /* 식단 생성 페이지 레이아웃 */
-        .meal-editor-container { display: flex; gap: 20px; align-items: flex-start; }
-        .meal-grid-area { flex: 1; }
-        .library-area { width: 320px; position: sticky; top: 30px; }
-
-        /* 상단 정보바 (평균단가 등) */
-        .stats-bar { display: flex; gap: 20px; margin-bottom: 15px; background: #fff; padding: 15px 25px; border-radius: 15px; border: 1px solid var(--primary); }
-        .stat-item { font-size: 15px; font-weight: 700; }
-        .stat-item span { color: var(--primary); }
-
-        /* 식단표 스타일 */
-        .meal-table { width: 100%; border-collapse: collapse; background: #fff; table-layout: fixed; }
-        .meal-table th, .meal-table td { border: 1px solid var(--border-color); padding: 10px; text-align: center; vertical-align: top; }
-        .meal-table th { background: #f8f9fa; font-size: 13px; height: 40px; }
-        .date-label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; }
-        
-        .drop-zone { min-height: 120px; cursor: pointer; transition: 0.2s; border-radius: 8px; }
-        .drop-zone.selected { background: #f0f3ff; border: 2px solid var(--primary); }
-        
-        /* 식단 내 메뉴 표시 */
-        .meal-item-in-grid { font-size: 12px; text-align: left; }
-        .meal-item-in-grid img { width: 100%; height: 60px; object-fit: cover; border-radius: 6px; margin-bottom: 5px; }
-        .meal-item-details { font-size: 10px; color: #666; line-height: 1.2; }
-
-        /* 메뉴 라이브러리 카드 */
-        .menu-list-scroll { max-height: 70vh; overflow-y: auto; }
-        .menu-card { border: 1px solid var(--border-color); padding: 10px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; display: flex; gap: 10px; align-items: center; }
-        .menu-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .menu-card img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-        .menu-card-info h4 { font-size: 14px; margin-bottom: 2px; }
-        .menu-card-info p { font-size: 11px; color: var(--text-muted); }
-
-        .btn { padding: 10px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-size: 14px; }
+        /* 버튼 및 폼 */
+        .btn { padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; }
+
+        /* --- 식단 생성 스타일 --- */
+        .gen-controls { display: grid; grid-template-columns: 1.5fr 1fr 2fr; gap: 20px; align-items: end; margin-bottom: 20px; }
+        .option-group { display: flex; gap: 12px; background: #f8faff; padding: 10px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .option-group label { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+        .meal-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-color); border-radius: 15px; overflow: hidden; table-layout: fixed; }
+        .meal-table th { background: #f8f9fa; padding: 12px; font-size: 13px; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+        .meal-table td { border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); vertical-align: top; }
+        .week-label { background: #f1f4ff; font-weight: 700; color: var(--primary); text-align: center; width: 60px; vertical-align: middle !important; }
+
+        .drop-zone { min-height: 180px; padding: 10px; cursor: pointer; }
+        .drop-zone.selected { background: #f0f3ff; box-shadow: inset 0 0 0 2px var(--primary); }
+        .cell-date { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 8px; display: block; }
+        
+        .meal-content img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; }
+        .meal-name-label { font-weight: 700; font-size: 14px; margin-bottom: 4px; display: block; }
+        
+        .extra-info { font-size: 11px; color: #666; display: none; margin-top: 2px; border-top: 1px dashed #eee; padding-top: 2px; }
+        .show-brand .info-brand, .show-price .info-price, .show-allergy .info-allergy { display: block; }
+
+        /* --- 메뉴 설정 스타일 --- */
+        .settings-container { display: flex; gap: 24px; }
+        .menu-thumb { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; }
+        .upload-area { width: 100%; height: 150px; border: 2px dashed var(--border-color); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; background: #fafbff; margin-bottom: 15px; }
+        .upload-area img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        #file-input { display: none; }
+
+        .editor-layout { display: flex; gap: 20px; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <div class="sidebar-header"><h2>B2B Meal Pro</h2></div>
+        <div class="sidebar-header"><h2>B2B Meal</h2></div>
         <nav>
-            <div class="nav-item active" onclick="showPage('page-generate')">📅 식단 생성</div>
-            <div class="nav-item" onclick="showPage('page-settings')">🍴 메뉴 설정</div>
+            <div class="nav-item active" id="nav-gen" onclick="showPage('page-generate')">📅 식단 생성</div>
+            <div class="nav-item" id="nav-set" onclick="showPage('page-settings')">🍴 메뉴 설정</div>
         </nav>
     </aside>
 
     <main class="main-content">
         <div id="page-generate" class="page active">
-            <header style="margin-bottom: 25px;">
-                <h1>식단 생성 및 편집</h1>
-            </header>
-
+            <header style="margin-bottom: 20px;"><h1>식단 생성 대시보드</h1></header>
+            
             <section class="card">
-                <div class="grid-form">
-                    <div class="input-field">
-                        <label>시작일(월요일)</label>
-                        <input type="date" id="start-date" onchange="generateMealGrid()">
+                <div class="gen-controls">
+                    <div>
+                        <label style="font-size:12px; font-weight:700;">시작 날짜 (월요일)</label>
+                        <input type="date" id="start-date" onchange="validateAndGenerate(this)">
                     </div>
-                    <div class="input-field">
-                        <label>기간 설정</label>
-                        <select id="week-length" onchange="generateMealGrid()">
-                            <option value="1">1주</option>
-                            <option value="2">2주</option>
-                            <option value="4" selected>4주</option>
+                    <div>
+                        <label style="font-size:12px; font-weight:700;">주차 선택</label>
+                        <select id="week-count" onchange="renderMealGrid()">
+                            <option value="1">1주일</option><option value="2">2주일</option>
+                            <option value="3">3주일</option><option value="4" selected>4주일</option>
                         </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px; font-weight:700;">노출 정보 설정</label>
+                        <div class="option-group">
+                            <label><input type="checkbox" onchange="toggleDisplay('show-brand', this)"> 브랜드</label>
+                            <label><input type="checkbox" onchange="toggleDisplay('show-price', this)"> 가격</label>
+                            <label><input type="checkbox" onchange="toggleDisplay('show-allergy', this)"> 알러지</label>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <div class="stats-bar">
-                <div class="stat-item">평균 식단가: <span id="avg-price">0</span>원</div>
-                <div class="stat-item">등록된 메뉴 수: <span id="total-count">0</span>개</div>
-            </div>
-
-            <div class="meal-editor-container">
-                <div class="meal-grid-area">
-                    <div id="meal-plan-grid" class="card">
-                        </div>
+            <div class="editor-layout">
+                <div style="flex:1">
+                    <div id="meal-grid-container"></div>
                 </div>
-                
-                <div class="library-area">
-                    <div class="card">
-                        <h3 style="margin-bottom:15px; font-size:16px;">메뉴 라이브러리</h3>
-                        <div id="menu-library-list" class="menu-list-scroll">
-                            </div>
-                    </div>
+                <div style="width:280px">
+                    <section class="card" id="lib-list-container" style="max-height: 80vh; overflow-y: auto;">
+                        <h3 class="section-title" style="font-size:15px;">라이브러리</h3>
+                        <div id="lib-list"></div>
+                    </section>
                 </div>
             </div>
         </div>
 
         <div id="page-settings" class="page">
-            <header style="margin-bottom: 25px;">
-                <h1>메뉴 설정 및 등록</h1>
-            </header>
-            
-            <section class="card">
-                <h3 style="margin-bottom: 15px;">신규 메뉴 등록</h3>
-                <div class="grid-form">
-                    <div class="input-field"><label>메뉴명</label><input type="text" id="reg-name"></div>
-                    <div class="input-field"><label>브랜드</label><input type="text" id="reg-brand"></div>
-                    <div class="input-field"><label>카테고리</label><input type="text" id="reg-cat"></div>
-                    <div class="input-field"><label>가격(원)</label><input type="number" id="reg-price"></div>
-                    <div class="input-field"><label>이미지 URL</label><input type="text" id="reg-img" placeholder="https://..."></div>
-                    <div class="input-field"><label>알러지 정보</label><input type="text" id="reg-allergy"></div>
-                    <div class="input-field" style="grid-column: span 2;"><label>메모</label><textarea id="reg-memo"></textarea></div>
+            <header style="margin-bottom: 20px;"><h1>메뉴 관리</h1></header>
+            <div class="settings-container">
+                <div style="flex:1">
+                    <section class="card">
+                        <input type="text" class="search-box" style="margin-bottom:15px;" placeholder="메뉴 검색..." onkeyup="renderSettingsTable()">
+                        <table style="width:100%; border-collapse:collapse;" id="settings-table">
+                            <thead style="text-align:left; font-size:13px; color:var(--text-muted);">
+                                <tr><th>이미지</th><th>메뉴명</th><th>가격</th><th>관리</th></tr>
+                            </thead>
+                            <tbody id="settings-menu-list"></tbody>
+                        </table>
+                    </section>
                 </div>
-                <button class="btn btn-primary" onclick="registerNewMenu()">메뉴 저장하기</button>
-            </section>
+                <div style="width:380px;">
+                    <section class="card">
+                        <div class="section-title" id="form-title">신규 메뉴 등록</div>
+                        <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                            <div id="upload-msg" style="text-align:center; font-size:12px; color:var(--text-muted);">
+                                <b>📷 사진 업로드</b><br>5MB 제한 (자동 압축)
+                            </div>
+                            <img id="img-preview">
+                        </div>
+                        <input type="file" id="file-input" accept="image/*" onchange="handleImageUpload(event)">
+                        <input type="hidden" id="edit-id"><input type="hidden" id="in-img-data">
+                        
+                        <div style="display:grid; gap:10px;">
+                            <input type="text" id="in-name" placeholder="메뉴명">
+                            <input type="text" id="in-brand" placeholder="브랜드">
+                            <input type="number" id="in-price" placeholder="가격">
+                            <input type="text" id="in-allergy" placeholder="알러지 정보">
+                            <textarea id="in-memo" placeholder="메모" rows="2"></textarea>
+                            <button class="btn btn-primary" onclick="saveMenu()">저장하기</button>
+                            <button class="btn btn-outline" onclick="resetForm()">취소</button>
+                        </div>
+                    </section>
+                </div>
+            </div>
         </div>
     </main>
 
     <script>
-        // 데이터 상태
-        let menuLibrary = [
-            { id: 1, name: '돈까스 정식', brand: '남산푸드', category: '일식', price: 8500, img: 'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=200', allergy: '돼지고기, 밀', memo: '인기메뉴' },
-            { id: 2, name: '김치찌개', brand: '본가', category: '한식', price: 7000, img: 'https://images.unsplash.com/photo-1583214725023-e229606d7f95?w=200', allergy: '대두', memo: '기본메뉴' }
-        ];
-        
+        let menus = [
+    { id: 1, name: "바싹불고기 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유", memo: "안매움", img: "" },
+    { id: 2, name: "숯불닭구이 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+    { id: 3, name: "깻잎제육 반상", brand: "본도시락", price: 10000, allergy: "대두, 밀, 돼지고기", memo: "약간매움", img: "" },
+    { id: 4, name: "버섯소불고기 반상", brand: "본도시락", price: 10400, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", img: "" },
+    { id: 5, name: "꽈리닭구이 반상", brand: "본도시락", price: 10200, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+    { id: 6, name: "부추마늘오리구이 반상", brand: "본도시락", price: 10400, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+    { id: 7, name: "전주 콩나물국밥", brand: "본설렁탕", price: 9000, allergy: "오징어, 새우, 대두, 밀, 조개류, 바지락, 굴, 쇠고기, 우유, 계란", memo: "", img: "" },
+    { id: 8, name: "한우사골 설렁탕", brand: "본설렁탕", price: 12000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", img: "" },
+    { id: 9, name: "쇠고기야채죽", brand: "본죽&비빔밥", price: 12000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+    { id: 10, name: "6가지나물비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 우유, 계란", memo: "", img: "" } 
+        ]; 
+        let mealData = {}; 
         let selectedCellId = null;
-        let mealData = {}; // { 'cell-0-1': menuObject }
 
-        // 페이지 전환
-        function showPage(pageId) {
+        // --- 공통: 페이지 전환 ---
+        function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            event.target.classList.add('active');
-            if(pageId === 'page-generate') renderLibrary();
+            document.getElementById(id).classList.add('active');
+            if(id === 'page-generate') {
+                document.getElementById('nav-gen').classList.add('active');
+                renderLibrary();
+                renderMealGrid();
+            } else {
+                document.getElementById('nav-set').classList.add('active');
+                renderSettingsTable();
+            }
         }
 
-        // 메뉴 등록
-        function registerNewMenu() {
-            const newMenu = {
-                id: Date.now(),
-                name: document.getElementById('reg-name').value,
-                brand: document.getElementById('reg-brand').value,
-                category: document.getElementById('reg-cat').value,
-                price: parseInt(document.getElementById('reg-price').value) || 0,
-                img: document.getElementById('reg-img').value || 'https://via.placeholder.com/100',
-                allergy: document.getElementById('reg-allergy').value,
-                memo: document.getElementById('reg-memo').value
+        // --- 메뉴 설정: 이미지 업로드 & 압축 ---
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 5 * 1024 * 1024) return alert("5MB 이하만 가능합니다.");
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600;
+                    let w = img.width, h = img.height;
+                    if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('in-img-data').value = compressed;
+                    document.getElementById('img-preview').src = compressed;
+                    document.getElementById('img-preview').style.display = 'block';
+                    document.getElementById('upload-msg').style.display = 'none';
+                };
             };
-            if(!newMenu.name) return alert("메뉴명을 입력하세요.");
-            menuLibrary.push(newMenu);
-            alert("등록되었습니다.");
-            renderLibrary();
+            reader.readAsDataURL(file);
         }
 
-        // 라이브러리 렌더링
-        function renderLibrary() {
-            const container = document.getElementById('menu-library-list');
-            container.innerHTML = menuLibrary.map(menu => `
-                <div class="menu-card" onclick="addMenuToGrid(${menu.id})">
-                    <img src="${menu.img}" alt="">
-                    <div class="menu-card-info">
-                        <h4>${menu.name}</h4>
-                        <p>${menu.brand} | ${menu.price.toLocaleString()}원</p>
-                    </div>
-                </div>
+        function saveMenu() {
+            const id = document.getElementById('edit-id').value;
+            const menuObj = {
+                id: id ? parseInt(id) : Date.now(),
+                name: document.getElementById('in-name').value,
+                brand: document.getElementById('in-brand').value,
+                price: parseInt(document.getElementById('in-price').value) || 0,
+                img: document.getElementById('in-img-data').value,
+                allergy: document.getElementById('in-allergy').value,
+                memo: document.getElementById('in-memo').value
+            };
+            if(!menuObj.name || !menuObj.img) return alert("이름과 사진은 필수입니다.");
+            
+            if(id) menus[menus.findIndex(m => m.id === parseInt(id))] = menuObj;
+            else menus.push(menuObj);
+
+            resetForm(); renderSettingsTable(); alert("저장 완료!");
+        }
+
+        function renderSettingsTable() {
+            const list = document.getElementById('settings-menu-list');
+            list.innerHTML = menus.map(m => `
+                <tr style="border-bottom:1px solid #eee; cursor:pointer;" onclick="loadMenu(${m.id})">
+                    <td style="padding:10px;"><img src="${m.img}" class="menu-thumb"></td>
+                    <td><b>${m.name}</b></td>
+                    <td>${m.price.toLocaleString()}원</td>
+                    <td><button onclick="event.stopPropagation(); deleteMenu(${m.id})">❌</button></td>
+                </tr>
             `).join('');
         }
 
-        // 식단표 생성
-        function generateMealGrid() {
-            const weeks = document.getElementById('week-length').value;
-            const startDateStr = document.getElementById('start-date').value;
-            const container = document.getElementById('meal-plan-grid');
+        function loadMenu(id) {
+            const m = menus.find(x => x.id === id);
+            document.getElementById('edit-id').value = m.id;
+            document.getElementById('in-name').value = m.name;
+            document.getElementById('in-brand').value = m.brand;
+            document.getElementById('in-price').value = m.price;
+            document.getElementById('in-img-data').value = m.img;
+            document.getElementById('img-preview').src = m.img;
+            document.getElementById('img-preview').style.display = 'block';
+            document.getElementById('upload-msg').style.display = 'none';
+        }
+
+        function resetForm() {
+            document.getElementById('edit-id').value = "";
+            document.querySelectorAll('#page-settings input, #page-settings textarea').forEach(i => i.value="");
+            document.getElementById('img-preview').style.display = 'none';
+            document.getElementById('upload-msg').style.display = 'block';
+        }
+
+        function deleteMenu(id) {
+            if(confirm("삭제할까요?")) { menus = menus.filter(m => m.id !== id); renderSettingsTable(); }
+        }
+
+        // --- 식단 생성: 날짜 로직 & 그리드 ---
+        function validateAndGenerate(input) {
+            const date = new Date(input.value);
+            if(date.getDay() !== 1) {
+                alert("식단표는 '월요일'부터 시작해야 합니다.");
+                input.value = ""; return;
+            }
+            renderMealGrid();
+        }
+
+        function toggleDisplay(cls, cb) {
+            const container = document.getElementById('meal-grid-container');
+            cb.checked ? container.classList.add(cls) : container.classList.remove(cls);
+        }
+
+        function renderMealGrid() {
+            const weeks = document.getElementById('week-count').value;
+            const startStr = document.getElementById('start-date').value;
+            const container = document.getElementById('meal-grid-container');
             
             let html = `<table class="meal-table"><thead><tr><th>주차</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr></thead><tbody>`;
             
-            for (let w = 0; w < weeks; w++) {
-                html += `<tr><td>${w+1}주차</td>`;
-                for (let d = 0; d < 5; d++) {
-                    const cellId = `cell-${w}-${d}`;
-                    let dateDisplay = "";
-                    if(startDateStr) {
-                        let date = new Date(startDateStr);
-                        date.setDate(date.getDate() + (w * 7) + d);
-                        dateDisplay = `${date.getMonth()+1}/${date.getDate()}`;
+            for(let w=0; w<weeks; w++) {
+                html += `<tr><td class="week-label">${w+1}주</td>`;
+                for(let d=0; d<5; d++) {
+                    const cid = `cell-${w}-${d}`;
+                    let dateInfo = "날짜 미정";
+                    if(startStr) {
+                        let dt = new Date(startStr);
+                        dt.setDate(dt.getDate() + (w*7) + d);
+                        dateInfo = `${dt.getMonth()+1}/${dt.getDate()} (${['일','월','화','수','목','금','토'][dt.getDay()]})`;
                     }
-                    html += `<td id="${cellId}" class="drop-zone" onclick="selectCell('${cellId}')">
-                        <span class="date-label">${dateDisplay}</span>
-                        <div class="cell-content"></div>
+                    html += `<td onclick="selectCell('${cid}')">
+                        <div id="${cid}" class="drop-zone">
+                            <span class="cell-date">${dateInfo}</span>
+                            <div class="meal-content">${mealData[cid] ? renderCellContent(mealData[cid]) : ''}</div>
+                        </div>
                     </td>`;
                 }
                 html += `</tr>`;
             }
-            container.innerHTML = html + '</tbody></table>';
-            calculateStats();
+            container.innerHTML = html + `</tbody></table>`;
         }
 
-        // 칸 선택
+        function renderCellContent(m) {
+            return `
+                <img src="${m.img}">
+                <span class="meal-name-label">${m.name}</span>
+                <div class="extra-info info-brand">🏢 ${m.brand}</div>
+                <div class="extra-info info-price">💰 ${m.price.toLocaleString()}원</div>
+                <div class="extra-info info-allergy">⚠️ ${m.allergy}</div>
+            `;
+        }
+
         function selectCell(id) {
-            if (selectedCellId) document.getElementById(selectedCellId).classList.remove('selected');
+            if(selectedCellId) document.getElementById(selectedCellId).classList.remove('selected');
             selectedCellId = id;
             document.getElementById(id).classList.add('selected');
         }
 
-        // 식단에 메뉴 추가 및 다음 칸 자동 이동
-        function addMenuToGrid(menuId) {
-            if (!selectedCellId) return alert("식단표에서 날짜를 먼저 선택해주세요.");
-            
-            const menu = menuLibrary.find(m => m.id === menuId);
-            mealData[selectedCellId] = menu;
-            
-            const cell = document.getElementById(selectedCellId);
-            cell.querySelector('.cell-content').innerHTML = `
-                <div class="meal-item-in-grid">
-                    <img src="${menu.img}">
-                    <strong>${menu.name}</strong>
-                    <div class="meal-item-details">
-                        ${menu.brand}<br>
-                        <span style="color:blue">${menu.price.toLocaleString()}원</span><br>
-                        <small>${menu.allergy || ''}</small>
-                    </div>
+        function renderLibrary() {
+            const lib = document.getElementById('lib-list');
+            lib.innerHTML = menus.map(m => `
+                <div class="card" style="padding:10px; margin-bottom:10px; cursor:pointer; display:flex; gap:10px;" onclick="addMenuToGrid(${m.id})">
+                    <img src="${m.img}" style="width:45px; height:45px; object-fit:cover; border-radius:6px;">
+                    <div><div style="font-weight:700; font-size:13px;">${m.name}</div><div style="font-size:11px; color:#999;">${m.price.toLocaleString()}원</div></div>
                 </div>
-            `;
-            
-            calculateStats();
-            moveToNextCell();
+            `).join('');
         }
 
-        // 다음 칸으로 자동 이동 로직
-        function moveToNextCell() {
-            const parts = selectedCellId.split('-');
-            let w = parseInt(parts[1]);
-            let d = parseInt(parts[2]);
-
-            d++; // 다음 날로
-            if (d > 4) { d = 0; w++; } // 금요일 지나면 다음주 월요일로
+        function addMenuToGrid(mid) {
+            if(!selectedCellId) return alert("날짜 칸을 먼저 선택하세요.");
+            const menu = menus.find(m => m.id === mid);
+            mealData[selectedCellId] = menu;
+            document.getElementById(selectedCellId).querySelector('.meal-content').innerHTML = renderCellContent(menu);
             
-            const nextId = `cell-${w}-${d}`;
-            if (document.getElementById(nextId)) {
-                selectCell(nextId);
-            }
+            // 자동 다음 칸 이동
+            const p = selectedCellId.split('-');
+            let w = parseInt(p[1]), d = parseInt(p[2]);
+            d++; if(d > 4) { d = 0; w++; }
+            const next = `cell-${w}-${d}`;
+            if(document.getElementById(next)) selectCell(next);
         }
 
-        // 통계 계산
-        function calculateStats() {
-            const menus = Object.values(mealData);
-            const total = menus.reduce((sum, m) => sum + m.price, 0);
-            const avg = menus.length > 0 ? Math.round(total / menus.length) : 0;
-            
-            document.getElementById('avg-price').innerText = avg.toLocaleString();
-            document.getElementById('total-count').innerText = menus.length;
-        }
-
-        window.onload = () => {
-            renderLibrary();
-            generateMealGrid();
-        };
+        window.onload = () => { renderMealGrid(); renderLibrary(); };
     </script>
 </body>
 </html>
