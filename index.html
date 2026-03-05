@@ -421,11 +421,36 @@ window.addEventListener('load', loadMenusFromServer);
         }
 
         function processImg(e) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (ev) => { document.getElementById('edit-img-base64').value = ev.target.result; document.getElementById('edit-preview').src = ev.target.result; document.getElementById('edit-preview').style.display = 'block'; document.getElementById('preview-text').style.display = 'none'; };
-            reader.readAsDataURL(file);
-        }
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+            // 1. 캔버스를 이용해 이미지 압축 (가로 400px 기준)
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400; 
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // 2. 압축된 데이터 추출 (품질 0.7로 설정해서 용량 최적화)
+            const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+            
+            // 3. 화면에 반영
+            document.getElementById('edit-img-base64').value = compressedData;
+            document.getElementById('edit-preview').src = compressedData;
+            document.getElementById('edit-preview').style.display = 'block';
+            document.getElementById('preview-text').style.display = 'none';
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
         async function saveAsPDF(id) {
             const canvas = await html2canvas(document.getElementById(id), { scale: 2 });
