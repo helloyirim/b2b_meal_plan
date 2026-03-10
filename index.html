@@ -33,7 +33,7 @@
         .drop-zone { min-height: 180px; padding: 10px; cursor: pointer; transition: 0.2s; position: relative; }
         .drop-zone.selected { background: #eef6ff; box-shadow: inset 0 0 0 2px var(--primary); }
 
-        .meal-content img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 4px; margin-bottom: 6px; border: 1px solid #eee; }
+        .meal-content img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: transparent; border-radius: 0; margin-bottom: 6px; padding: 0; border: none; box-shadow: none; }
         .meal-title { font-weight: 800; font-size: 13px; line-height: 1.3; display: block; margin-bottom: 4px; }
         .extra-info { font-size: 11px; color: #666; display: none; margin-top: 2px; border-top: 1px dotted #ddd; padding-top: 2px; }
         .show-brand .info-brand, .show-price .info-price, .show-allergy .info-allergy, .show-memo .info-memo { display: block; }
@@ -204,434 +204,781 @@
     </main>
 
     <script>
-// 2. 사용자 데이터 및 권한 정의
-const USERS = {
-    'yirim.yu': { pw: 'rim77', role: 'ADMIN', name: '유이림' }, 
-    'jaeyong.choi': { pw: 'jy1234', role: 'ADMIN', name: '최재용' },
-    'jeongmun.lee': { pw: 'jm1234', role: 'ADMIN', name: '이정문' },
-    'bondo': { pw: 'bondo1234', role: 'USER', name: '스태프' }
-};
-
-function checkLogin() {
-    const id = document.getElementById('login-id').value;
-    const pw = document.getElementById('login-pw').value;
-
-    if (USERS[id] && USERS[id].pw === pw) {
-        localStorage.setItem('currentUser', JSON.stringify({
-            id: id, name: USERS[id].name, role: USERS[id].role
-        }));
-        alert(`${USERS[id].name}님 환영합니다.`);
-        location.reload();
-    } else {
-        alert('아이디 또는 비밀번호가 틀렸습니다.');
-    }
-}
-
-function initAuth() {
-    const session = JSON.parse(localStorage.getItem('currentUser'));
-    const overlay = document.getElementById('login-overlay');
-    
-    if (!session) {
-        overlay.style.display = 'flex';
-        return;
-    }
-    overlay.style.display = 'none';
-    
-    // 1. 현재 로그인한 사용자 이름 표시
-    if(document.getElementById('current-user-name')) {
-        document.getElementById('current-user-name').innerText = session.name;
-    }
-    
-    // 2. 일반 사용자(USER) 권한일 때 메뉴 숨기기
-    if (session.role === 'USER') {
-        const historyNav = document.getElementById('nav-his');
-        const settingsNav = document.getElementById('nav-set');
-        if(historyNav) historyNav.style.display = 'none';
-        if(settingsNav) settingsNav.style.display = 'none';
-        showPage('page-generate'); 
-    }
-}
-
-// 로그아웃 함수 추가
-function logout() {
-    if(confirm("로그아웃 하시겠습니까?")) {
-        localStorage.removeItem('currentUser'); // 세션 삭제
-        location.reload(); // 페이지 새로고침하여 로그인창 띄움
-    }
-}
-
-const initialMenus = [
-    // 본도시락 - 봄 시즌 및 상시 메뉴
-    { name: "봄냉이무침 양념돼지구이 쌈밥 한상", brand: "본도시락", price: 16900, allergy: "", memo: "", image: "" },
-    { name: "봄냉이무침 양념돼지구이 국반상", brand: "본도시락", price: 10900, allergy: "", memo: "", image: "" },
-    { name: "봄냉이무침 양념돼지구이 반상", brand: "본도시락", price: 10900, allergy: "", memo: "", image: "" },
-    { name: "봄냉이무침 제육덮밥", brand: "본도시락", price: 8200, allergy: "", memo: "", image: "" },
-    { name: "본격도시락(스팸두부조림)", brand: "본도시락", price: 8300, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 우유, 토마토, 굴, 조개류", memo: "", image: "" },
-    { name: "본격도시락(카츠&전)", brand: "본도시락", price: 8300, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 게, 토마토, 오징어", memo: "", image: "" },
-    { name: "바싹불고기 깻잎제육 한상", brand: "본도시락", price: 12900, allergy: "대두, 밀, 돼지고기", memo: "", image: "" },
-    { name: "버섯소불고기 깻잎제육 한상", brand: "본도시락", price: 13600, allergy: "대두, 밀, 쇠고기, 돼지고기, 토마토", memo: "", image: "" },
-    { name: "바싹불고기 숯불닭구이 한상", brand: "본도시락", price: 12900, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유", memo: "", image: "" },
-    { name: "우삼겹된장찌개 제육 백반 한상", brand: "본도시락", price: 13900, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩, 우유, 새우, 아황산류, 호두, 조개류", memo: "", image: "" },
-    { name: "바싹불고기 여수꼬막무침 한상", brand: "본도시락", price: 13900, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유, 조개류", memo: "", image: "" },
-    { name: "바싹불고기 오징어두루치기 한상", brand: "본도시락", price: 14900, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "우렁강된장 제육 쌈밥 한상", brand: "본도시락", price: 15400, allergy: "대두, 밀, 쇠고기, 돼지고기, 게, 새우, 아황산류", memo: "", image: "" },
-    { name: "바싹불고기 국반상", brand: "본도시락", price: 8600, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유", memo: "", image: "" },
-    { name: "깻잎제육 국반상", brand: "본도시락", price: 9200, allergy: "대두, 밀, 돼지고기", memo: "", image: "" },
-    { name: "버섯소불고기 국반상", brand: "본도시락", price: 10100, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", image: "" },
-    { name: "숯불닭구이 국반상", brand: "본도시락", price: 9100, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", image: "" },
-    { name: "꽈리닭구이 국반상", brand: "본도시락", price: 9900, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", image: "" },
-    { name: "오징어두루치기 국반상", brand: "본도시락", price: 10600, allergy: "대두, 밀, 쇠고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "수작돈까스 국반상", brand: "본도시락", price: 10900, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩, 토마토, 굴, 조개류", memo: "", image: "" },
-    { name: "궁중떡갈비 국반상", brand: "본도시락", price: 7900, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩", memo: "", image: "" },
-    { name: "바싹불고기 반상", brand: "본도시락", price: 8900, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유", memo: "", image: "" },
-    { name: "깻잎제육 반상", brand: "본도시락", price: 9500, allergy: "대두, 밀, 돼지고기", memo: "", image: "" },
-    { name: "버섯소불고기 반상", brand: "본도시락", price: 10400, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", image: "" },
-    { name: "숯불닭구이 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", image: "" },
-    { name: "꽈리닭구이 반상", brand: "본도시락", price: 10200, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", image: "" },
-    { name: "오징어두루치기 반상", brand: "본도시락", price: 10900, allergy: "대두, 밀, 쇠고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "수작돈까스 반상", brand: "본도시락", price: 11200, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩, 토마토, 굴, 조개류", memo: "", image: "" },
-    { name: "궁중떡갈비 반상", brand: "본도시락", price: 8200, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩", memo: "", image: "" },
-    { name: "고추장애호박찌개", brand: "본도시락", price: 10200, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 굴, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "스팸김치찌개", brand: "본도시락", price: 9400, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 우유, 새우", memo: "", image: "" },
-    { name: "우삼겹된장찌개", brand: "본도시락", price: 8900, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 우유, 새우, 아황산류, 조개류", memo: "", image: "" },
-    { name: "숯불주꾸미 꽈리닭구이 한상", brand: "본도시락", price: 16400, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "", image: "" },
-    { name: "울릉도 오징어 양념돼지구이 한상", brand: "본도시락", price: 19400, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 게, 새우, 아황산류, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "더덕장어구이 바싹불고기 한상", brand: "본도시락", price: 18900, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유", memo: "기력충전", image: "" },
-    { name: "특선 LA갈비구이 한정식", brand: "본도시락", price: 27900, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 토마토, 조개류", memo: "기력충전", image: "" },
-    { name: "궁중 전복소갈비찜 한정식", brand: "본도시락", price: 29900, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 토마토, 전복, 조개류", memo: "기력충전", image: "" },
-    { name: "보양 고추장 더덕 장어구이 한정식", brand: "본도시락", price: 34900, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 토마토, 조개류", memo: "기력충전", image: "" },
-    { name: "스크램블드에그 치킨마요", brand: "본도시락", price: 6800, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 땅콩, 우유, 호두, 굴, 조개류", memo: "", image: "" },
-    { name: "저염 스팸김치볶음밥", brand: "본도시락", price: 7900, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 굴, 조개류", memo: "", image: "" },
-    { name: "울릉도 나물 버섯영양밥", brand: "본도시락", price: 8200, allergy: "대두, 밀, 쇠고기, 우유", memo: "", image: "" },
-    { name: "닭가슴살 샐러드", brand: "본도시락", price: 7900, allergy: "대두, 밀, 닭고기, 우유, 아황산류", memo: "", image: "" },
-    { name: "단호박식혜", brand: "본도시락", price: 1500, allergy: "", memo: "", image: "" },
-    { name: "생수", brand: "본도시락", price: 1000, allergy: "", memo: "", image: "" },
-    { name: "컵국", brand: "본도시락", price: 1000, allergy: "", memo: "", image: "" },
-    { name: "별도 국", brand: "본도시락", price: 1000, allergy: "", memo: "", image: "" },
-
-    // 본죽&비빔밥
-    { name: "본죽장조림버터비빔밥", brand: "본죽&비빔밥", price: 11000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유", memo: "", image: "" },
-    { name: "낙지김치비빔밥", brand: "본죽&비빔밥", price: 11500, allergy: "난류(계란), 대두, 밀, 쇠고기, 새우, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "불고기낙지비빔밥", brand: "본죽&비빔밥", price: 12000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 아황산류", memo: "기력충전", image: "" },
-    { name: "신짬뽕비빔밥", brand: "본죽&비빔밥", price: 11500, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 게, 새우, 오징어, 홍합, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "전복내장해물비빔밥", brand: "본죽&비빔밥", price: 14500, allergy: "대두, 밀, 쇠고기, 우유, 새우, 오징어, 전복, 조개류", memo: "기력충전", image: "" },
-    { name: "참치야채비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "난류(계란), 대두, 밀, 우유", memo: "", image: "" },
-    { name: "6가지나물비빔밥", brand: "본죽&비빔밥", price: 9500, allergy: "난류(계란), 대두, 밀, 쇠고기", memo: "", image: "" },
-    { name: "제육볶음나물비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유, 아황산류", memo: "", image: "" },
-    { name: "소불고기나물비빔밥", brand: "본죽&비빔밥", price: 11500, allergy: "대두, 밀, 쇠고기, 우유, 아황산류", memo: "", image: "" },
-    { name: "해물된장뚝배기", brand: "본죽&비빔밥", price: 10500, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 새우, 아황산류, 오징어, 홍합, 조개류", memo: "", image: "" },
-    { name: "뚝배기 제육볶음", brand: "본죽&비빔밥", price: 10500, allergy: "난류(계란), 대두, 밀, 돼지고기, 우유, 아황산류", memo: "", image: "" },
-    { name: "소불고기버섯뚝배기", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 우유, 아황산류", memo: "", image: "" },
-    { name: "콩비지뚝배기", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 돼지고기", memo: "", image: "" },
-    { name: "전복죽", brand: "본죽&비빔밥", price: 12000, allergy: "대두, 밀, 쇠고기, 우유, 전복, 조개류, 잣", memo: "기력충전", image: "" },
-    { name: "쇠고기야채죽", brand: "본죽&비빔밥", price: 11000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", image: "" },
-    { name: "쇠고기버섯죽", brand: "본죽&비빔밥", price: 10000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", image: "" },
-    { name: "참치야채죽", brand: "본죽&비빔밥", price: 10000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", image: "" },
-    { name: "7가지야채죽", brand: "본죽&비빔밥", price: 9000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", image: "" },
-    { name: "해물죽", brand: "본죽&비빔밥", price: 11000, allergy: "대두, 밀, 쇠고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", image: "" },
-    { name: "새우죽", brand: "본죽&비빔밥", price: 9500, allergy: "대두, 밀, 쇠고기, 우유, 새우", memo: "", image: "" },
-    { name: "통영굴버섯죽", brand: "본죽&비빔밥", price: 9500, allergy: "대두, 밀, 쇠고기, 우유, 굴", memo: "", image: "" },
-    { name: "낙지김치죽", brand: "본죽&비빔밥", price: 11500, allergy: "대두, 밀, 쇠고기, 우유, 새우, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "신짬뽕죽", brand: "본죽&비빔밥", price: 11500, allergy: "대두, 밀, 쇠고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "삼계죽", brand: "본죽&비빔밥", price: 12500, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "기력충전", image: "" },
-    { name: "불고기낙지죽", brand: "본죽&비빔밥", price: 12000, allergy: "대두, 밀, 쇠고기, 우유", memo: "기력충전", image: "" },
-    { name: "단호박죽", brand: "본죽&비빔밥", price: 9500, allergy: "", memo: "전통죽", image: "" },
-    { name: "단팥죽", brand: "본죽&비빔밥", price: 9500, allergy: "", memo: "전통죽", image: "" },
-    { name: "동지팥죽", brand: "본죽&비빔밥", price: 9000, allergy: "", memo: "전통죽", image: "" },
-
-    // 본설렁탕
-    { name: "바지락 순두부찌개", brand: "본설렁탕", price: 10000, allergy: "", memo: "맵파민 중독", image: "" },
-    { name: "통영굴국밥", brand: "본설렁탕", price: 11000, allergy: "대두, 밀, 쇠고기, 우유, 새우, 오징어, 난류(계란), 굴", memo: "기력충전", image: "" },
-    { name: "본해장국밥", brand: "본설렁탕", price: 11000, allergy: "대두, 밀, 쇠고기, 우유, 새우, 오징어", memo: "맵파민 중독", image: "" },
-    { name: "전주콩나물국밥", brand: "본설렁탕", price: 9000, allergy: "오징어, 새우, 대두, 밀, 조개류, 바지락, 굴, 쇠고기, 우유, 난류(계란)", memo: "숙취 해결사", image: "" },
-    { name: "한우사골 토종순대국밥", brand: "본설렁탕", price: 10000, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 아황산류, 오징어, 조개류", memo: "숙취 해결사", image: "" },
-    { name: "한우사골 얼큰순대국밥", brand: "본설렁탕", price: 10000, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 아황산류, 오징어, 조개류, 홍합", memo: "숙취 해결사", image: "" },
-    { name: "한우사골 돼지수육국밥", brand: "본설렁탕", price: 11000, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 오징어, 굴, 조개류", memo: "숙취 해결사", image: "" },
-    { name: "한우사골 나주식곰탕", brand: "본설렁탕", price: 12000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", image: "" },
-    { name: "한우사골 설렁탕", brand: "본설렁탕", price: 12000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", image: "" },
-    { name: "한우사골 얼큰설렁탕", brand: "본설렁탕", price: 12000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 새우, 오징어, 굴, 조개류", memo: "맵파민 중독", image: "" },
-    { name: "한우사골 떡만두설렁탕", brand: "본설렁탕", price: 11000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", image: "" },
-    { name: "한우사골 얼큰떡만두설렁탕", brand: "본설렁탕", price: 11000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 오징어, 굴, 조개류, 홍합", memo: "맵파민 중독", image: "" },
-
-    // 단체전용 메뉴
-    { name: "가츠동 덮밥", brand: "본도시락_단체전용", price: 9000, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기", memo: "", image: "" },
-    { name: "간장양념꾸이 도시락", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 돼지고기", memo: "", image: "" },
-    { name: "마늘쫑돼지고기볶음 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 닭고기, 돼지고기, 굴, 조개류", memo: "", image: "" },
-    { name: "바싹불고기 도시락", brand: "본도시락_단체전용", price: 7000, allergy: "대두, 밀, 돼지고기", memo: "", image: "" },
-    { name: "소금닭구이 도시락", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", image: "" },
-    { name: "소불고기 도시락", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", image: "" },
-    { name: "스팸두부조림 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유, 토마토, 굴, 조개류", memo: "", image: "" },
-    { name: "우삼겹강된장 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 게, 새우, 아황산류", memo: "", image: "" },
-    { name: "우삼겹규동 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유", memo: "", image: "" },
-    { name: "우삼겹칠리마파두부 덮밥", brand: "본도시락_단체전용", price: 9000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 굴, 조개류", memo: "", image: "" },
-    { name: "콩나물불고기 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 돼지고기", memo: "", image: "" },
-    { name: "콩나물불고기 도시락", brand: "본도시락_단체전용", price: 7000, allergy: "대두, 밀, 돼지고기", memo: "", image: "" },
-    { name: "간장양념꾸이 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 땅콩, 우유, 호두, 굴, 조개류", memo: "", image: "" },
-    { name: "스크램블드에그함박 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 땅콩, 우유, 토마토, 굴, 조개류", memo: "", image: "" },
-    { name: "스팸마요 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 우유, 굴, 조개류", memo: "", image: "" },
-    { name: "오야꼬동 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 우유", memo: "", image: "" },
-    { name: "짜장계란 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 아황산류, 굴, 조개류", memo: "", image: "" },
-    { name: "참치김치 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 쇠고기, 땅콩, 우유, 호두, 홍합, 굴, 조개류", memo: "", image: "" },
-    { name: "참치마요 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 홍합, 굴, 조개류", memo: "", image: "" },
-    { name: "치킨카레 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 토마토, 아황산류, 굴, 조개류", memo: "", image: "" },
-    { name: "콩나물잡채 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유", memo: "", image: "" }
-];
-
+        // =========================
+        // 사용자 데이터 및 권한 정의
+        // =========================
+        const USERS = {
+            'yirim.yu': { pw: 'rim77', role: 'ADMIN', name: '유이림' },
+            'jaeyong.choi': { pw: 'jy1234', role: 'ADMIN', name: '최재용' },
+            'jeongmun.lee': { pw: 'jm1234', role: 'ADMIN', name: '이정문' },
+            'bondo': { pw: 'bondo1234', role: 'USER', name: '스태프' }
+        };
+        
         const API_URL = "https://b2b-meal-api.wispy-river-05a7.workers.dev";
-let menus = []; // 서버에서 받아올 거라 빈 배열로 시작합니다.
-let mealPlan = {};
-let currentCellId = "cell-0-0";
-
-// 페이지가 로드될 때 서버에서 데이터를 가져오는 함수
-async function loadMenusFromServer() {
+        
+        let menus = [];
+        let mealPlan = {};
+        let currentCellId = "cell-0-0";
+        let historyPlansCache = [];
+        
+        // =========================
+        // 초기 메뉴 데이터
+        // =========================
+        const initialMenus = [
+            // 본도시락 - 봄 시즌 및 상시 메뉴
+            { id: 1001, name: "봄냉이무침 양념돼지구이 쌈밥 한상", brand: "본도시락", price: 16900, allergy: "", memo: "", img: "" },
+            { id: 1002, name: "봄냉이무침 양념돼지구이 국반상", brand: "본도시락", price: 10900, allergy: "", memo: "", img: "" },
+            { id: 1003, name: "봄냉이무침 양념돼지구이 반상", brand: "본도시락", price: 10900, allergy: "", memo: "", img: "" },
+            { id: 1004, name: "봄냉이무침 제육덮밥", brand: "본도시락", price: 8200, allergy: "", memo: "", img: "" },
+            { id: 1005, name: "본격도시락(스팸두부조림)", brand: "본도시락", price: 8300, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 우유, 토마토, 굴, 조개류", memo: "", img: "" },
+            { id: 1006, name: "본격도시락(카츠&전)", brand: "본도시락", price: 8300, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 게, 토마토, 오징어", memo: "", img: "" },
+            { id: 1007, name: "바싹불고기 깻잎제육 한상", brand: "본도시락", price: 12900, allergy: "대두, 밀, 돼지고기", memo: "", img: "" },
+            { id: 1008, name: "버섯소불고기 깻잎제육 한상", brand: "본도시락", price: 13600, allergy: "대두, 밀, 쇠고기, 돼지고기, 토마토", memo: "", img: "" },
+            { id: 1009, name: "바싹불고기 숯불닭구이 한상", brand: "본도시락", price: 12900, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유", memo: "", img: "" },
+            { id: 1010, name: "우삼겹된장찌개 제육 백반 한상", brand: "본도시락", price: 13900, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩, 우유, 새우, 아황산류, 호두, 조개류", memo: "", img: "" },
+            { id: 1011, name: "바싹불고기 여수꼬막무침 한상", brand: "본도시락", price: 13900, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유, 조개류", memo: "", img: "" },
+            { id: 1012, name: "바싹불고기 오징어두루치기 한상", brand: "본도시락", price: 14900, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 1013, name: "우렁강된장 제육 쌈밥 한상", brand: "본도시락", price: 15400, allergy: "대두, 밀, 쇠고기, 돼지고기, 게, 새우, 아황산류", memo: "", img: "" },
+            { id: 1014, name: "바싹불고기 국반상", brand: "본도시락", price: 8600, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유", memo: "", img: "" },
+            { id: 1015, name: "깻잎제육 국반상", brand: "본도시락", price: 9200, allergy: "대두, 밀, 돼지고기", memo: "", img: "" },
+            { id: 1016, name: "버섯소불고기 국반상", brand: "본도시락", price: 10100, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", img: "" },
+            { id: 1017, name: "숯불닭구이 국반상", brand: "본도시락", price: 9100, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+            { id: 1018, name: "꽈리닭구이 국반상", brand: "본도시락", price: 9900, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+            { id: 1019, name: "오징어두루치기 국반상", brand: "본도시락", price: 10600, allergy: "대두, 밀, 쇠고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 1020, name: "수작돈까스 국반상", brand: "본도시락", price: 10900, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩, 토마토, 굴, 조개류", memo: "", img: "" },
+            { id: 1021, name: "궁중떡갈비 국반상", brand: "본도시락", price: 7900, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩", memo: "", img: "" },
+            { id: 1022, name: "바싹불고기 반상", brand: "본도시락", price: 8900, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유", memo: "", img: "" },
+            { id: 1023, name: "깻잎제육 반상", brand: "본도시락", price: 9500, allergy: "대두, 밀, 돼지고기", memo: "", img: "" },
+            { id: 1024, name: "버섯소불고기 반상", brand: "본도시락", price: 10400, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", img: "" },
+            { id: 1025, name: "숯불닭구이 반상", brand: "본도시락", price: 9400, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+            { id: 1026, name: "꽈리닭구이 반상", brand: "본도시락", price: 10200, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+            { id: 1027, name: "오징어두루치기 반상", brand: "본도시락", price: 10900, allergy: "대두, 밀, 쇠고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 1028, name: "수작돈까스 반상", brand: "본도시락", price: 11200, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩, 토마토, 굴, 조개류", memo: "", img: "" },
+            { id: 1029, name: "궁중떡갈비 반상", brand: "본도시락", price: 8200, allergy: "대두, 밀, 쇠고기, 돼지고기, 땅콩", memo: "", img: "" },
+            { id: 1030, name: "고추장애호박찌개", brand: "본도시락", price: 10200, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 굴, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 1031, name: "스팸김치찌개", brand: "본도시락", price: 9400, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 우유, 새우", memo: "", img: "" },
+            { id: 1032, name: "우삼겹된장찌개", brand: "본도시락", price: 8900, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 우유, 새우, 아황산류, 조개류", memo: "", img: "" },
+            { id: 1033, name: "숯불주꾸미 꽈리닭구이 한상", brand: "본도시락", price: 16400, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "", img: "" },
+            { id: 1034, name: "울릉도 오징어 양념돼지구이 한상", brand: "본도시락", price: 19400, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 게, 새우, 아황산류, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 1035, name: "더덕장어구이 바싹불고기 한상", brand: "본도시락", price: 18900, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유", memo: "기력충전", img: "" },
+            { id: 1036, name: "특선 LA갈비구이 한정식", brand: "본도시락", price: 27900, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 토마토, 조개류", memo: "기력충전", img: "" },
+            { id: 1037, name: "궁중 전복소갈비찜 한정식", brand: "본도시락", price: 29900, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 토마토, 전복, 조개류", memo: "기력충전", img: "" },
+            { id: 1038, name: "보양 고추장 더덕 장어구이 한정식", brand: "본도시락", price: 34900, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 토마토, 조개류", memo: "기력충전", img: "" },
+            { id: 1039, name: "스크램블드에그 치킨마요", brand: "본도시락", price: 6800, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 땅콩, 우유, 호두, 굴, 조개류", memo: "", img: "" },
+            { id: 1040, name: "저염 스팸김치볶음밥", brand: "본도시락", price: 7900, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 굴, 조개류", memo: "", img: "" },
+            { id: 1041, name: "울릉도 나물 버섯영양밥", brand: "본도시락", price: 8200, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 1042, name: "닭가슴살 샐러드", brand: "본도시락", price: 7900, allergy: "대두, 밀, 닭고기, 우유, 아황산류", memo: "", img: "" },
+            { id: 1043, name: "단호박식혜", brand: "본도시락", price: 1500, allergy: "", memo: "", img: "" },
+            { id: 1044, name: "생수", brand: "본도시락", price: 1000, allergy: "", memo: "", img: "" },
+            { id: 1045, name: "컵국", brand: "본도시락", price: 1000, allergy: "", memo: "", img: "" },
+            { id: 1046, name: "별도 국", brand: "본도시락", price: 1000, allergy: "", memo: "", img: "" },
+        
+            // 본죽&비빔밥
+            { id: 2001, name: "본죽장조림버터비빔밥", brand: "본죽&비빔밥", price: 11000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 2002, name: "낙지김치비빔밥", brand: "본죽&비빔밥", price: 11500, allergy: "난류(계란), 대두, 밀, 쇠고기, 새우, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 2003, name: "불고기낙지비빔밥", brand: "본죽&비빔밥", price: 12000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 아황산류", memo: "기력충전", img: "" },
+            { id: 2004, name: "신짬뽕비빔밥", brand: "본죽&비빔밥", price: 11500, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 게, 새우, 오징어, 홍합, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 2005, name: "전복내장해물비빔밥", brand: "본죽&비빔밥", price: 14500, allergy: "대두, 밀, 쇠고기, 우유, 새우, 오징어, 전복, 조개류", memo: "기력충전", img: "" },
+            { id: 2006, name: "참치야채비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "난류(계란), 대두, 밀, 우유", memo: "", img: "" },
+            { id: 2007, name: "6가지나물비빔밥", brand: "본죽&비빔밥", price: 9500, allergy: "난류(계란), 대두, 밀, 쇠고기", memo: "", img: "" },
+            { id: 2008, name: "제육볶음나물비빔밥", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유, 아황산류", memo: "", img: "" },
+            { id: 2009, name: "소불고기나물비빔밥", brand: "본죽&비빔밥", price: 11500, allergy: "대두, 밀, 쇠고기, 우유, 아황산류", memo: "", img: "" },
+            { id: 2010, name: "해물된장뚝배기", brand: "본죽&비빔밥", price: 10500, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 새우, 아황산류, 오징어, 홍합, 조개류", memo: "", img: "" },
+            { id: 2011, name: "뚝배기 제육볶음", brand: "본죽&비빔밥", price: 10500, allergy: "난류(계란), 대두, 밀, 돼지고기, 우유, 아황산류", memo: "", img: "" },
+            { id: 2012, name: "소불고기버섯뚝배기", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 우유, 아황산류", memo: "", img: "" },
+            { id: 2013, name: "콩비지뚝배기", brand: "본죽&비빔밥", price: 10500, allergy: "대두, 밀, 쇠고기, 돼지고기", memo: "", img: "" },
+            { id: 2014, name: "전복죽", brand: "본죽&비빔밥", price: 12000, allergy: "대두, 밀, 쇠고기, 우유, 전복, 조개류, 잣", memo: "기력충전", img: "" },
+            { id: 2015, name: "쇠고기야채죽", brand: "본죽&비빔밥", price: 11000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 2016, name: "쇠고기버섯죽", brand: "본죽&비빔밥", price: 10000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 2017, name: "참치야채죽", brand: "본죽&비빔밥", price: 10000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 2018, name: "7가지야채죽", brand: "본죽&비빔밥", price: 9000, allergy: "대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 2019, name: "해물죽", brand: "본죽&비빔밥", price: 11000, allergy: "대두, 밀, 쇠고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", img: "" },
+            { id: 2020, name: "새우죽", brand: "본죽&비빔밥", price: 9500, allergy: "대두, 밀, 쇠고기, 우유, 새우", memo: "", img: "" },
+            { id: 2021, name: "통영굴버섯죽", brand: "본죽&비빔밥", price: 9500, allergy: "대두, 밀, 쇠고기, 우유, 굴", memo: "", img: "" },
+            { id: 2022, name: "낙지김치죽", brand: "본죽&비빔밥", price: 11500, allergy: "대두, 밀, 쇠고기, 우유, 새우, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 2023, name: "신짬뽕죽", brand: "본죽&비빔밥", price: 11500, allergy: "대두, 밀, 쇠고기, 우유, 게, 새우, 오징어, 홍합, 굴, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 2024, name: "삼계죽", brand: "본죽&비빔밥", price: 12500, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "기력충전", img: "" },
+            { id: 2025, name: "불고기낙지죽", brand: "본죽&비빔밥", price: 12000, allergy: "대두, 밀, 쇠고기, 우유", memo: "기력충전", img: "" },
+            { id: 2026, name: "단호박죽", brand: "본죽&비빔밥", price: 9500, allergy: "", memo: "전통죽", img: "" },
+            { id: 2027, name: "단팥죽", brand: "본죽&비빔밥", price: 9500, allergy: "", memo: "전통죽", img: "" },
+            { id: 2028, name: "동지팥죽", brand: "본죽&비빔밥", price: 9000, allergy: "", memo: "전통죽", img: "" },
+        
+            // 본설렁탕
+            { id: 3001, name: "바지락 순두부찌개", brand: "본설렁탕", price: 10000, allergy: "", memo: "맵파민 중독", img: "" },
+            { id: 3002, name: "통영굴국밥", brand: "본설렁탕", price: 11000, allergy: "대두, 밀, 쇠고기, 우유, 새우, 오징어, 난류(계란), 굴", memo: "기력충전", img: "" },
+            { id: 3003, name: "본해장국밥", brand: "본설렁탕", price: 11000, allergy: "대두, 밀, 쇠고기, 우유, 새우, 오징어", memo: "맵파민 중독", img: "" },
+            { id: 3004, name: "전주콩나물국밥", brand: "본설렁탕", price: 9000, allergy: "오징어, 새우, 대두, 밀, 조개류, 바지락, 굴, 쇠고기, 우유, 난류(계란)", memo: "숙취 해결사", img: "" },
+            { id: 3005, name: "한우사골 토종순대국밥", brand: "본설렁탕", price: 10000, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 아황산류, 오징어, 조개류", memo: "숙취 해결사", img: "" },
+            { id: 3006, name: "한우사골 얼큰순대국밥", brand: "본설렁탕", price: 10000, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 아황산류, 오징어, 조개류, 홍합", memo: "숙취 해결사", img: "" },
+            { id: 3007, name: "한우사골 돼지수육국밥", brand: "본설렁탕", price: 11000, allergy: "대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 오징어, 굴, 조개류", memo: "숙취 해결사", img: "" },
+            { id: 3008, name: "한우사골 나주식곰탕", brand: "본설렁탕", price: 12000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", img: "" },
+            { id: 3009, name: "한우사골 설렁탕", brand: "본설렁탕", price: 12000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", img: "" },
+            { id: 3010, name: "한우사골 얼큰설렁탕", brand: "본설렁탕", price: 12000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 새우, 오징어, 굴, 조개류", memo: "맵파민 중독", img: "" },
+            { id: 3011, name: "한우사골 떡만두설렁탕", brand: "본설렁탕", price: 11000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 오징어, 굴, 조개류", memo: "", img: "" },
+            { id: 3012, name: "한우사골 얼큰떡만두설렁탕", brand: "본설렁탕", price: 11000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 새우, 오징어, 굴, 조개류, 홍합", memo: "맵파민 중독", img: "" },
+        
+            // 단체전용 메뉴
+            { id: 4001, name: "가츠동 덮밥", brand: "본도시락_단체전용", price: 9000, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기", memo: "", img: "" },
+            { id: 4002, name: "간장양념꾸이 도시락", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 돼지고기", memo: "", img: "" },
+            { id: 4003, name: "마늘쫑돼지고기볶음 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 닭고기, 돼지고기, 굴, 조개류", memo: "", img: "" },
+            { id: 4004, name: "바싹불고기 도시락", brand: "본도시락_단체전용", price: 7000, allergy: "대두, 밀, 돼지고기", memo: "", img: "" },
+            { id: 4005, name: "소금닭구이 도시락", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+            { id: 4006, name: "소불고기 도시락", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 토마토", memo: "", img: "" },
+            { id: 4007, name: "스팸두부조림 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 돼지고기, 우유, 토마토, 굴, 조개류", memo: "", img: "" },
+            { id: 4008, name: "우삼겹강된장 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 게, 새우, 아황산류", memo: "", img: "" },
+            { id: 4009, name: "우삼겹규동 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유", memo: "", img: "" },
+            { id: 4010, name: "우삼겹칠리마파두부 덮밥", brand: "본도시락_단체전용", price: 9000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 굴, 조개류", memo: "", img: "" },
+            { id: 4011, name: "콩나물불고기 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 돼지고기", memo: "", img: "" },
+            { id: 4012, name: "콩나물불고기 도시락", brand: "본도시락_단체전용", price: 7000, allergy: "대두, 밀, 돼지고기", memo: "", img: "" },
+            { id: 4013, name: "간장양념꾸이 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 땅콩, 우유, 호두, 굴, 조개류", memo: "", img: "" },
+            { id: 4014, name: "스크램블드에그함박 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 땅콩, 우유, 토마토, 굴, 조개류", memo: "", img: "" },
+            { id: 4015, name: "스팸마요 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 돼지고기, 우유, 굴, 조개류", memo: "", img: "" },
+            { id: 4016, name: "오야꼬동 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 우유", memo: "", img: "" },
+            { id: 4017, name: "짜장계란 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 쇠고기, 닭고기, 돼지고기, 우유, 아황산류, 굴, 조개류", memo: "", img: "" },
+            { id: 4018, name: "참치김치 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 쇠고기, 땅콩, 우유, 호두, 홍합, 굴, 조개류", memo: "", img: "" },
+            { id: 4019, name: "참치마요 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유, 홍합, 굴, 조개류", memo: "", img: "" },
+            { id: 4020, name: "치킨카레 덮밥", brand: "본도시락_단체전용", price: 8000, allergy: "대두, 밀, 쇠고기, 닭고기, 우유, 토마토, 아황산류, 굴, 조개류", memo: "", img: "" },
+            { id: 4021, name: "콩나물잡채 덮밥", brand: "본도시락_단체전용", price: 7000, allergy: "난류(계란), 대두, 밀, 쇠고기, 우유", memo: "", img: "" }
+        ];
+        
+        // =========================
+        // 공통 유틸
+        // =========================
+        function escapeHtml(str = '') {
+            return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+        
+        function getCurrentUser() {
+            return JSON.parse(localStorage.getItem('currentUser') || '{}');
+        }
+        
+        function getDefaultImage(src) {
+            return src && src.trim() ? src : 'https://via.placeholder.com/150';
+        }
+        
+        // =========================
+        // API 공통 함수
+        // =========================
+        async function apiGet(path = '') {
+            const response = await fetch(`${API_URL}${path}`);
+            if (!response.ok) throw new Error(`GET 실패: ${response.status}`);
+            return response.json();
+        }
+        
+        async function apiPost(path = '', body = {}) {
+            const response = await fetch(`${API_URL}${path}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!response.ok) throw new Error(`POST 실패: ${response.status}`);
+            return response.json().catch(() => ({}));
+        }
+        
+        async function apiDelete(path = '') {
+            const response = await fetch(`${API_URL}${path}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) throw new Error(`DELETE 실패: ${response.status}`);
+            return response.json().catch(() => ({}));
+        }
+        
+        // =========================
+        // 인증/세션
+        // =========================
+        function checkLogin() {
+            const id = document.getElementById('login-id').value;
+            const pw = document.getElementById('login-pw').value;
+        
+            if (USERS[id] && USERS[id].pw === pw) {
+                localStorage.setItem('currentUser', JSON.stringify({
+                    id: id,
+                    name: USERS[id].name,
+                    role: USERS[id].role
+                }));
+                alert(`${USERS[id].name}님 환영합니다.`);
+                location.reload();
+            } else {
+                alert('아이디 또는 비밀번호가 틀렸습니다.');
+            }
+        }
+        
+        function initAuth() {
+            const session = getCurrentUser();
+            const overlay = document.getElementById('login-overlay');
+        
+            if (!session || !session.id) {
+                overlay.style.display = 'flex';
+                return false;
+            }
+        
+            overlay.style.display = 'none';
+        
+            if (document.getElementById('current-user-name')) {
+                document.getElementById('current-user-name').innerText = session.name || '로그인 사용자';
+            }
+        
+            if (session.role === 'USER') {
+                const historyNav = document.getElementById('nav-his');
+                const settingsNav = document.getElementById('nav-set');
+                if (historyNav) historyNav.style.display = 'none';
+                if (settingsNav) settingsNav.style.display = 'none';
+                showPage('page-generate');
+            }
+        
+            return true;
+        }
+        
+        function logout() {
+            if (confirm("로그아웃 하시겠습니까?")) {
+                localStorage.removeItem('currentUser');
+                location.reload();
+            }
+        }
+        
+        // =========================
+        // 메뉴 API
+        // =========================
+        async function loadMenusFromServer() {
     try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        
-        // 서버 데이터가 있으면 사용하고, 없으면 initialData를 기본값으로 사용합니다.
-        menus = (data && data.length > 0) ? data : [...initialData];
-        
-        // 데이터를 다 받았으니 화면을 그립니다.
-        if(typeof renderLib === 'function') renderLib();
-        if(typeof renderMgmt === 'function') renderMgmt();
+        const data = await apiGet('/menus');
+
+        const validMenus = Array.isArray(data)
+            ? data.filter(item =>
+                item &&
+                typeof item === 'object' &&
+                !item.data &&
+                typeof item.name === 'string' &&
+                typeof item.brand === 'string' &&
+                typeof item.price !== 'undefined'
+            )
+            : [];
+
+        const mergedMap = new Map();
+
+        [...initialMenus, ...validMenus].forEach(menu => {
+            const key = String(menu.id || `${menu.name}_${menu.brand}`);
+            mergedMap.set(key, menu);
+        });
+
+        menus = Array.from(mergedMap.values());
+
+        localStorage.setItem('b2b_menus_cache', JSON.stringify(menus));
     } catch (e) {
-        console.error("데이터 로딩 실패:", e);
-        // 실패 시 로컬스토리지 보험
-        const local = localStorage.getItem('b2b_menus');
-        menus = local ? JSON.parse(local) : [...initialData];
+        console.error("메뉴 로딩 실패:", e);
+        const local = localStorage.getItem('b2b_menus_cache');
+        menus = local ? JSON.parse(local) : [...initialMenus];
+    }
+
+    renderLib();
+    renderMgmt();
+}
+        
+        async function saveMenusToServer() {
+            try {
+                await apiPost('/menus', menus);
+                localStorage.setItem('b2b_menus_cache', JSON.stringify(menus));
+                console.log("클라우드 메뉴 저장 완료");
+            } catch (e) {
+                console.error("서버 저장 실패:", e);
+                localStorage.setItem('b2b_menus_cache', JSON.stringify(menus));
+                throw e;
+            }
+        }
+        
+        // =========================
+        // 식단 API
+        // =========================
+        async function loadPlansFromServer() {
+    try {
+        const plans = await apiGet('/plans');
+
+        historyPlansCache = Array.isArray(plans)
+            ? plans.filter(item =>
+                item &&
+                typeof item === 'object' &&
+                item.data &&
+                typeof item.name === 'string'
+            )
+            : [];
+
+        localStorage.setItem('b2b_plans_cache', JSON.stringify(historyPlansCache));
+        return historyPlansCache;
+    } catch (e) {
+        console.error("식단 로딩 실패:", e);
+        const cached = localStorage.getItem('b2b_plans_cache');
+        historyPlansCache = cached ? JSON.parse(cached) : [];
+        return historyPlansCache;
     }
 }
-
-// 윈도우 로딩 시 서버 호출 시작
-window.addEventListener('load', () => {
-    initAuth(); // 로그인 여부와 권한을 먼저 체크합니다.
-    loadMenusFromServer(); // 그 다음 서버에서 메뉴 데이터를 불러옵니다.
-});
-
+        
+        async function savePlanToServer(plan) {
+            const result = await apiPost('/plans', plan);
+            await loadPlansFromServer();
+            return result;
+        }
+        
+        async function deletePlan(id) {
+            if (!confirm("삭제하시겠습니까?")) return;
+        
+            try {
+                await apiDelete(`/plans/${id}`);
+                await renderHistoryList();
+                document.getElementById('history-detail').innerHTML =
+                    '<p style="color:#ccc; text-align:center; margin-top:100px;">이력을 선택하면 상세 내용을 볼 수 있습니다.</p>';
+            } catch (e) {
+                console.error("삭제 실패:", e);
+                alert("삭제에 실패했습니다.");
+            }
+        }
+        
+        // =========================
+        // 페이지
+        // =========================
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
             document.getElementById(id).classList.add('active');
-            if(id === 'page-generate') { 
-                document.getElementById('nav-gen').classList.add('active'); 
-                initGrid(); 
-                renderLib(); 
+        
+            if (id === 'page-generate') {
+                document.getElementById('nav-gen').classList.add('active');
+                initGrid();
+                renderLib();
             }
-            if(id === 'page-history') { document.getElementById('nav-his').classList.add('active'); renderHistoryList(); }
-            if(id === 'page-settings') { document.getElementById('nav-set').classList.add('active'); renderMgmt(); }
+            if (id === 'page-history') {
+                document.getElementById('nav-his').classList.add('active');
+                renderHistoryList();
+            }
+            if (id === 'page-settings') {
+                document.getElementById('nav-set').classList.add('active');
+                renderMgmt();
+            }
         }
-
+        
         function validateMonday(input) {
             const date = new Date(input.value);
-            if(date.getDay() !== 1) { alert("시작일은 월요일만 선택 가능합니다."); input.value = ""; return; }
+            if (date.getDay() !== 1) {
+                alert("시작일은 월요일만 선택 가능합니다.");
+                input.value = "";
+                return;
+            }
             initGrid();
         }
-
+        
+        // =========================
+        // 식단 그리드
+        // =========================
         function initGrid() {
             const startStr = document.getElementById('start-date').value;
             const weeks = parseInt(document.getElementById('week-count').value);
             const container = document.getElementById('grid-container');
-            let html = `<table class="meal-table"><thead><tr><th></th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr></thead><tbody>`;
-            for(let w=0; w<weeks; w++) {
-                html += `<tr><td class="week-label">${w+1}주</td>`;
-                for(let d=0; d<5; d++) {
+        
+            let html = `
+                <table class="meal-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>월</th>
+                            <th>화</th>
+                            <th>수</th>
+                            <th>목</th>
+                            <th>금</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+        
+            for (let w = 0; w < weeks; w++) {
+                html += `<tr><td class="week-label">${w + 1}주</td>`;
+                for (let d = 0; d < 5; d++) {
                     const cid = `cell-${w}-${d}`;
                     let dateLabel = "";
-                    if(startStr) {
-                        let dt = new Date(startStr);
-                        dt.setDate(dt.getDate() + (w*7) + d);
-                        dateLabel = `${dt.getMonth()+1}/${dt.getDate()}`;
+        
+                    if (startStr) {
+                        const dt = new Date(startStr);
+                        dt.setDate(dt.getDate() + (w * 7) + d);
+                        dateLabel = `${dt.getMonth() + 1}/${dt.getDate()}`;
                     }
-                    html += `<td onclick="selectCell('${cid}')"><div id="${cid}" class="drop-zone ${currentCellId === cid ? 'selected' : ''}"><span class="cell-date" style="font-size:10px; color:#999; margin-bottom:4px; display:block;">${dateLabel}</span><div class="cell-content">${mealPlan[cid] ? renderCell(mealPlan[cid]) : ''}</div></div></td>`;
+        
+                    html += `
+                        <td onclick="selectCell('${cid}')">
+                            <div id="${cid}" class="drop-zone ${currentCellId === cid ? 'selected' : ''}">
+                                <span class="cell-date" style="font-size:10px; color:#999; margin-bottom:4px; display:block;">${dateLabel}</span>
+                                <div class="cell-content">${mealPlan[cid] ? renderCell(mealPlan[cid]) : ''}</div>
+                            </div>
+                        </td>
+                    `;
                 }
                 html += `</tr>`;
             }
-            container.innerHTML = html + `</tbody></table>`;
+        
+            html += `</tbody></table>`;
+            container.innerHTML = html;
             updateStats();
         }
-
+        
         function selectCell(id) {
-            if(document.getElementById(currentCellId)) document.getElementById(currentCellId).classList.remove('selected');
+            if (document.getElementById(currentCellId)) {
+                document.getElementById(currentCellId).classList.remove('selected');
+            }
             currentCellId = id;
-            if(document.getElementById(id)) document.getElementById(id).classList.add('selected');
+            if (document.getElementById(id)) {
+                document.getElementById(id).classList.add('selected');
+            }
         }
-
+        
         function addToGrid(mid) {
-            const menu = menus.find(m => m.id === mid);
-            mealPlan[currentCellId] = {...menu};
-            document.getElementById(currentCellId).querySelector('.cell-content').innerHTML = renderCell(menu);
+            const menu = menus.find(m => String(m.id) === String(mid));
+            if (!menu) return;
+        
+            mealPlan[currentCellId] = { ...menu };
+            const targetCell = document.getElementById(currentCellId);
+            if (targetCell) {
+                const content = targetCell.querySelector('.cell-content');
+                if (content) content.innerHTML = renderCell(menu);
+            }
             updateStats();
+        
             const parts = currentCellId.split('-');
-            let w = parseInt(parts[1]), d = parseInt(parts[2]);
-            d++; if(d > 4) { d = 0; w++; }
-            if(w < parseInt(document.getElementById('week-count').value)) selectCell(`cell-${w}-${d}`);
+            let w = parseInt(parts[1], 10);
+            let d = parseInt(parts[2], 10);
+        
+            d++;
+            if (d > 4) {
+                d = 0;
+                w++;
+            }
+        
+            if (w < parseInt(document.getElementById('week-count').value, 10)) {
+                selectCell(`cell-${w}-${d}`);
+            }
         }
-
+        
         function renderCell(m) {
-            return `<div class="meal-content">
-                <img src="${m.img || 'https://via.placeholder.com/150'}">
-                <span class="meal-title">${m.name}</span>
-                <div class="extra-info info-brand">🏢 ${m.brand}</div>
-                <div class="extra-info info-price">💰 ${m.price.toLocaleString()}원</div>
-                <div class="extra-info info-allergy">⚠️ ${m.allergy}</div>
-                <div class="extra-info info-memo">📝 ${m.memo || ''}</div>
-            </div>`;
+            return `
+                <div class="meal-content">
+                    <img src="${escapeHtml(getDefaultImage(m.img || m.image || ''))}">
+                    <span class="meal-title">${escapeHtml(m.name || '')}</span>
+                    <div class="extra-info info-brand">🏢 ${escapeHtml(m.brand || '')}</div>
+                    <div class="extra-info info-price">💰 ${(m.price || 0).toLocaleString()}원</div>
+                    <div class="extra-info info-allergy">⚠️ ${escapeHtml(m.allergy || '')}</div>
+                    <div class="extra-info info-memo">📝 ${escapeHtml(m.memo || '')}</div>
+                </div>
+            `;
         }
-
+        
         function updateStats() {
             const meals = Object.values(mealPlan);
             const names = meals.map(m => m.name);
             const uniqueCount = new Set(names).size;
-            const avg = meals.length > 0 ? Math.round(meals.reduce((s, m) => s + m.price, 0) / meals.length) : 0;
+            const avg = meals.length > 0
+                ? Math.round(meals.reduce((s, m) => s + (m.price || 0), 0) / meals.length)
+                : 0;
+        
             document.getElementById('stat-avg').innerText = avg.toLocaleString();
             document.getElementById('stat-total').innerText = meals.length + "개";
             document.getElementById('stat-unique').innerText = meals.length > 0 ? `(중복 제외 ${uniqueCount}종)` : "";
         }
-
+        
         function toggleInfo(cls, cb) {
             const container = document.getElementById('grid-container');
+            if (!container) return;
             cb.checked ? container.classList.add(cls) : container.classList.remove(cls);
         }
-
-        function renderHistoryList() {
+        
+        // =========================
+        // 식단 이력
+        // =========================
+        async function renderHistoryList() {
             const sidebar = document.getElementById('history-sidebar');
-            const plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
-            if(plans.length === 0) { sidebar.innerHTML = "<p style='color:#999; font-size:12px; text-align:center;'>저장된 이력이 없습니다.</p>"; return; }
-            sidebar.innerHTML = plans.reverse().map(p => `<div class="history-card" onclick="viewHistoryDetail(${p.id}, this)"><b>${p.name}</b><span>${p.date}</span><button class="btn-red delete-btn" onclick="event.stopPropagation(); deletePlan(${p.id})">삭제</button></div>`).join('');
+            if (!sidebar) return;
+        
+            const plans = await loadPlansFromServer();
+        
+            if (!plans || plans.length === 0) {
+                sidebar.innerHTML = "<p style='color:#999; font-size:12px; text-align:center;'>저장된 이력이 없습니다.</p>";
+                return;
+            }
+        
+            const sortedPlans = [...plans].sort((a, b) => (b.id || 0) - (a.id || 0));
+        
+            sidebar.innerHTML = sortedPlans.map(p => `
+                <div class="history-card" onclick="viewHistoryDetail(${p.id}, this)">
+                    <b>${escapeHtml(p.name || '')}</b>
+                    <span>${escapeHtml(p.date || '')}</span><br>
+                    <span>저장자: ${escapeHtml(p.savedBy?.name || '알 수 없음')}</span>
+                    <button class="btn-red delete-btn" onclick="event.stopPropagation(); deletePlan(${p.id})">삭제</button>
+                </div>
+            `).join('');
         }
-
-        function viewHistoryDetail(id, el) {
+        
+        async function viewHistoryDetail(id, el) {
             document.querySelectorAll('.history-card').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            const plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
-            const plan = plans.find(p => p.id === id);
+            if (el) el.classList.add('active');
+        
+            const plans = historyPlansCache.length ? historyPlansCache : await loadPlansFromServer();
+            const plan = plans.find(p => String(p.id) === String(id));
             const detail = document.getElementById('history-detail');
-            detail.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h3>${plan.name}</h3><button class="btn btn-save" onclick="loadPlan(${plan.id})">이 식단 불러오기</button></div><div class="show-brand show-price">${renderStaticGrid(plan)}</div>`;
+        
+            if (!plan) {
+                detail.innerHTML = `<p>해당 식단을 찾을 수 없습니다.</p>`;
+                return;
+            }
+        
+            detail.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <div>
+                        <h3>${escapeHtml(plan.name || '')}</h3>
+                        <div style="font-size:12px; color:#777; margin-top:6px;">
+                            저장자: ${escapeHtml(plan.savedBy?.name || '알 수 없음')} / 저장일시: ${escapeHtml(plan.date || '')}
+                        </div>
+                    </div>
+                    <button class="btn btn-save" onclick="loadPlan(${plan.id})">이 식단 불러오기</button>
+                </div>
+                <div class="show-brand show-price">${renderStaticGrid(plan)}</div>
+            `;
         }
-
+        
         function renderStaticGrid(plan) {
-            let html = `<table class="meal-table"><thead><tr><th></th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th></tr></thead><tbody>`;
-            const weeks = parseInt(plan.weeks);
-            for(let w=0; w<weeks; w++) {
-                html += `<tr><td class="week-label">${w+1}주</td>`;
-                for(let d=0; d<5; d++) {
+            let html = `
+                <table class="meal-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>월</th>
+                            <th>화</th>
+                            <th>수</th>
+                            <th>목</th>
+                            <th>금</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+        
+            const weeks = parseInt(plan.weeks || 1, 10);
+        
+            for (let w = 0; w < weeks; w++) {
+                html += `<tr><td class="week-label">${w + 1}주</td>`;
+                for (let d = 0; d < 5; d++) {
                     const cid = `cell-${w}-${d}`;
-                    const m = plan.data[cid];
+                    const m = plan.data?.[cid];
                     html += `<td>${m ? renderCell(m) : ''}</td>`;
                 }
                 html += `</tr>`;
             }
-            return html + `</tbody></table>`;
+        
+            html += `</tbody></table>`;
+            return html;
         }
-
-        function savePlan() {
-            if(Object.keys(mealPlan).length === 0) return alert("저장할 식단이 없습니다.");
+        
+        async function savePlan() {
+            if (Object.keys(mealPlan).length === 0) {
+                return alert("저장할 식단이 없습니다.");
+            }
+        
             const planName = prompt("식단 이름을 입력해주세요:");
-            if(!planName) return;
-            const plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
-            plans.push({ id: Date.now(), name: planName, date: new Date().toLocaleString(), data: mealPlan, weeks: document.getElementById('week-count').value, startDate: document.getElementById('start-date').value });
-            localStorage.setItem('b2b_plans', JSON.stringify(plans));
-            alert("저장되었습니다.");
+            if (!planName) return;
+        
+            const currentUser = getCurrentUser();
+            const now = new Date();
+        
+            const plan = {
+                id: Date.now(),
+                name: planName,
+                date: now.toLocaleString('ko-KR'),
+                savedAt: now.toISOString(),
+                savedBy: {
+                    id: currentUser.id || '',
+                    name: currentUser.name || '알 수 없음',
+                    role: currentUser.role || ''
+                },
+                data: mealPlan,
+                weeks: document.getElementById('week-count').value,
+                startDate: document.getElementById('start-date').value
+            };
+        
+            try {
+                await savePlanToServer(plan);
+                alert("식단이 저장되었습니다.");
+                await renderHistoryList();
+            } catch (e) {
+                console.error(e);
+                alert("식단 저장에 실패했습니다.");
+            }
         }
-
-        function loadPlan(id) {
-            const plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
-            const plan = plans.find(p => p.id === id);
-            mealPlan = plan.data;
-            document.getElementById('week-count').value = plan.weeks;
-            document.getElementById('start-date').value = plan.startDate;
-            showPage('page-generate');
+        
+        async function loadPlan(id) {
+            try {
+                const plans = historyPlansCache.length ? historyPlansCache : await loadPlansFromServer();
+                const plan = plans.find(p => String(p.id) === String(id));
+        
+                if (!plan) return alert("식단을 찾을 수 없습니다.");
+        
+                mealPlan = plan.data || {};
+                document.getElementById('week-count').value = plan.weeks || 1;
+                document.getElementById('start-date').value = plan.startDate || '';
+                showPage('page-generate');
+            } catch (e) {
+                console.error(e);
+                alert("식단 불러오기에 실패했습니다.");
+            }
         }
-
-        function deletePlan(id) {
-            if(!confirm("삭제하시겠습니까?")) return;
-            let plans = JSON.parse(localStorage.getItem('b2b_plans') || '[]');
-            plans = plans.filter(p => p.id !== id);
-            localStorage.setItem('b2b_plans', JSON.stringify(plans));
-            renderHistoryList();
-            document.getElementById('history-detail').innerHTML = '<p style="color:#ccc; text-align:center; margin-top:100px;">이력을 선택하면 상세 내용을 볼 수 있습니다.</p>';
-        }
-
+        
+        // =========================
+        // 메뉴 라이브러리/관리
+        // =========================
         function renderLib(filter = "") {
             const list = document.getElementById('lib-list');
-            const filtered = menus.filter(m => m.name.toLowerCase().includes(filter.toLowerCase()));
-            list.innerHTML = filtered.map(m => `<div class="lib-card" onclick="addToGrid(${m.id})"><img src="${m.img || 'https://via.placeholder.com/50'}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;"><div><div style="font-weight:800; font-size:12px;">${m.name}</div><div style="font-size:10px; color:#999;">${m.brand} | ${m.price.toLocaleString()}원</div></div></div>`).join('');
+            if (!list) return;
+        
+            const filtered = menus.filter(m =>
+                (m.name || '').toLowerCase().includes(filter.toLowerCase())
+            );
+        
+            list.innerHTML = filtered.map(m => `
+                <div class="lib-card" onclick="addToGrid('${String(m.id)}')">
+                    <img src="${escapeHtml(getDefaultImage(m.img || m.image || ''))}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">
+                    <div>
+                        <div style="font-weight:800; font-size:12px;">${escapeHtml(m.name || '')}</div>
+                        <div style="font-size:10px; color:#999;">${escapeHtml(m.brand || '')} | ${(m.price || 0).toLocaleString()}원</div>
+                    </div>
+                </div>
+            `).join('');
         }
-
+        
         function renderMgmt() {
             const list = document.getElementById('mgmt-list');
-            const val = document.getElementById('mgmt-search').value.toLowerCase();
-            const filtered = menus.filter(m => m.name.toLowerCase().includes(val));
+            const searchEl = document.getElementById('mgmt-search');
+            if (!list) return;
+        
+            const val = (searchEl?.value || '').toLowerCase();
+            const filtered = menus.filter(m => (m.name || '').toLowerCase().includes(val));
+        
             list.innerHTML = filtered.map(m => `
                 <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:12px 10px;"><img src="${m.img || 'https://via.placeholder.com/50'}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;"></td>
-                    <td style="font-weight:600;">${m.name}</td>
-                    <td style="color:#666;">${m.brand}</td>
-                    <td>${m.price.toLocaleString()}원</td>
-                    <td style="text-align:center;"><button class="btn btn-grey" style="padding:6px 12px; font-size:12px;" onclick="editMenu(${m.id})">수정</button></td>
+                    <td style="padding:12px 10px;">
+                        <img src="${escapeHtml(getDefaultImage(m.img || m.image || ''))}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;">
+                    </td>
+                    <td style="font-weight:600;">${escapeHtml(m.name || '')}</td>
+                    <td style="color:#666;">${escapeHtml(m.brand || '')}</td>
+                    <td>${(m.price || 0).toLocaleString()}원</td>
+                    <td style="text-align:center;">
+                        <button class="btn btn-grey" style="padding:6px 12px; font-size:12px;" onclick="editMenu('${String(m.id)}')">수정</button>
+                    </td>
                 </tr>
             `).join('');
         }
-
-        function saveMenu() {
+        
+        async function saveMenu() {
             const id = document.getElementById('edit-id').value;
-            const obj = { id: id ? parseInt(id) : Date.now(), name: document.getElementById('edit-name').value, brand: document.getElementById('edit-brand').value, price: parseInt(document.getElementById('edit-price').value || 0), allergy: document.getElementById('edit-allergy').value, memo: document.getElementById('edit-memo').value, img: document.getElementById('edit-img-base64').value };
-            if(!obj.name) return alert("메뉴명을 입력해주세요.");
-            if(id) { const idx = menus.findIndex(m => m.id === parseInt(id)); menus[idx] = obj; } else { menus.push(obj); }
-            localStorage.setItem('b2b_menus', JSON.stringify(menus));
-            saveMenusToServer(); // <-- 이 줄을 꼭 넣어주세요!
-            alert("저장되었습니다."); resetMenuForm(); renderMgmt(); renderLib();
+        
+            const obj = {
+                id: id ? id : String(Date.now()),
+                name: document.getElementById('edit-name').value.trim(),
+                brand: document.getElementById('edit-brand').value.trim(),
+                price: parseInt(document.getElementById('edit-price').value || 0, 10),
+                allergy: document.getElementById('edit-allergy').value.trim(),
+                memo: document.getElementById('edit-memo').value.trim(),
+                img: document.getElementById('edit-img-base64').value
+            };
+        
+            if (!obj.name) return alert("메뉴명을 입력해주세요.");
+        
+            if (id) {
+                const idx = menus.findIndex(m => String(m.id) === String(id));
+                if (idx > -1) menus[idx] = obj;
+            } else {
+                menus.push(obj);
+            }
+        
+            try {
+                await saveMenusToServer();
+                alert("저장되었습니다.");
+                resetMenuForm();
+                renderMgmt();
+                renderLib();
+            } catch (e) {
+                console.error(e);
+                alert("클라우드 저장에 실패했습니다.");
+            }
         }
-
+        
         function editMenu(id) {
-            const m = menus.find(x => x.id === id);
+            const m = menus.find(x => String(x.id) === String(id));
+            if (!m) return;
+        
             document.getElementById('edit-id').value = m.id;
-            document.getElementById('edit-name').value = m.name;
-            document.getElementById('edit-brand').value = m.brand;
-            document.getElementById('edit-price').value = m.price;
-            document.getElementById('edit-allergy').value = m.allergy;
-            document.getElementById('edit-memo').value = m.memo;
-            document.getElementById('edit-img-base64').value = m.img;
-            if(m.img) { document.getElementById('edit-preview').src = m.img; document.getElementById('edit-preview').style.display='block'; document.getElementById('preview-text').style.display='none'; }
+            document.getElementById('edit-name').value = m.name || '';
+            document.getElementById('edit-brand').value = m.brand || '';
+            document.getElementById('edit-price').value = m.price || '';
+            document.getElementById('edit-allergy').value = m.allergy || '';
+            document.getElementById('edit-memo').value = m.memo || '';
+            document.getElementById('edit-img-base64').value = m.img || '';
+        
+            if (m.img) {
+                document.getElementById('edit-preview').src = m.img;
+                document.getElementById('edit-preview').style.display = 'block';
+                document.getElementById('preview-text').style.display = 'none';
+            } else {
+                document.getElementById('edit-preview').style.display = 'none';
+                document.getElementById('preview-text').style.display = 'block';
+            }
+        
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
+        
         function resetMenuForm() {
-            document.getElementById('edit-id').value = ""; document.getElementById('edit-name').value = ""; document.getElementById('edit-brand').value = ""; document.getElementById('edit-price').value = ""; document.getElementById('edit-allergy').value = ""; document.getElementById('edit-memo').value = ""; document.getElementById('edit-img-base64').value = ""; document.getElementById('edit-preview').style.display='none'; document.getElementById('preview-text').style.display='block';
+            document.getElementById('edit-id').value = "";
+            document.getElementById('edit-name').value = "";
+            document.getElementById('edit-brand').value = "";
+            document.getElementById('edit-price').value = "";
+            document.getElementById('edit-allergy').value = "";
+            document.getElementById('edit-memo').value = "";
+            document.getElementById('edit-img-base64').value = "";
+            document.getElementById('edit-preview').style.display = 'none';
+            document.getElementById('edit-preview').src = '';
+            document.getElementById('preview-text').style.display = 'block';
         }
-
+        
         function processImg(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        const img = new Image();
-        img.onload = () => {
-            // 1. 캔버스를 이용해 이미지 압축 (가로 400px 기준)
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 400; 
-            const scaleSize = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
-            canvas.height = img.height * scaleSize;
-
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-            // 2. 압축된 데이터 추출 (품질 0.7로 설정해서 용량 최적화)
-            const compressedData = canvas.toDataURL('image/jpeg', 0.7);
-            
-            // 3. 화면에 반영
-            document.getElementById('edit-img-base64').value = compressedData;
-            document.getElementById('edit-preview').src = compressedData;
-            document.getElementById('edit-preview').style.display = 'block';
-            document.getElementById('preview-text').style.display = 'none';
-        };
-        img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
+            const file = e.target.files[0];
+            if (!file) return;
+        
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 400;
+                    const scaleSize = MAX_WIDTH / img.width;
+        
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+        
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+                    const compressedData = canvas.toDataURL('image/png', 0.7);
+        
+                    document.getElementById('edit-img-base64').value = compressedData;
+                    document.getElementById('edit-preview').src = compressedData;
+                    document.getElementById('edit-preview').style.display = 'block';
+                    document.getElementById('preview-text').style.display = 'none';
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // =========================
+        // PDF
+        // =========================
         async function saveAsPDF(id) {
             const canvas = await html2canvas(document.getElementById(id), { scale: 2 });
             const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
@@ -640,23 +987,20 @@ window.addEventListener('load', () => {
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 10, w, h);
             pdf.save(`식단_${new Date().getTime()}.pdf`);
         }
-        // --- 여기서부터 복사해서 넣으세요 ---
-        async function saveMenusToServer() {
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(menus)
-                });
-                console.log("클라우드 서버 저장 완료");
-            } catch (e) {
-                console.error("서버 저장 실패:", e);
-            }
-        }
-
-
-
-        window.onload = () => { initGrid(); };
-    </script>
+        
+        // =========================
+        // 초기 실행
+        // =========================
+        window.addEventListener('load', async () => {
+            const authed = initAuth();
+            if (!authed) return;
+        
+            initGrid();
+            await loadMenusFromServer();
+        
+            // 식단 이력 미리 불러오기
+            await loadPlansFromServer();
+        });
+        </script>
 </body>
 </html>
