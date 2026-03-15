@@ -445,19 +445,19 @@
         // 메뉴 API
         // =========================
         async function loadMenusFromServer() {
-    try {
-        const data = await apiGet('/menus');
+           try {
+             const data = await apiGet('/menus');
 
-        const validMenus = Array.isArray(data)
-            ? data.filter(item =>
-                item &&
-                typeof item === 'object' &&
-                !item.data &&
-                typeof item.name === 'string' &&
-                typeof item.brand === 'string' &&
-                typeof item.price !== 'undefined'
-            )
-            : [];
+             const validMenus = Array.isArray(data)
+                ? data.filter(item =>
+                 item &&
+                  typeof item === 'object' &&
+                  !item.data &&
+                  typeof item.name === 'string' &&
+                 typeof item.brand === 'string' &&
+                 typeof item.price !== 'undefined'
+               )
+              : [];
 
         const mergedMap = new Map();
 
@@ -468,11 +468,21 @@
 
         menus = Array.from(mergedMap.values());
 
-        localStorage.setItem('b2b_menus_cache', JSON.stringify(menus));
+        try {
+            localStorage.setItem('b2b_menus_cache', JSON.stringify(menus));
+        } catch (storageErr) {
+            console.warn('메뉴 캐시 저장 생략:', storageErr);
+        }
+
     } catch (e) {
         console.error("메뉴 로딩 실패:", e);
-        const local = localStorage.getItem('b2b_menus_cache');
-        menus = local ? JSON.parse(local) : [...initialMenus];
+
+        try {
+            const local = localStorage.getItem('b2b_menus_cache');
+            menus = local ? JSON.parse(local) : [...initialMenus];
+        } catch {
+            menus = [...initialMenus];
+        }
     }
 
     renderLib();
@@ -507,13 +517,13 @@
             )
             : [];
 
-        localStorage.setItem('b2b_plans_cache', JSON.stringify(historyPlansCache));
+        //localStorage.setItem('b2b_plans_cache', JSON.stringify(historyPlansCache)); --삭제
         return historyPlansCache;
     } catch (e) {
         console.error("식단 로딩 실패:", e);
-        const cached = localStorage.getItem('b2b_plans_cache');
-        historyPlansCache = cached ? JSON.parse(cached) : [];
-        return historyPlansCache;
+        //const cached = localStorage.getItem('b2b_plans_cache'); --삭제
+        historyPlansCache = [];
+        return [];
     }
 }
         
@@ -995,6 +1005,10 @@
             const authed = initAuth();
             if (!authed) return;
         
+            // 예전 식단 캐시 제거
+             localStorage.removeItem('b2b_plans_cache');
+             localStorage.removeItem('b2b_menus_cache');
+
             initGrid();
             await loadMenusFromServer();
         
