@@ -29,30 +29,19 @@ This document outlines the design and implementation of the B2B Meal Plan Editor
 ### Features
 - **User Authentication & Authorization:** Login/Logout, role-based access (Guest, Admin).
 - **Meal Plan Editor:** Dynamic date generation, efficient data entry with keyboard navigation, save/load/reset functionality, project name, week length configuration.
+- **Day Selection:** Ability to choose specific days of the week (Mon-Sun) to display in the meal plan grid.
 - **Menu Library Management:** Menu registration (Admin only), search and filter options, image placeholder generation.
 - **Reporting/Exporting:** Print/PDF meal plan.
 - **Accessibility (A11y):** Implement accessibility features for diverse users.
 
-## Plan for Current Change: Recreate Website `https://2eafc56a.b2b-schedule-test.pages.dev/` (Dashboard Layout Implementation & Styling)
+## Plan for Current Change: Implement Day Selection & Deploy to Firebase
 
 ### Steps
-1.  **Modify `index.html` for Dashboard Layout & Cache Busting:** *Completed.* The `index.html` file has been refactored to implement a dashboard layout. This includes adding a `<div class="dashboard-container">` that holds a `<aside class="sidebar">` for navigation and a `<div class="main-content">` for the primary application area. The previous `app-main` content has been reorganized into card sections (`meal-setting-card`, `meal-grid-card`, `menu-library-card`) within a `<div class="card-layout">`. A cache-busting query parameter (`?v=1.1`) has been added to the `style.css` link to ensure the latest stylesheet is loaded by the browser.
-2.  **Modify `style.css` for Dashboard Layout and Aesthetic (with fixes):** *Completed.* The `style.css` has been completely revised to implement the requested aesthetic. To address persistent styling issues (e.g., "연두색 폰트"), `!important` flags were added to the `color` properties of `.app-header h1` and `.card h2` to ensure they correctly apply the intended dark color and primary blue color respectively, overriding any less specific or cached styles. This includes:
-    *   Importing 'Inter' font.
-    *   Setting a very light grey background (`#f4f7fe`) for the entire page.
-    *   Styling the sidebar with a dark navy/grey tone (`#2c3e50`), generous padding, and subtle shadows.
-    *   Designing card sections with white backgrounds, rounded corners, and soft box-shadows.
-    *   Applying rounded corners (`8px`) to buttons, with blue accent colors for primary actions and hover effects.
-    *   Ensuring ample padding and margin throughout the layout for a spacious dashboard feel.
-    *   Adjusting existing styles (e.g., `.app-header`, `h2`) for consistency with the new design.
-    *   Refining responsive adjustments for various screen sizes, including the sidebar and card layouts.
-3.  **Review `main.js` for Compatibility:** *Completed.* `main.js` was reviewed. Since its primary function is modal handling, and the modal elements and their trigger buttons remain in the DOM with their original IDs, no changes were required for `main.js` to function with the new layout.
-4.  **Implement Header (Integrated into new layout):** *Completed.* The existing header content was moved into the `main-content` area, retaining its original functionality and appearance within the new layout, with updated styling.
-5.  **Implement Meal Plan Section (Integrated into new layout as cards):** *Completed.* The previous `meal-plan-section` content was divided into "식단 설정" and "식단표 그리드" cards within the `card-layout`, maintaining their input fields and controls, with updated styling.
-6.  **Implement Menu Library Section (Integrated into new layout as a card):** *Completed.* The previous `menu-library-section` content was transformed into a "메뉴 라이브러리" card within the `card-layout`, preserving its search, filter, and registration functionalities, with updated styling.
-7.  **Implement Modals:** *Completed.* The HTML structure for the Login and Menu Registration modals remains unchanged and functions as before, with updated styling for a more modern look (e.g., more padding, rounded corners, softer shadows).
-8.  **Add Responsive Design:** *Completed.* Comprehensive responsive adjustments for the dashboard layout have been implemented in `style.css`, ensuring the layout adapts gracefully to different screen sizes, including collapsing the sidebar and stacking cards on smaller viewports.
-9.  **Basic Interactivity:** *Completed.* JavaScript event listeners for showing/hiding modals are confirmed to be working correctly with the updated HTML structure.
+1.  **Modify `index.html` to add Day Selection UI:** *Completed.* Added checkboxes for days (Mon-Sun) in the settings grid.
+2.  **Update `initGrid` logic in `index.html`:** *Completed.* Modified `initGrid` and added `getSelectedDays` to dynamically render only the selected days in the meal plan table.
+3.  **Update `blueprint.md`:** *Completed.* Documented the new feature and the deployment plan.
+4.  **Commit and Push to Git:** *In Progress.* Stage all changes and push to the remote repository.
+5.  **Deploy to Firebase Hosting:** *In Progress.* Run `firebase deploy` to make the changes live.
 
 ### Next Steps (Proposed)
 - Implement dynamic generation of the meal plan grid based on week length and start date.

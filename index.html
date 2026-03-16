@@ -22,8 +22,18 @@
         .page.active { display: block; }
         .card { background: var(--bg-card); border-radius: 12px; padding: 24px; border: 1px solid var(--border-light); margin-bottom: 20px; }
 
-        .settings-grid { display: grid; grid-template-columns: 200px 140px 1fr; gap: 20px; align-items: end; }
-        .option-row { display: flex; flex-direction: row; gap: 15px; background: #fafafa; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-light); align-items: center; width: 100%; white-space: nowrap; }
+        .settings-grid { display: grid; grid-template-columns: 180px 120px 420px 320px; gap: 16px; align-items: end; }
+        .settings-grid input[type="date"],
+        .settings-grid select {
+            width: 100%;
+            height: 38px;
+            padding: 0 10px;
+            border: 1px solid var(--border-soft);
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fff;
+        }
+        .option-row { display: flex; flex-direction: row; gap: 12px; background: #fafafa; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-light); align-items: center; width: 100%; white-space : nowrap;}
         .option-row label { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; cursor: pointer; }
 
         .meal-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid var(--border-soft); background: #fff; }
@@ -104,8 +114,34 @@
             </div>
             <section class="card">
                 <div class="settings-grid">
-                    <div><label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">시작일</label><input type="date" id="start-date" onchange="validateMonday(this)"></div>
-                    <div><label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">기간</label><select id="week-count" onchange="initGrid()"><option value="1">1주일</option><option value="2">2주일</option><option value="3">3주일</option><option value="4" selected>4주일</option></select></div>
+                    <div>
+                        <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">시작일</label>
+                        <input type="date" id="start-date" onchange="validateMonday(this)">
+                    </div>
+            
+                    <div>
+                        <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">기간</label>
+                        <select id="week-count" onchange="initGrid()">
+                            <option value="1">1주일</option>
+                            <option value="2">2주일</option>
+                            <option value="3">3주일</option>
+                            <option value="4" selected>4주일</option>
+                        </select>
+                    </div>
+            
+                    <div>
+                        <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">요일 선택</label>
+                        <div class="option-row">
+                            <label><input type="checkbox" class="check" value="1" checked onchange="initGrid()"> 월</label>
+                            <label><input type="checkbox" class="day-check" value="2" checked onchange="initGrid()"> 화</label>
+                            <label><input type="checkbox" class="day-check" value="3" checked onchange="initGrid()"> 수</label>
+                            <label><input type="checkbox" class="day-check" value="4" checked onchange="initGrid()"> 목</label>
+                            <label><input type="checkbox" class="day-check" value="5" checked onchange="initGrid()"> 금</label>
+                            <label><input type="checkbox" class="day-check" value="6" onchange="initGrid()"> 토</label>
+                            <label><input type="checkbox" class="day-check" value="0" onchange="initGrid()"> 일</label>
+                        </div>
+                    </div>
+            
                     <div>
                         <label style="font-size:11px; font-weight:800; display:block; margin-bottom:5px;">노출 정보 설정</label>
                         <div class="option-row">
@@ -216,11 +252,22 @@
         
         const API_URL = "https://b2b-meal-api.wispy-river-05a7.workers.dev";
         
+        const DAY_LABELS = {
+            1: '월',
+            2: '화',
+            3: '수',
+            4: '목',
+            5: '금',
+            6: '토',
+            0: '일'
+        };
+
         let menus = [];
         let mealPlan = {};
         let currentCellId = "cell-0-0";
         let historyPlansCache = [];
         
+
         // =========================
         // 초기 메뉴 데이터
         // =========================
@@ -361,6 +408,14 @@
             return src && src.trim() ? src : 'https://via.placeholder.com/150';
         }
         
+        function getSelectedDays() {
+            const checked = Array.from(document.querySelectorAll('.day-check:checked'))
+                .map(el => parseInt(el.value, 10));
+
+            // 아무것도 선택 안 하면 월~금 기본
+            return checked.length > 0 ? checked : [1, 2, 3, 4, 5];
+        }
+
         // =========================
         // API 공통 함수
         // =========================
@@ -571,36 +626,47 @@
         // =========================
         function initGrid() {
             const startStr = document.getElementById('start-date').value;
-            const weeks = parseInt(document.getElementById('week-count').value);
+            const weeks = parseInt(document.getElementById('week-count').value, 10);
+            const selectedDays = getSelectedDays();
             const container = document.getElementById('grid-container');
-        
+
+            // 선택된 요일이 없으면 안내
+            if (!selectedDays.length) {
+                container.innerHTML = `<p style="color:#999; text-align:center; padding:40px;">요일을 1개 이상 선택해주세요.</p>`;
+                updateStats();
+                return;
+            }
+
             let html = `
                 <table class="meal-table">
                     <thead>
                         <tr>
                             <th></th>
-                            <th>월</th>
-                            <th>화</th>
-                            <th>수</th>
-                            <th>목</th>
-                            <th>금</th>
+                            ${selectedDays.map(day => `<th>${DAY_LABELS[day]}</th>`).join('')}
                         </tr>
                     </thead>
                     <tbody>
             `;
-        
+
             for (let w = 0; w < weeks; w++) {
                 html += `<tr><td class="week-label">${w + 1}주</td>`;
-                for (let d = 0; d < 5; d++) {
-                    const cid = `cell-${w}-${d}`;
+
+                selectedDays.forEach(day => {
+                    const cid = `cell-${w}-${day}`;
                     let dateLabel = "";
-        
+
                     if (startStr) {
-                        const dt = new Date(startStr);
-                        dt.setDate(dt.getDate() + (w * 7) + d);
-                        dateLabel = `${dt.getMonth() + 1}/${dt.getDate()}`;
+                        const startDate = new Date(startStr);
+                        const monday = new Date(startDate);
+                        monday.setDate(startDate.getDate() + (w * 7));
+
+                        const cellDate = new Date(monday);
+                        const offset = day === 0 ? 6 : day - 1; // 월=0, 화=1 ... 일=6
+                        cellDate.setDate(monday.getDate() + offset);
+
+                        dateLabel = `${cellDate.getMonth() + 1}/${cellDate.getDate()}`;
                     }
-        
+
                     html += `
                         <td onclick="selectCell('${cid}')">
                             <div id="${cid}" class="drop-zone ${currentCellId === cid ? 'selected' : ''}">
@@ -609,12 +675,22 @@
                             </div>
                         </td>
                     `;
-                }
+                });
+
                 html += `</tr>`;
             }
-        
+
             html += `</tbody></table>`;
             container.innerHTML = html;
+
+            // 현재 선택 셀이 안 보이는 요일이면 첫 번째 셀 선택
+            if (!document.getElementById(currentCellId)) {
+                currentCellId = `cell-0-${selectedDays[0]}`;
+                if (document.getElementById(currentCellId)) {
+                    document.getElementById(currentCellId).classList.add('selected');
+                }
+            }
+
             updateStats();
         }
         
@@ -631,30 +707,42 @@
         function addToGrid(mid) {
             const menu = menus.find(m => String(m.id) === String(mid));
             if (!menu) return;
-        
+
             mealPlan[currentCellId] = { ...menu };
+
             const targetCell = document.getElementById(currentCellId);
             if (targetCell) {
                 const content = targetCell.querySelector('.cell-content');
                 if (content) content.innerHTML = renderCell(menu);
             }
+
             updateStats();
-        
+
+            const selectedDays = getSelectedDays();
             const parts = currentCellId.split('-');
             let w = parseInt(parts[1], 10);
-            let d = parseInt(parts[2], 10);
-        
-            d++;
-            if (d > 4) {
-                d = 0;
-                w++;
+            let day = parseInt(parts[2], 10);
+
+            const currentIndex = selectedDays.indexOf(day);
+
+            if (currentIndex === -1) {
+                // 현재 day가 선택 목록에 없으면 첫 번째로
+                selectCell(`cell-${w}-${selectedDays[0]}`);
+                return;
             }
-        
+
+            let nextIndex = currentIndex + 1;
+
+            if (nextIndex >= selectedDays.length) {
+                nextIndex = 0;
+                w += 1;
+            }
+
             if (w < parseInt(document.getElementById('week-count').value, 10)) {
-                selectCell(`cell-${w}-${d}`);
+                selectCell(`cell-${w}-${selectedDays[nextIndex]}`);
             }
         }
-        
+                
         function renderCell(m) {
             return `
                 <div class="meal-content">
@@ -741,33 +829,35 @@
         }
         
         function renderStaticGrid(plan) {
+            const selectedDays = Array.isArray(plan.selectedDays) && plan.selectedDays.length
+                ? plan.selectedDays
+                : [1, 2, 3, 4, 5];
+
             let html = `
                 <table class="meal-table">
                     <thead>
                         <tr>
                             <th></th>
-                            <th>월</th>
-                            <th>화</th>
-                            <th>수</th>
-                            <th>목</th>
-                            <th>금</th>
+                            ${selectedDays.map(day => `<th>${DAY_LABELS[day]}</th>`).join('')}
                         </tr>
                     </thead>
                     <tbody>
             `;
-        
+
             const weeks = parseInt(plan.weeks || 1, 10);
-        
+
             for (let w = 0; w < weeks; w++) {
                 html += `<tr><td class="week-label">${w + 1}주</td>`;
-                for (let d = 0; d < 5; d++) {
-                    const cid = `cell-${w}-${d}`;
+
+                selectedDays.forEach(day => {
+                    const cid = `cell-${w}-${day}`;
                     const m = plan.data?.[cid];
                     html += `<td>${m ? renderCell(m) : ''}</td>`;
-                }
+                });
+
                 html += `</tr>`;
             }
-        
+
             html += `</tbody></table>`;
             return html;
         }
@@ -795,7 +885,8 @@
                 },
                 data: mealPlan,
                 weeks: document.getElementById('week-count').value,
-                startDate: document.getElementById('start-date').value
+                startDate: document.getElementById('start-date').value,
+                selectedDays: getSelectedDays()
             };
         
             try {
@@ -812,12 +903,22 @@
             try {
                 const plans = historyPlansCache.length ? historyPlansCache : await loadPlansFromServer();
                 const plan = plans.find(p => String(p.id) === String(id));
-        
+
                 if (!plan) return alert("식단을 찾을 수 없습니다.");
-        
+
                 mealPlan = plan.data || {};
                 document.getElementById('week-count').value = plan.weeks || 1;
                 document.getElementById('start-date').value = plan.startDate || '';
+
+                const selectedDays = Array.isArray(plan.selectedDays) && plan.selectedDays.length
+                    ? plan.selectedDays
+                    : [1, 2, 3, 4, 5];
+
+                document.querySelectorAll('.day-check').forEach(el => {
+                    el.checked = selectedDays.includes(parseInt(el.value, 10));
+                });
+
+                currentCellId = `cell-0-${selectedDays[0]}`;
                 showPage('page-generate');
             } catch (e) {
                 console.error(e);
