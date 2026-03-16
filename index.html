@@ -444,62 +444,47 @@
         // =========================
         // 메뉴 API
         // =========================
-        async function loadMenusFromServer() {
-           try {
-             const data = await apiGet('/menus');
-
-             const validMenus = Array.isArray(data)
-                ? data.filter(item =>
-                 item &&
-                  typeof item === 'object' &&
-                  !item.data &&
-                  typeof item.name === 'string' &&
-                 typeof item.brand === 'string' &&
-                 typeof item.price !== 'undefined'
-               )
-              : [];
-
-        const mergedMap = new Map();
-
-        [...initialMenus, ...validMenus].forEach(menu => {
-            const key = String(menu.id || `${menu.name}_${menu.brand}`);
-            mergedMap.set(key, menu);
-        });
-
-        menus = Array.from(mergedMap.values());
-
-        try {
-            localStorage.setItem('b2b_menus_cache', JSON.stringify(menus));
-        } catch (storageErr) {
-            console.warn('메뉴 캐시 저장 생략:', storageErr);
-        }
-
-    } catch (e) {
-        console.error("메뉴 로딩 실패:", e);
-
-        try {
-            const local = localStorage.getItem('b2b_menus_cache');
-            menus = local ? JSON.parse(local) : [...initialMenus];
-        } catch {
-            menus = [...initialMenus];
-        }
-    }
-
-    renderLib();
-    renderMgmt();
-}
-        
-        async function saveMenusToServer() {
+                async function loadMenusFromServer() {
             try {
-                await apiPost('/menus', menus);
-                localStorage.setItem('b2b_menus_cache', JSON.stringify(menus));
-                console.log("클라우드 메뉴 저장 완료");
+                const data = await apiGet('/menus');
+
+                const validMenus = Array.isArray(data)
+                    ? data.filter(item =>
+                        item &&
+                        typeof item === 'object' &&
+                        !item.data &&
+                        typeof item.name === 'string' &&
+                        typeof item.brand === 'string' &&
+                        typeof item.price !== 'undefined'
+                    )
+                    : [];
+
+                const mergedMap = new Map();
+
+                [...initialMenus, ...validMenus].forEach(menu => {
+                    const key = String(menu.id || `${menu.name}_${menu.brand}`);
+                    mergedMap.set(key, menu);
+                });
+
+                menus = Array.from(mergedMap.values());
             } catch (e) {
-                console.error("서버 저장 실패:", e);
-                localStorage.setItem('b2b_menus_cache', JSON.stringify(menus));
-                throw e;
+                console.error("메뉴 로딩 실패:", e);
+                menus = [...initialMenus];
             }
+
+            renderLib();
+            renderMgmt();
         }
+        
+            async function saveMenuItemToServer(menuItem) {
+                try {
+                    await apiPost('/menus/item', menuItem);
+                    console.log("클라우드 메뉴 단건 저장 완료");
+                } catch (e) {
+                    console.error("서버 저장 실패:", e);
+                    throw e;
+                }
+            }
         
         // =========================
         // 식단 API
@@ -887,7 +872,7 @@
         
         async function saveMenu() {
             const id = document.getElementById('edit-id').value;
-        
+
             const obj = {
                 id: id ? id : String(Date.now()),
                 name: document.getElementById('edit-name').value.trim(),
@@ -897,18 +882,21 @@
                 memo: document.getElementById('edit-memo').value.trim(),
                 img: document.getElementById('edit-img-base64').value
             };
-        
+
             if (!obj.name) return alert("메뉴명을 입력해주세요.");
-        
-            if (id) {
-                const idx = menus.findIndex(m => String(m.id) === String(id));
-                if (idx > -1) menus[idx] = obj;
-            } else {
-                menus.push(obj);
-            }
-        
+
             try {
-                await saveMenusToServer();
+                // 서버에 단건 저장
+                await saveMenuItemToServer(obj);
+
+                // 화면용 로컬 메모리 menus도 갱신
+                const idx = menus.findIndex(m => String(m.id) === String(obj.id));
+                if (idx > -1) {
+                    menus[idx] = obj;
+                } else {
+                    menus.push(obj);
+                }
+
                 alert("저장되었습니다.");
                 resetMenuForm();
                 renderMgmt();
@@ -959,23 +947,25 @@
         function processImg(e) {
             const file = e.target.files[0];
             if (!file) return;
-        
+
             const reader = new FileReader();
             reader.onload = (ev) => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 250;
-                    const scaleSize = MAX_WIDTH / img.width;
-        
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-        
+
+                    const MAX_WIDTH = 120; // 180 -> 120
+                    const scaleSize = Math.min(1, MAX_WIDTH / img.width);
+
+                    canvas.width = Math.round(img.width * scaleSize);
+                    canvas.height = Math.round(img.height * scaleSize);
+
                     const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-                    const compressedData = canvas.toDataURL('image/png', 0.7);
-        
+
+                    const compressedData = canvas.toDataURL('image/png');
+
                     document.getElementById('edit-img-base64').value = compressedData;
                     document.getElementById('edit-preview').src = compressedData;
                     document.getElementById('edit-preview').style.display = 'block';
