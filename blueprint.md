@@ -1,23 +1,27 @@
 # B2B Meal Plan Editor - Blueprint
 
 ## Overview
+
 This document outlines the design and implementation of the B2B Meal Plan Editor, a web application for managing meal plans for B2B sales teams. The application features user authentication, role-based access control, efficient data entry for meal plans, and comprehensive menu library management. The application now features a dashboard layout with a persistent sidebar navigation and a main content area organized into distinct card sections.
 
 ## Project Outline
 
 ### Initial Version (Current State)
+
 - **Files:** `index.html`, `style.css`, `main.js`, `.gitignore`, `GEMINI.md`, `README.md`, `firebase-debug.log`, `.idx/dev.nix`, `.idx/mcp.json`, `.vscode/settings.json`
 - **Git Integration:** Local repository connected to `https://github.com/helloyirim/b2b_meal_plan.git` with `.gitignore` configured.
 
 ### Style, Design, and Features
 
 #### Aesthetic Goals
+
 - Build beautiful and intuitive user interfaces that follow modern design guidelines.
 - Ensure the app is mobile responsive and adapts to different screen sizes.
 - Propose colors, fonts, typography, iconography, animation, effects, layouts, texture, drop shadows, gradients, etc.
 - Use modern, interactive iconography, images, and UI components like buttons, text fields, animation, effects, gestures, sliders, carousels, navigation, etc.
 
 #### Core Design Principles
+
 - **Layout:** Dashboard layout with a left-aligned sidebar containing primary navigation and a main content area. The main content is organized into independent, card-based sections for "식단 설정", "식단표 그리드", and "메뉴 라이브러리". Modals are used for login and menu registration.
 - **Typography:** The base font is set to 'Inter', providing a clean and modern sans-serif style. Headings and text elements use appropriate weights for hierarchy and readability.
 - **Color:** A refined palette including a very light grey background (`#f4f7fe`), a dark navy/grey sidebar (`#2c3e50`), white card backgrounds, and blue hues for primary (`#3b82f6`) and secondary (`#60a5fa`) actions, creating a vibrant and energetic look.
@@ -27,6 +31,7 @@ This document outlines the design and implementation of the B2B Meal Plan Editor
 - **Interactivity:** Interactive elements like buttons feature rounded corners (`8px`), blue accent colors, and subtle hover effects (`transform: translateY(-1px);`) for a polished and engaging user experience. Sufficient padding and margin ensure a spacious and clean dashboard feel.
 
 ### Features
+
 - **User Authentication & Authorization:** Login/Logout, role-based access (Guest, Admin).
 - **Meal Plan Editor:** Dynamic date generation, efficient data entry with keyboard navigation, save/load/reset functionality, project name, week length configuration.
 - **Day Selection:** Ability to choose specific days of the week (Mon-Sun) to display in the meal plan grid.
@@ -37,13 +42,15 @@ This document outlines the design and implementation of the B2B Meal Plan Editor
 ## Plan for Current Change: Implement Day Selection & Deploy to Firebase
 
 ### Steps
-1.  **Modify `index.html` to add Day Selection UI:** *Completed.* Added checkboxes for days (Mon-Sun) in the settings grid.
-2.  **Update `initGrid` logic in `index.html`:** *Completed.* Modified `initGrid` and added `getSelectedDays` to dynamically render only the selected days in the meal plan table.
-3.  **Update `blueprint.md`:** *Completed.* Documented the new feature and the deployment plan.
-4.  **Commit and Push to Git:** *In Progress.* Stage all changes and push to the remote repository.
-5.  **Deploy to Firebase Hosting:** *In Progress.* Run `firebase deploy` to make the changes live.
+
+1.  **Modify `index.html` to add Day Selection UI:** _Completed._ Added checkboxes for days (Mon-Sun) in the settings grid.
+2.  **Update `initGrid` logic in `index.html`:** _Completed._ Modified `initGrid` and added `getSelectedDays` to dynamically render only the selected days in the meal plan table.
+3.  **Update `blueprint.md`:** _Completed._ Documented the new feature and the deployment plan.
+4.  **Commit and Push to Git:** _In Progress._ Stage all changes and push to the remote repository.
+5.  **Deploy to Firebase Hosting:** _In Progress._ Run `firebase deploy` to make the changes live.
 
 ### Next Steps (Proposed)
+
 - Implement dynamic generation of the meal plan grid based on week length and start date.
 - Develop functionality for the menu library, including dynamic loading of menu items, search, and filter.
 - Implement actual user authentication logic for the login modal.
