@@ -263,6 +263,30 @@
         transition: 0.2s;
       }
 
+      .lib-filters {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .lib-filter-select {
+        width: 100%;
+        height: 38px;
+        padding: 0 10px;
+        border: 1.5px solid var(--border-soft);
+        border-radius: 6px;
+        font-size: 13px;
+        background: #fff;
+      }
+
+      .lib-card:hover {
+        border-color: var(--primary);
+        background: #f8fbff;
+      }
+
+
+      
       .btn {
         padding: 10px 16px;
         border-radius: 6px;
@@ -703,13 +727,45 @@
               <h4 style="margin-bottom: 12px; font-size: 14px">
                 메뉴 라이브러리
               </h4>
-              <input
-                type="text"
-                class="lib-search"
-                placeholder="메뉴 검색..."
-                onkeyup="renderLib(this.value)"
-              />
+
+              <div class="lib-filters">
+                <input
+                  type="text"
+                  id="lib-search-input"
+                  class="lib-search"
+                  placeholder="메뉴 검색..."
+                  onkeyup="renderLib()"
+                />
+
+                <select
+                  id="lib-brand-filter"
+                  class="lib-filter-select"
+                  onchange="renderLib()"
+                >
+                  <option value="">전체 브랜드</option>
+                </select>
+
+                <select
+                  id="lib-price-filter"
+                  class="lib-filter-select"
+                  onchange="renderLib()"
+                >
+                  <option value="">전체 가격대</option>
+                  <option value="under_6000">6,000원 미만</option>
+                  <option value="7000">7,000원대</option>
+                  <option value="8000">8,000원대</option>
+                  <option value="9000">9,000원대</option>
+                  <option value="10000">10,000원대</option>
+                  <option value="11000">11,000원대</option>
+                  <option value="12000">12,000원대</option>
+                  <option value="13000">13,000원대</option>
+                  <option value="14000">14,000원대</option>
+                  <option value="over_15000">15,000원 이상</option>
+                </select>
+              </div>
+
               <div id="lib-list"></div>
+            </div>
             </div>
           </div>
         </div>
@@ -2044,6 +2100,7 @@
           menus = [...initialMenus];
         }
 
+        populateLibBrandFilter();
         renderLib();
         renderMgmt();
       }
@@ -2121,6 +2178,7 @@
         if (id === "page-generate") {
           document.getElementById("nav-gen").classList.add("active");
           initGrid();
+          populateLibBrandFilter();
           renderLib();
         }
         if (id === "page-history") {
@@ -2478,24 +2536,98 @@
       // =========================
       // 메뉴 라이브러리/관리
       // =========================
-      function renderLib(filter = "") {
+      // 🔽 이거 추가
+      function populateLibBrandFilter() {
+        const brandSelect = document.getElementById("lib-brand-filter");
+        if (!brandSelect) return;
+
+        const currentValue = brandSelect.value || "";
+
+        const brands = [...new Set(
+          menus
+            .map((m) => (m.brand || "").trim())
+            .filter(Boolean)
+        )].sort();
+
+        brandSelect.innerHTML = `
+          <option value="">전체 브랜드</option>
+          ${brands
+            .map(
+              (brand) =>
+                `<option value="${escapeHtml(brand)}">${escapeHtml(brand)}</option>`
+            )
+            .join("")}
+        `;
+
+        brandSelect.value = currentValue;
+      }
+      // 🔼 여기까지 추가
+
+      function isMatchedPriceRange(price, selectedRange) {
+        const p = Number(price || 0);
+
+        if (!selectedRange) return true;
+
+        if (selectedRange === "under_6000") {
+          return p < 6000;
+        }
+
+        if (selectedRange === "over_15000") {
+          return p >= 15000;
+        }
+
+        const base = Number(selectedRange);
+        return p >= base && p <= base + 900;
+      }
+      function renderLib() {
         const list = document.getElementById("lib-list");
         if (!list) return;
 
-        const filtered = menus.filter((m) =>
-          (m.name || "").toLowerCase().includes(filter.toLowerCase()),
-        );
+        const keyword =
+          document.getElementById("lib-search-input")?.value.trim().toLowerCase() || "";
+        const selectedBrand =
+          document.getElementById("lib-brand-filter")?.value || "";
+        const selectedPrice =
+          document.getElementById("lib-price-filter")?.value || "";
+
+        const filtered = menus.filter((m) => {
+          const name = (m.name || "").toLowerCase();
+          const brand = m.brand || "";
+          const price = Number(m.price || 0);
+
+          const matchKeyword = !keyword || name.includes(keyword);
+          const matchBrand = !selectedBrand || brand === selectedBrand;
+          const matchPrice = isMatchedPriceRange(price, selectedPrice);
+
+          return matchKeyword && matchBrand && matchPrice;
+        });
+
+        if (filtered.length === 0) {
+          list.innerHTML = `
+            <div style="padding:20px; text-align:center; color:#999; font-size:13px;">
+              조건에 맞는 메뉴가 없습니다.
+            </div>
+          `;
+          return;
+        }
 
         list.innerHTML = filtered
           .map(
             (m) => `
-                <div class="lib-card" onclick="addToGrid('${String(m.id)}')">
-                    <img src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">
-                    <div>
-                        <div style="font-weight:800; font-size:12px;">${escapeHtml(m.name || "")}</div>
-                        <div style="font-size:10px; color:#999;">${escapeHtml(m.brand || "")} | ${(m.price || 0).toLocaleString()}원</div>
-                    </div>
+              <div class="lib-card" onclick="addToGrid('${String(m.id)}')">
+                <img
+                  src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}"
+                  style="width:40px; height:40px; border-radius:4px; object-fit:cover;"
+                >
+                <div>
+                  <div style="font-weight:800; font-size:12px;">
+                    ${escapeHtml(m.name || "")}
+                  </div>
+                  <div style="font-size:10px; color:#999;">
+                    ${escapeHtml(m.brand || "")} | ${(m.price || 0).toLocaleString()}원
+                  </div>
                 </div>
+              </div>
             `,
           )
           .join("");
@@ -2559,6 +2691,7 @@
 
           alert("저장되었습니다.");
           resetMenuForm();
+          populateLibBrandFilter();
           renderMgmt();
           renderLib();
         } catch (e) {

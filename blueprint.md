@@ -39,13 +39,13 @@ This document outlines the design and implementation of the B2B Meal Plan Editor
 - **Reporting/Exporting:** Print/PDF meal plan.
 - **Accessibility (A11y):** Implement accessibility features for diverse users.
 
-## Plan for Current Change: Implement Day Selection & Deploy to Firebase
+## Plan for Current Change: Implement Menu Library Filters & Deploy
 
 ### Steps
 
-1.  **Modify `index.html` to add Day Selection UI:** _Completed._ Added checkboxes for days (Mon-Sun) in the settings grid.
-2.  **Update `initGrid` logic in `index.html`:** _Completed._ Modified `initGrid` and added `getSelectedDays` to dynamically render only the selected days in the meal plan table.
-3.  **Update `blueprint.md`:** _Completed._ Documented the new feature and the deployment plan.
+1.  **Modify `index.html` to add Menu Library Filters:** _Completed._ Added search input, brand filter (select), and price range filter (select) to the menu library section.
+2.  **Update `renderLib` logic in `index.html`:** _Completed._ Updated `renderLib` to filter based on brand and price range in addition to the search query. Added `populateLibBrandFilter` to dynamically fill the brand filter options.
+3.  **Update `blueprint.md`:** _Completed._ Documented the new features and the deployment plan.
 4.  **Commit and Push to Git:** _In Progress._ Stage all changes and push to the remote repository.
 5.  **Deploy to Firebase Hosting:** _In Progress._ Run `firebase deploy` to make the changes live.
 
