@@ -485,6 +485,25 @@
 
     <aside class="sidebar">
       <h2>B2B 정기식 식단표</h2>
+    
+      <!-- 단체캘린더 -->
+      <div
+        class="nav-item"
+        id="nav-calendar"
+        onclick="showPage('page-calendar')"
+      >
+        🗓️ 단체캘린더
+      </div>
+    
+      <div
+        style="
+          height:1px;
+          background:rgba(255,255,255,0.15);
+          margin:15px 0;
+        "
+      ></div>
+    
+      <!-- 식단관리 -->
       <div
         class="nav-item active"
         id="nav-gen"
@@ -492,9 +511,11 @@
       >
         📅 식단 생성
       </div>
+    
       <div class="nav-item" id="nav-his" onclick="showPage('page-history')">
         📋 식단 관리
       </div>
+    
       <div class="nav-item" id="nav-set" onclick="showPage('page-settings')">
         🍴 메뉴 관리
       </div>
@@ -527,6 +548,16 @@
     </aside>
 
     <main class="main-content">
+
+      <div id="page-calendar" class="page">
+        <div class="card">
+          <h2>단체캘린더</h2>
+          <p style="margin-top:10px; color:#777;">
+            단체 일정 관리 기능 개발 예정
+          </p>
+        </div>
+      </div>
+    
       <div id="page-generate" class="page active">
         <div
           class="card"
@@ -2180,6 +2211,9 @@
           initGrid();
           populateLibBrandFilter();
           renderLib();
+        }
+        if (id === "page-calendar") {
+          document.getElementById("nav-calendar").classList.add("active");
         }
         if (id === "page-history") {
           document.getElementById("nav-his").classList.add("active");
