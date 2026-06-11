@@ -406,6 +406,302 @@
         width: 100%;
         table-layout: fixed;
       }
+      /* =========================
+   단체캘린더 CSS
+========================= */
+
+.calendar-dashboard {
+  width: 100%;
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calendar-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calendar-page-title {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.calendar-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--border-soft);
+  padding: 6px;
+}
+
+.calendar-month-label {
+  min-width: 140px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.calendar-main-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 74% 26%;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.calendar-panel-box,
+.calendar-summary-panel {
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.calendar-header-box {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.calendar-title {
+  font-size: 42px;
+  font-weight: 800;
+}
+
+.calendar-kpi-inline {
+  display: flex;
+  gap: 24px;
+}
+
+.calendar-kpi-box {
+  text-align: right;
+}
+
+.calendar-kpi-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 700;
+}
+
+.calendar-kpi-value {
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.calendar-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f4f5f7;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.weekday {
+  text-align: center;
+  padding: 10px 6px;
+  font-size: 14px;
+  font-weight: 800;
+  border-right: 1px solid var(--border-soft);
+}
+
+.calendar-weeks {
+  flex: 1;
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  min-height: 0;
+}
+
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  position: relative;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.day-cell {
+  position: relative;
+  border-right: 1px solid var(--border-soft);
+  background: #fff;
+  padding-top: 26px;
+  overflow: hidden;
+}
+
+.day-cell.other-month {
+  background: #fafafa;
+}
+
+.day-num {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #444;
+}
+
+.week-events-layer {
+  position: absolute;
+  inset: 26px 0 4px 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.event-bar {
+  position: absolute;
+  height: 24px;
+  line-height: 24px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.08);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: auto;
+  cursor: pointer;
+  text-align: center;
+}
+
+.event-bar.cancelled {
+  opacity: 0.58;
+  text-decoration: line-through;
+}
+
+.calendar-summary-top {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.calendar-summary-title {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.calendar-summary-table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+
+.empty-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #888;
+  font-size: 14px;
+}
+
+.calendar-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.28);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.calendar-modal-backdrop.show {
+  display: flex;
+}
+
+.calendar-modal {
+  width: min(1100px, 95vw);
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.calendar-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.calendar-modal-title {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.calendar-modal-body {
+  padding: 16px;
+}
+
+.calendar-form-grid {
+  display: grid;
+  grid-template-columns: 140px 140px 1.2fr 1.2fr 110px 120px 120px 120px 1fr;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--border-soft);
+  padding: 0 12px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.calc-box {
+  height: 42px;
+  border: 1px solid var(--border-soft);
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: #777;
+  font-size: 12px;
+  margin-top: 8px;
+}
     </style>
   </head>
   <body>
@@ -550,11 +846,133 @@
     <main class="main-content">
 
       <div id="page-calendar" class="page">
-        <div class="card">
-          <h2>단체캘린더</h2>
-          <p style="margin-top:10px; color:#777;">
-            단체 일정 관리 기능 개발 예정
-          </p>
+        <div class="calendar-dashboard">
+          <div class="calendar-topbar">
+            <h1 class="calendar-page-title">월간 단체 납품 보고판</h1>
+      
+            <div class="calendar-topbar-right">
+              <div class="calendar-month-nav">
+                <button id="prevMonthBtn">◀ 이전달</button>
+                <div class="calendar-month-label" id="monthLabel"></div>
+                <button id="nextMonthBtn">다음달 ▶</button>
+              </div>
+              <button id="openModalBtn" class="btn btn-save">데이터 입력</button>
+            </div>
+          </div>
+      
+          <div class="calendar-main-layout">
+            <section class="calendar-panel-box">
+              <div class="calendar-header-box">
+                <div class="calendar-title" id="calendarTitle">단체 납품 일정</div>
+      
+                <div class="calendar-kpi-inline">
+                  <div class="calendar-kpi-box">
+                    <div class="calendar-kpi-label">총 납품 수량</div>
+                    <div class="calendar-kpi-value" id="summaryQty">0 ea</div>
+                  </div>
+                  <div class="calendar-kpi-box">
+                    <div class="calendar-kpi-label">총 예상 매출</div>
+                    <div class="calendar-kpi-value" id="summarySales">0원</div>
+                  </div>
+                </div>
+              </div>
+      
+              <div class="calendar-shell">
+                <div class="weekday-row">
+                  <div class="weekday">일</div>
+                  <div class="weekday">월</div>
+                  <div class="weekday">화</div>
+                  <div class="weekday">수</div>
+                  <div class="weekday">목</div>
+                  <div class="weekday">금</div>
+                  <div class="weekday">토</div>
+                </div>
+      
+                <div class="calendar-weeks" id="calendarWeeks"></div>
+              </div>
+            </section>
+      
+            <aside class="calendar-summary-panel">
+              <div class="calendar-summary-top">
+                <h2 class="calendar-summary-title">상세정보</h2>
+              </div>
+              <div class="calendar-summary-table-wrap" id="summaryTableWrap"></div>
+            </aside>
+          </div>
+        </div>
+      
+        <div class="calendar-modal-backdrop" id="modalBackdrop">
+          <div class="calendar-modal">
+            <div class="calendar-modal-header">
+              <h2 class="calendar-modal-title">데이터 입력</h2>
+              <button id="closeModalBtn">닫기</button>
+            </div>
+      
+            <div class="calendar-modal-body">
+              <form id="eventForm">
+                <input type="hidden" id="eventId" />
+      
+                <div class="calendar-form-grid">
+                  <div class="field">
+                    <label for="startDate">행사일자</label>
+                    <input type="date" id="startDate" required />
+                  </div>
+      
+                  <div class="field">
+                    <label for="endDate">종료일자</label>
+                    <input type="date" id="endDate" />
+                  </div>
+      
+                  <div class="field">
+                    <label for="eventName">행사명</label>
+                    <input type="text" id="eventName" placeholder="행사명 입력" required />
+                  </div>
+      
+                  <div class="field">
+                    <label for="companyName">업체명</label>
+                    <input type="text" id="companyName" placeholder="업체명 입력" required />
+                  </div>
+      
+                  <div class="field">
+                    <label for="quantity">수량</label>
+                    <input type="number" id="quantity" min="0" placeholder="0" required />
+                  </div>
+      
+                  <div class="field">
+                    <label for="unitPrice">단가</label>
+                    <input type="number" id="unitPrice" min="0" placeholder="0" required />
+                  </div>
+      
+                  <div class="field">
+                    <label>예상매출</label>
+                    <div class="calc-box" id="estimatedSalesBox">0원</div>
+                  </div>
+      
+                  <div class="field">
+                    <label for="status">상태</label>
+                    <select id="status">
+                      <option value="확정">확정</option>
+                      <option value="진행중">진행중</option>
+                      <option value="취소">취소</option>
+                    </select>
+                  </div>
+      
+                  <div class="field">
+                    <label for="menuName">메뉴명</label>
+                    <input type="text" id="menuName" placeholder="메뉴명" />
+                  </div>
+                </div>
+      
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-save">저장</button>
+                  <button type="button" id="resetBtn" class="btn btn-grey">초기화</button>
+                  <button type="button" id="deleteBtn" class="btn-red">삭제</button>
+                </div>
+      
+                <p class="muted">캘린더 막대나 우측 표를 클릭하면 수정 모드로 열립니다.</p>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     
@@ -970,7 +1388,39 @@
 
       const API_URL = "https://b2b-meal-api.wispy-river-05a7.workers.dev";
 
-      const DAY_LABELS = {
+      let deliveryEventsCache = [];
+
+      async function loadDeliveryEventsFromServer() {
+        try {
+          const data = await apiGet("/delivery-events");
+
+          deliveryEventsCache = Array.isArray(data)
+            ? data.filter((item) => item && item.id && item.startDate)
+            : [];
+
+          return deliveryEventsCache;
+        } catch (e) {
+          console.error("단체 캘린더 데이터 로딩 실패:", e);
+          deliveryEventsCache = [];
+          return [];
+        }
+      }
+
+      async function saveDeliveryEventToServer(eventData) {
+        await apiPost("/delivery-events/item", eventData);
+        await loadDeliveryEventsFromServer();
+      }
+
+      async function deleteDeliveryEventFromServer(id) {
+        await apiDelete(`/delivery-events/${id}`);
+        await loadDeliveryEventsFromServer();
+      }
+
+      function getEvents() {
+        return deliveryEventsCache;
+      }
+
+      const DAY_LABELS = {  
         1: "월",
         2: "화",
         3: "수",
@@ -2214,6 +2664,7 @@
         }
         if (id === "page-calendar") {
           document.getElementById("nav-calendar").classList.add("active");
+          initDeliveryCalendarPage();
         }
         if (id === "page-history") {
           document.getElementById("nav-his").classList.add("active");
@@ -2889,6 +3340,456 @@
         }
       }
 
+
+      // =========================
+// 단체캘린더
+// =========================
+let currentMonth = new Date();
+currentMonth.setDate(1);
+
+let deliveryCalendarInitialized = false;
+let editingId = null;
+
+function generateDeliveryId() {
+  return "evt_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+}
+
+async function initDeliveryCalendarPage() {
+  if (!deliveryCalendarInitialized) {
+    bindDeliveryCalendarEvents();
+    updateEstimatedSalesPreview();
+    deliveryCalendarInitialized = true;
+  }
+
+  await loadDeliveryEventsFromServer();
+  renderDeliveryAll();
+}
+
+function bindDeliveryCalendarEvents() {
+  document.getElementById("prevMonthBtn").addEventListener("click", () => {
+    currentMonth.setMonth(currentMonth.getMonth() - 1);
+    currentMonth.setDate(1);
+    renderDeliveryAll();
+  });
+
+  document.getElementById("nextMonthBtn").addEventListener("click", () => {
+    currentMonth.setMonth(currentMonth.getMonth() + 1);
+    currentMonth.setDate(1);
+    renderDeliveryAll();
+  });
+
+  document.getElementById("openModalBtn").addEventListener("click", openModal);
+  document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+
+  document.getElementById("modalBackdrop").addEventListener("click", (e) => {
+    if (e.target.id === "modalBackdrop") closeModal();
+  });
+
+  document.getElementById("quantity").addEventListener("input", updateEstimatedSalesPreview);
+  document.getElementById("unitPrice").addEventListener("input", updateEstimatedSalesPreview);
+  document.getElementById("eventForm").addEventListener("submit", handleDeliverySubmit);
+  document.getElementById("resetBtn").addEventListener("click", resetDeliveryForm);
+  document.getElementById("deleteBtn").addEventListener("click", handleDeliveryDelete);
+}
+
+function openModal() {
+  document.getElementById("modalBackdrop").classList.add("show");
+}
+
+function closeModal() {
+  document.getElementById("modalBackdrop").classList.remove("show");
+}
+
+function calculateSales(quantity, unitPrice) {
+  return Number(quantity || 0) * Number(unitPrice || 0);
+}
+
+function formatNumber(num) {
+  return Number(num || 0).toLocaleString("ko-KR");
+}
+
+function formatCurrency(num) {
+  return formatNumber(num) + "원";
+}
+
+function normalizeDate(dateStr) {
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function updateEstimatedSalesPreview() {
+  const qty = document.getElementById("quantity")?.value || 0;
+  const unitPrice = document.getElementById("unitPrice")?.value || 0;
+  const box = document.getElementById("estimatedSalesBox");
+  if (box) box.textContent = formatCurrency(calculateSales(qty, unitPrice));
+}
+
+function getMonthlyEvents() {
+  const events = getEvents();
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+
+  const monthStart = new Date(year, month, 1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  const monthEnd = new Date(year, month + 1, 0);
+  monthEnd.setHours(23, 59, 59, 999);
+
+  return events
+    .filter((event) => {
+      const start = normalizeDate(event.startDate);
+      const end = normalizeDate(event.endDate || event.startDate);
+      return start <= monthEnd && end >= monthStart;
+    })
+    .sort((a, b) => normalizeDate(a.startDate) - normalizeDate(b.startDate));
+}
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+function getPastelColor(seed) {
+  const hash = hashString(seed);
+  const hue = hash % 360;
+  const saturation = 52 + (hash % 8);
+  const lightness = 84 + (hash % 5);
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+function renderDeliveryAll() {
+  renderDeliveryHeader();
+  renderDeliverySummaryTable();
+  renderDeliveryCalendar();
+}
+
+function renderDeliveryHeader() {
+  const monthText = `${currentMonth.getFullYear()}년 ${currentMonth.getMonth() + 1}월`;
+  document.getElementById("monthLabel").textContent = monthText;
+  document.getElementById("calendarTitle").textContent = `${currentMonth.getMonth() + 1}월 단체 납품 일정`;
+
+  const monthlyEvents = getMonthlyEvents();
+  const totalQty = monthlyEvents.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const totalSales = monthlyEvents.reduce(
+    (sum, item) => sum + calculateSales(item.quantity, item.unitPrice),
+    0
+  );
+
+  document.getElementById("summaryQty").textContent = `${formatNumber(totalQty)} ea`;
+  document.getElementById("summarySales").textContent = formatCurrency(totalSales);
+}
+
+function renderDeliveryCalendar() {
+  const weeksContainer = document.getElementById("calendarWeeks");
+  weeksContainer.innerHTML = "";
+
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+
+  const firstDayOfMonth = new Date(year, month, 1);
+  const startOffset = firstDayOfMonth.getDay();
+
+  const gridStart = new Date(year, month, 1 - startOffset);
+  gridStart.setHours(0, 0, 0, 0);
+
+  const weeks = [];
+
+  for (let w = 0; w < 6; w++) {
+    const days = [];
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(gridStart);
+      date.setDate(gridStart.getDate() + w * 7 + d);
+      days.push(date);
+    }
+    weeks.push(days);
+  }
+
+  weeks.forEach((weekDays, weekIndex) => {
+    const weekRow = document.createElement("div");
+    weekRow.className = "week-row";
+    weekRow.dataset.weekIndex = weekIndex;
+
+    weekDays.forEach((date) => {
+      const cell = document.createElement("div");
+      cell.className = "day-cell";
+      if (date.getMonth() !== month) cell.classList.add("other-month");
+
+      const num = document.createElement("div");
+      num.className = "day-num";
+      num.textContent = date.getDate();
+
+      cell.appendChild(num);
+      weekRow.appendChild(cell);
+    });
+
+    const eventsLayer = document.createElement("div");
+    eventsLayer.className = "week-events-layer";
+    eventsLayer.dataset.weekIndex = weekIndex;
+    weekRow.appendChild(eventsLayer);
+
+    weeksContainer.appendChild(weekRow);
+  });
+
+  const monthlyEvents = getMonthlyEvents();
+  const weekSegments = buildWeeklySegments(monthlyEvents, weeks);
+
+  weekSegments.forEach((segments, weekIndex) => {
+    const lanes = assignLanes(segments);
+    const layer = weeksContainer.querySelector(
+      `.week-events-layer[data-week-index="${weekIndex}"]`
+    );
+    if (!layer) return;
+
+    lanes.forEach((laneSegments, laneIndex) => {
+      laneSegments.forEach((seg) => {
+        const bar = document.createElement("div");
+        bar.className = "event-bar";
+        if (seg.event.status === "취소") bar.classList.add("cancelled");
+
+        const leftPercent = (seg.startCol / 7) * 100;
+        const widthPercent = ((seg.endCol - seg.startCol + 1) / 7) * 100;
+
+        bar.style.left = `calc(${leftPercent}% + 2px)`;
+        bar.style.width = `calc(${widthPercent}% - 4px)`;
+        bar.style.top = `${laneIndex * 28}px`;
+        bar.style.background = getPastelColor(seg.event.id);
+        bar.textContent = seg.event.eventName;
+        bar.title = seg.event.eventName;
+
+        bar.addEventListener("click", () => {
+          loadDeliveryEventToForm(seg.event.id);
+        });
+
+        layer.appendChild(bar);
+      });
+    });
+  });
+}
+
+function buildWeeklySegments(events, weeks) {
+  const result = Array.from({ length: 6 }, () => []);
+
+  events.forEach((event) => {
+    const eventStart = normalizeDate(event.startDate);
+    const eventEnd = normalizeDate(event.endDate || event.startDate);
+
+    weeks.forEach((weekDays, weekIndex) => {
+      const weekStart = normalizeDate(weekDays[0]);
+      const weekEnd = normalizeDate(weekDays[6]);
+
+      if (eventEnd < weekStart || eventStart > weekEnd) return;
+
+      const segmentStart = eventStart > weekStart ? eventStart : weekStart;
+      const segmentEnd = eventEnd < weekEnd ? eventEnd : weekEnd;
+
+      const startCol = diffDays(weekStart, segmentStart);
+      const endCol = diffDays(weekStart, segmentEnd);
+
+      result[weekIndex].push({
+        event,
+        startCol,
+        endCol,
+      });
+    });
+  });
+
+  return result;
+}
+
+function diffDays(baseDate, targetDate) {
+  const ms = normalizeDate(targetDate) - normalizeDate(baseDate);
+  return Math.round(ms / (1000 * 60 * 60 * 24));
+}
+
+function assignLanes(segments) {
+  const sorted = [...segments].sort((a, b) => {
+    if (a.startCol !== b.startCol) return a.startCol - b.startCol;
+    return b.endCol - b.startCol - (a.endCol - a.startCol);
+  });
+
+  const lanes = [];
+
+  sorted.forEach((seg) => {
+    let placed = false;
+
+    for (const lane of lanes) {
+      const overlaps = lane.some((existing) => {
+        return !(seg.endCol < existing.startCol || seg.startCol > existing.endCol);
+      });
+
+      if (!overlaps) {
+        lane.push(seg);
+        placed = true;
+        break;
+      }
+    }
+
+    if (!placed) {
+      lanes.push([seg]);
+    }
+  });
+
+  return lanes;
+}
+
+function renderDeliverySummaryTable() {
+  const wrap = document.getElementById("summaryTableWrap");
+  const monthlyEvents = getMonthlyEvents();
+
+  if (!monthlyEvents.length) {
+    wrap.innerHTML = `<div class="empty-box">선택한 월 데이터가 없습니다.</div>`;
+    return;
+  }
+
+  let html = `
+    <table style="width:100%; border-collapse:collapse; table-layout:fixed;">
+      <thead>
+        <tr>
+          <th style="width:42%; padding:10px; border-bottom:1px solid #eee;">업체명</th>
+          <th style="width:26%; padding:10px; border-bottom:1px solid #eee;">수량</th>
+          <th style="width:32%; padding:10px; border-bottom:1px solid #eee;">매출</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  monthlyEvents.forEach((event) => {
+    html += `
+      <tr data-id="${event.id}" style="cursor:pointer;">
+        <td style="padding:10px; border-bottom:1px solid #eee; font-weight:700;">
+          ${escapeHtml(event.companyName)}
+        </td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">
+          ${formatNumber(event.quantity)} ea
+        </td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">
+          ${formatCurrency(calculateSales(event.quantity, event.unitPrice))}
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll("tbody tr").forEach((row) => {
+    row.addEventListener("click", () => {
+      loadDeliveryEventToForm(row.dataset.id);
+    });
+  });
+}
+
+async function handleDeliverySubmit(e) {
+  e.preventDefault();
+
+  const id = document.getElementById("eventId").value || generateDeliveryId();
+  const startDate = document.getElementById("startDate").value;
+  const endDate = document.getElementById("endDate").value;
+  const eventName = document.getElementById("eventName").value.trim();
+  const companyName = document.getElementById("companyName").value.trim();
+  const quantity = Number(document.getElementById("quantity").value || 0);
+  const unitPrice = Number(document.getElementById("unitPrice").value || 0);
+  const menuName = document.getElementById("menuName").value.trim();
+  const status = document.getElementById("status").value;
+
+  if (!startDate) {
+    alert("행사일자를 입력해주세요.");
+    return;
+  }
+
+  if (endDate && endDate < startDate) {
+    alert("종료일자는 행사일자보다 빠를 수 없습니다.");
+    return;
+  }
+
+  const currentUser = getCurrentUser();
+
+  const eventData = {
+    id,
+    startDate,
+    endDate,
+    eventName,
+    companyName,
+    quantity,
+    unitPrice,
+    menuName,
+    status,
+    savedBy: {
+      id: currentUser.id || "",
+      name: currentUser.name || "알 수 없음",
+      role: currentUser.role || "",
+    },
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    await saveDeliveryEventToServer(eventData);
+
+    currentMonth = normalizeDate(startDate);
+    currentMonth.setDate(1);
+
+    resetDeliveryForm();
+    closeModal();
+    renderDeliveryAll();
+  } catch (e) {
+    console.error(e);
+    alert("단체 일정 저장에 실패했습니다. API에 /delivery-events 저장 경로가 있는지 확인해주세요.");
+  }
+}
+
+function loadDeliveryEventToForm(id) {
+  const events = getEvents();
+  const event = events.find((item) => item.id === id);
+  if (!event) return;
+
+  editingId = id;
+
+  document.getElementById("eventId").value = event.id;
+  document.getElementById("startDate").value = event.startDate || "";
+  document.getElementById("endDate").value = event.endDate || "";
+  document.getElementById("eventName").value = event.eventName || "";
+  document.getElementById("companyName").value = event.companyName || "";
+  document.getElementById("quantity").value = event.quantity || 0;
+  document.getElementById("unitPrice").value = event.unitPrice || 0;
+  document.getElementById("menuName").value = event.menuName || "";
+  document.getElementById("status").value = event.status || "확정";
+
+  updateEstimatedSalesPreview();
+  openModal();
+}
+
+function resetDeliveryForm() {
+  editingId = null;
+  document.getElementById("eventForm").reset();
+  document.getElementById("eventId").value = "";
+  document.getElementById("status").value = "확정";
+  document.getElementById("estimatedSalesBox").textContent = "0원";
+}
+
+async function handleDeliveryDelete() {
+  const id = document.getElementById("eventId").value;
+
+  if (!id) {
+    alert("삭제할 항목을 먼저 선택해주세요.");
+    return;
+  }
+
+  if (!confirm("선택한 데이터를 삭제하시겠습니까?")) return;
+
+  try {
+    await deleteDeliveryEventFromServer(id);
+    resetDeliveryForm();
+    closeModal();
+    renderDeliveryAll();
+  } catch (e) {
+    console.error(e);
+    alert("삭제에 실패했습니다.");
+  }
+}
       // =========================
       // 초기 실행
       // =========================
