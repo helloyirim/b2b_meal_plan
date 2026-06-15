@@ -788,7 +788,7 @@
     
       <!-- 단체캘린더 -->
       <div
-        class="nav-item"
+        class="nav-item active"
         id="nav-calendar"
         onclick="showPage('page-calendar')"
       >
@@ -805,7 +805,7 @@
     
       <!-- 식단관리 -->
       <div
-        class="nav-item active"
+        class="nav-item"
         id="nav-gen"
         onclick="showPage('page-generate')"
       >
@@ -849,7 +849,7 @@
 
     <main class="main-content">
 
-      <div id="page-calendar" class="page">
+      <div id="page-calendar" class="page active">
         <div class="calendar-dashboard">
           <div class="calendar-topbar">
             <h1 class="calendar-page-title">월간 단체 납품 보고판</h1>
@@ -944,12 +944,12 @@
       
                   <div class="field">
                     <label for="unitPrice">단가</label>
-                    <input type="number" id="unitPrice" min="0" placeholder="0" required />
+                    <input type="number" id="unitPrice" min="0" placeholder="선택 입력" />
                   </div>
-      
+                  
                   <div class="field">
-                    <label>예상매출</label>
-                    <div class="calc-box" id="estimatedSalesBox">0원</div>
+                    <label for="sales">예상매출</label>
+                    <input type="number" id="sales" min="0" placeholder="0" required />
                   </div>
       
                   <div class="field">
@@ -980,7 +980,7 @@
         </div>
       </div>
     
-      <div id="page-generate" class="page active">
+      <div id="page-generate" class="page">
         <div
           class="card"
           style="
@@ -3361,7 +3361,6 @@ function generateDeliveryId() {
 async function initDeliveryCalendarPage() {
   if (!deliveryCalendarInitialized) {
     bindDeliveryCalendarEvents();
-    updateEstimatedSalesPreview();
     deliveryCalendarInitialized = true;
   }
 
@@ -3389,8 +3388,7 @@ function bindDeliveryCalendarEvents() {
     if (e.target.id === "modalBackdrop") closeModal();
   });
 
-  document.getElementById("quantity").addEventListener("input", updateEstimatedSalesPreview);
-  document.getElementById("unitPrice").addEventListener("input", updateEstimatedSalesPreview);
+
   document.getElementById("eventForm").addEventListener("submit", handleDeliverySubmit);
   document.getElementById("resetBtn").addEventListener("click", resetDeliveryForm);
   document.getElementById("deleteBtn").addEventListener("click", handleDeliveryDelete);
@@ -3419,6 +3417,18 @@ function formatNumber(num) {
 
 function formatCurrency(num) {
   return formatNumber(num) + "원";
+}
+
+function getEventSales(event) {
+  if (
+    typeof event.sales !== "undefined" &&
+    event.sales !== null &&
+    event.sales !== ""
+  ) {
+    return Number(event.sales || 0);
+  }
+
+  return calculateSales(event.quantity, event.unitPrice);
 }
 
 function normalizeDate(dateStr) {
@@ -3484,9 +3494,9 @@ function renderDeliveryHeader() {
   const monthlyEvents = getMonthlyEvents();
   const totalQty = monthlyEvents.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const totalSales = monthlyEvents.reduce(
-    (sum, item) => sum + calculateSales(item.quantity, item.unitPrice),
-    0
-  );
+  (sum, item) => sum + getEventSales(item),
+  0
+);
 
   document.getElementById("summaryQty").textContent = `${formatNumber(totalQty)} ea`;
   document.getElementById("summarySales").textContent = formatCurrency(totalSales);
@@ -3676,7 +3686,7 @@ function renderDeliverySummaryTable() {
           ${formatNumber(event.quantity)} ea
         </td>
         <td style="padding:10px; border-bottom:1px solid #eee;">
-          ${formatCurrency(calculateSales(event.quantity, event.unitPrice))}
+          ${formatCurrency(getEventSales(event))}
         </td>
       </tr>
     `;
@@ -3702,6 +3712,7 @@ async function handleDeliverySubmit(e) {
   const companyName = document.getElementById("companyName").value.trim();
   const quantity = Number(document.getElementById("quantity").value || 0);
   const unitPrice = Number(document.getElementById("unitPrice").value || 0);
+  const sales = Number(document.getElementById("sales").value || 0);
   const menuName = document.getElementById("menuName").value.trim();
   const status = document.getElementById("status").value;
 
@@ -3725,6 +3736,7 @@ async function handleDeliverySubmit(e) {
     companyName,
     quantity,
     unitPrice,
+    sales,
     menuName,
     status,
     savedBy: {
@@ -3764,10 +3776,10 @@ function loadDeliveryEventToForm(id) {
   document.getElementById("companyName").value = event.companyName || "";
   document.getElementById("quantity").value = event.quantity || 0;
   document.getElementById("unitPrice").value = event.unitPrice || 0;
+  document.getElementById("sales").value = getEventSales(event);
   document.getElementById("menuName").value = event.menuName || "";
   document.getElementById("status").value = event.status || "확정";
 
-  updateEstimatedSalesPreview();
   openModal();
 }
 
@@ -3776,7 +3788,6 @@ function resetDeliveryForm() {
   document.getElementById("eventForm").reset();
   document.getElementById("eventId").value = "";
   document.getElementById("status").value = "확정";
-  document.getElementById("estimatedSalesBox").textContent = "0원";
 }
 
 async function handleDeliveryDelete() {
@@ -3815,6 +3826,8 @@ async function handleDeliveryDelete() {
 
         // 식단 이력 미리 불러오기
         await loadPlansFromServer();
+
+        showPage("page-calendar");
       });
     </script>
   </body>
