@@ -586,8 +586,10 @@
 }
 
 .event-bar.cancelled {
-  opacity: 0.58;
+  opacity: 0.7;
   text-decoration: line-through;
+  background: #e0e0e0 !important;
+  color: #777;
 }
 
 .calendar-summary-top {
@@ -852,7 +854,7 @@
       <div id="page-calendar" class="page active">
         <div class="calendar-dashboard">
           <div class="calendar-topbar">
-            <h1 class="calendar-page-title">월간 단체 납품 보고판</h1>
+            <h1 class="calendar-page-title">월간 단체 납품 보고</h1>
       
             <div class="calendar-topbar-right">
               <div class="calendar-month-nav">
@@ -3474,9 +3476,14 @@ function hashString(str) {
 
 function getPastelColor(seed) {
   const hash = hashString(seed);
-  const hue = hash % 360;
-  const saturation = 52 + (hash % 8);
-  const lightness = 84 + (hash % 5);
+
+  // 색상이 한쪽으로 몰리지 않도록 황금각 기준으로 분산
+  const hue = (hash * 137.508) % 360;
+
+  // 파스텔톤 유지
+  const saturation = 58;
+  const lightness = 84;
+
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
@@ -3817,17 +3824,13 @@ async function handleDeliveryDelete() {
         const authed = initAuth();
         if (!authed) return;
 
-        // 예전 식단 캐시 제거
         localStorage.removeItem("b2b_plans_cache");
         localStorage.removeItem("b2b_menus_cache");
 
-        initGrid();
-        await loadMenusFromServer();
-
-        // 식단 이력 미리 불러오기
-        await loadPlansFromServer();
-
         showPage("page-calendar");
+
+        loadMenusFromServer();
+        loadPlansFromServer();
       });
     </script>
   </body>
