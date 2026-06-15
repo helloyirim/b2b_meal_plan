@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>B2B Meal Plan Pro</title>
+    <title>B2B 영업관리시스템</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link
@@ -591,13 +591,17 @@
 }
 
 .calendar-summary-top {
+  height: 91px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
 }
 
 .calendar-summary-title {
-  font-size: 28px;
+  font-size: 42px;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .calendar-summary-table-wrap {
@@ -732,7 +736,7 @@
         "
       >
         <h2 style="color: #333; margin-bottom: 25px; font-weight: 800">
-          B2B영업팀 영업관리시스템
+          B2B 영업관리시스템
         </h2>
         <input
           type="text"
@@ -780,7 +784,7 @@
     </div>
 
     <aside class="sidebar">
-      <h2>B2B 영업관리</h2>
+      <h2>B2B 영업관리시스템</h2>
     
       <!-- 단체캘린더 -->
       <div
@@ -867,7 +871,7 @@
       
                 <div class="calendar-kpi-inline">
                   <div class="calendar-kpi-box">
-                    <div class="calendar-kpi-label">총 납품 수량</div>
+                    <div class="calendar-kpi-label">총 예상 납품 수량</div>
                     <div class="calendar-kpi-value" id="summaryQty">0 ea</div>
                   </div>
                   <div class="calendar-kpi-box">
@@ -3378,7 +3382,7 @@ function bindDeliveryCalendarEvents() {
     renderDeliveryAll();
   });
 
-  document.getElementById("openModalBtn").addEventListener("click", openModal);
+  document.getElementById("openModalBtn").addEventListener("click", openNewDeliveryModal);
   document.getElementById("closeModalBtn").addEventListener("click", closeModal);
 
   document.getElementById("modalBackdrop").addEventListener("click", (e) => {
@@ -3390,6 +3394,11 @@ function bindDeliveryCalendarEvents() {
   document.getElementById("eventForm").addEventListener("submit", handleDeliverySubmit);
   document.getElementById("resetBtn").addEventListener("click", resetDeliveryForm);
   document.getElementById("deleteBtn").addEventListener("click", handleDeliveryDelete);
+}
+
+function openNewDeliveryModal() {
+  resetDeliveryForm();
+  openModal();
 }
 
 function openModal() {
