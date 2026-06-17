@@ -708,6 +708,84 @@
   font-size: 12px;
   margin-top: 8px;
 }
+
+/* =========================
+   흑염소 매출보고 CSS
+========================= */
+
+.sales-dashboard {
+  width: 100%;
+  min-height: calc(100vh - 80px);
+}
+
+.sales-report-area {
+  background: #fff;
+  margin-top: 20px;
+  border: 1px solid var(--border-light);
+}
+
+.sales-report-title {
+  background: #082b68;
+  color: #fff;
+  padding: 18px 24px;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.sales-report-title span {
+  font-size: 22px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.sales-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 32px 24px;
+  gap: 24px;
+  background: #fff;
+}
+
+.sales-kpi-box {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 18px;
+}
+
+.sales-kpi-box span {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sales-kpi-box strong {
+  font-size: 44px;
+  font-weight: 800;
+}
+
+.sales-report-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 36px;
+  padding: 0 24px 24px;
+}
+
+.sales-section-title {
+  background: #082b68;
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+#salesDailyTableWrap,
+#salesMonthlyTableWrap {
+  min-height: 360px;
+  background: #f1f1f1;
+  border: 1px solid #ddd;
+}
+
     </style>
   </head>
   <body>
@@ -797,6 +875,14 @@
         🗓️ 단체캘린더
       </div>
     
+      <div
+      class="nav-item"
+      id="nav-sales"
+      onclick="showPage('page-sales')"
+    >
+      📊 흑염소매출보고
+    </div>
+
       <div
         style="
           height:1px;
@@ -977,6 +1063,95 @@
       
                 <p class="muted">캘린더 막대나 우측 표를 클릭하면 수정 모드로 열립니다.</p>
               </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 매출보고 -->
+      <div id="page-sales" class="page">
+        <div class="sales-dashboard">
+          <div class="calendar-topbar">
+            <h1 class="calendar-page-title">흑염소진액 매출보고</h1>
+
+            <button id="openSalesModalBtn" class="btn btn-save">
+              Raw 데이터 입력
+            </button>
+          </div>
+
+          <div id="sales-report-area" class="sales-report-area">
+            <div class="sales-report-title">
+              흑염소진액 매출보고
+              <span id="salesReportPeriod">(기준기간 미입력)</span>
+            </div>
+
+            <div class="sales-kpi-row">
+              <div class="sales-kpi-box">
+                <span>총 구매고객</span>
+                <strong id="salesTotalCustomers">0명</strong>
+              </div>
+
+              <div class="sales-kpi-box">
+                <span>총 판매수량</span>
+                <strong id="salesTotalQty">0세트</strong>
+              </div>
+
+              <div class="sales-kpi-box">
+                <span>총 매출</span>
+                <strong id="salesTotalAmount">0원</strong>
+              </div>
+            </div>
+
+            <div class="sales-report-grid">
+              <section class="sales-daily-section">
+                <div class="sales-section-title">네이버 스마트스토어 일매출</div>
+                <div id="salesDailyTableWrap"></div>
+              </section>
+
+              <section class="sales-monthly-section">
+                <div class="sales-section-title">참고 네이버 스마트스토어 월매출</div>
+                <div id="salesMonthlyTableWrap"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="calendar-modal-backdrop" id="salesModalBackdrop">
+          <div class="calendar-modal">
+            <div class="calendar-modal-header">
+              <h2 class="calendar-modal-title">Raw 데이터 입력</h2>
+              <button id="closeSalesModalBtn">닫기</button>
+            </div>
+
+            <div class="calendar-modal-body">
+              <div class="field" style="margin-bottom:12px;">
+                <label for="salesReportStart">기준 시작일</label>
+                <input type="date" id="salesReportStart" />
+              </div>
+
+              <div class="field" style="margin-bottom:12px;">
+                <label for="salesReportEnd">기준 종료일</label>
+                <input type="date" id="salesReportEnd" />
+              </div>
+
+              <div class="field">
+                <label for="salesRawInput">Raw 데이터 붙여넣기</label>
+                <textarea
+                  id="salesRawInput"
+                  rows="14"
+                  placeholder="네이버 스마트스토어 매출 Raw 데이터를 엑셀에서 복사해 붙여넣으세요."
+                  style="width:100%; padding:12px; border:1px solid #ccc; resize:vertical;"
+                ></textarea>
+              </div>
+
+              <div class="form-actions" style="margin-top:12px;">
+                <button type="button" class="btn btn-save">
+                  분석 반영
+                </button>
+                <button type="button" class="btn btn-grey" id="resetSalesRawBtn">
+                  초기화
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2671,6 +2846,9 @@
         if (id === "page-calendar") {
           document.getElementById("nav-calendar").classList.add("active");
           initDeliveryCalendarPage();
+        }
+        if (id === "page-sales") {
+          document.getElementById("nav-sales").classList.add("active");
         }
         if (id === "page-history") {
           document.getElementById("nav-his").classList.add("active");
