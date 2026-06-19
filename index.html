@@ -719,71 +719,169 @@
 }
 
 .sales-report-area {
-  background: #fff;
-  margin-top: 20px;
-  border: 1px solid var(--border-light);
+  background: #f8fafc;
+  margin-top: 16px;
 }
 
-.sales-report-title {
-  background: #082b68;
-  color: #fff;
-  padding: 18px 24px;
-  font-size: 32px;
-  font-weight: 800;
-}
-
-.sales-report-title span {
-  font-size: 22px;
-  font-weight: 600;
-  margin-left: 8px;
-}
-
-.sales-kpi-row {
+.sales-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  padding: 32px 24px;
-  gap: 24px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.sales-kpi-card {
   background: #fff;
+  border: 1px solid #e5eaf2;
+  border-radius: 10px;
+  padding: 20px 18px;
+  min-height: 132px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
-.sales-kpi-box {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 18px;
-}
-
-.sales-kpi-box span {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.sales-kpi-box strong {
-  font-size: 44px;
+.kpi-label {
+  font-size: 14px;
   font-weight: 800;
+  color: #111827;
+  margin-bottom: 16px;
 }
 
-.sales-report-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 36px;
-  padding: 0 24px 24px;
-}
-
-.sales-section-title {
-  background: #082b68;
-  color: #fff;
-  padding: 10px;
+.kpi-value {
+  font-size: 28px;
+  font-weight: 500;
+  color: #111827;
   text-align: center;
-  font-size: 22px;
-  font-weight: 700;
 }
 
-#salesDailyTableWrap,
-#salesMonthlyTableWrap {
-  min-height: 360px;
-  background: #f1f1f1;
-  border: 1px solid #ddd;
+.kpi-sub {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #53627c;
+  text-align: center;
+}
+
+.sales-kpi-card.refund .kpi-label {
+  margin-bottom: 20px;
+}
+
+.refund-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 9px 0;
+  font-size: 14px;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.refund-row:last-child {
+  border-bottom: 0;
+}
+
+.refund-row strong {
+  color: #ef1d1d;
+  font-size: 18px;
+}
+
+.sales-main-grid {
+  display: grid;
+  grid-template-columns: 2.3fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.sales-panel {
+  background: #fff;
+  border: 1px solid #e5eaf2;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.sales-panel-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0b2d66;
+  margin-bottom: 12px;
+}
+
+.sales-panel-title span {
+  float: right;
+  font-size: 12px;
+  color: #53627c;
+}
+
+.sales-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.sales-report-table th {
+  background: #52627d;
+  color: #fff;
+  padding: 8px;
+  text-align: center;
+}
+
+.sales-report-table td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.sales-report-table td.amount {
+  color: #1d5fd1;
+  font-weight: 800;
+  text-align: right;
+}
+
+.rank-legend {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.sales-report-table tr.out-range td {
+  background: #f1f5f9;
+  color: #a0a7b4;
+}
+
+.monthly-sales-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.monthly-sales-row {
+  display: grid;
+  grid-template-columns: 42px 1fr 90px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.month-label {
+  font-weight: 800;
+}
+
+.month-bar-wrap {
+  height: 18px;
+  background: #eef2f7;
+}
+
+.month-bar {
+  height: 100%;
+  background: #9aa8bd;
+}
+
+.monthly-sales-row.current .month-bar {
+  background: #1d5fd1;
+}
+
+.month-amount {
+  text-align: right;
+  font-weight: 700;
 }
 
     </style>
@@ -1074,53 +1172,79 @@
           <div class="calendar-topbar">
             <h1 class="calendar-page-title">흑염소진액 매출보고</h1>
 
-            <button id="openSalesModalBtn" class="btn btn-save">
-              Raw 데이터 입력
-            </button>
+            <button
+            id="openSalesModalBtn"
+            class="btn btn-save"
+            onclick="openSalesModal()"
+          >
+            Raw 데이터 입력
+          </button>
           </div>
 
           <div id="sales-report-area" class="sales-report-area">
-            <div class="sales-report-title">
-              흑염소진액 매출보고
-              <span id="salesReportPeriod">(기준기간 미입력)</span>
+
+            <div class="sales-kpi-grid">
+              <div class="sales-kpi-card">
+                <div class="kpi-label">구매고객</div>
+                <div class="kpi-value" id="salesTotalCustomers">0명</div>
+                <div class="kpi-sub">(누적)</div>
+              </div>
+          
+              <div class="sales-kpi-card">
+                <div class="kpi-label">판매수량(세트)</div>
+                <div class="kpi-value" id="salesTotalQty">0세트</div>
+                <div class="kpi-sub">(체험팩 포함)</div>
+              </div>
+          
+              <div class="sales-kpi-card">
+                <div class="kpi-label">총 매출</div>
+                <div class="kpi-value" id="salesTotalAmount">0원</div>
+                <div class="kpi-sub">(환불 반영)</div>
+              </div>
+          
+              <div class="sales-kpi-card">
+                <div class="kpi-label">객단가</div>
+                <div class="kpi-value" id="salesAvgCustomer">0원</div>
+                <div class="kpi-sub">(1인당 평균)</div>
+              </div>
+          
+              <div class="sales-kpi-card">
+                <div class="kpi-label">세트당 매출</div>
+                <div class="kpi-value" id="salesAvgSet">0원</div>
+                <div class="kpi-sub">(세트당 평균)</div>
+              </div>
+          
+              <div class="sales-kpi-card refund">
+                <div class="kpi-label">환불 현황</div>
+                <div class="refund-row"><span>환불 건수</span><strong id="salesRefundCount">0건</strong></div>
+                <div class="refund-row"><span>환불 금액</span><strong id="salesRefundAmount">0원</strong></div>
+              </div>
             </div>
-
-            <div class="sales-kpi-row">
-              <div class="sales-kpi-box">
-                <span>총 구매고객</span>
-                <strong id="salesTotalCustomers">0명</strong>
-              </div>
-
-              <div class="sales-kpi-box">
-                <span>총 판매수량</span>
-                <strong id="salesTotalQty">0세트</strong>
-              </div>
-
-              <div class="sales-kpi-box">
-                <span>총 매출</span>
-                <strong id="salesTotalAmount">0원</strong>
-              </div>
-            </div>
-
-            <div class="sales-report-grid">
-              <section class="sales-daily-section">
-                <div class="sales-section-title">네이버 스마트스토어 일매출</div>
-                <div id="salesDailyTableWrap"></div>
+          
+            <div class="sales-main-grid">
+              <section class="sales-panel wide">
+                <div class="sales-panel-title">일별 매출 추이 <span>(단위 : 원)</span></div>
+                <canvas id="salesDailyChart" height="180"></canvas>
               </section>
-
-              <section class="sales-monthly-section">
-                <div class="sales-section-title">참고 네이버 스마트스토어 월매출</div>
+          
+              <section class="sales-panel">
+                <div class="sales-panel-title">월별 매출 현황 <span>(단위 : 원)</span></div>
                 <div id="salesMonthlyTableWrap"></div>
               </section>
             </div>
+          
+            <section class="sales-panel">
+              <div class="sales-panel-title">일별 상세 매출 현황</div>
+              <div id="salesDailyTableWrap"></div>
+              <div class="rank-legend">⭐ 1위 &nbsp;&nbsp; ☆ 2위 &nbsp;&nbsp; ★ 3위</div>
+            </section>
           </div>
-        </div>
 
         <div class="calendar-modal-backdrop" id="salesModalBackdrop">
           <div class="calendar-modal">
             <div class="calendar-modal-header">
               <h2 class="calendar-modal-title">Raw 데이터 입력</h2>
-              <button id="closeSalesModalBtn">닫기</button>
+              <button id="closeSalesModalBtn" onclick="closeSalesModal()">닫기</button>
             </div>
 
             <div class="calendar-modal-body">
@@ -1145,9 +1269,13 @@
               </div>
 
               <div class="form-actions" style="margin-top:12px;">
-                <button type="button" class="btn btn-save">
-                  분석 반영
-                </button>
+                <button
+                type="button"
+                class="btn btn-save"
+                onclick="applySalesRaw()"
+              >
+                분석 반영
+              </button>
                 <button type="button" class="btn btn-grey" id="resetSalesRawBtn">
                   초기화
                 </button>
@@ -3996,6 +4124,300 @@ async function handleDeliveryDelete() {
     alert("삭제에 실패했습니다.");
   }
 }
+
+
+// =========================
+// 흑염소 매출보고
+// =========================
+
+let salesReportCache = null;
+let salesDailyChartInstance = null;
+
+async function loadSalesReportFromServer() {
+  try {
+    const data = await apiGet("/blackgoat-sales");
+    salesReportCache = data || null;
+
+    if (salesReportCache?.dailyRows) {
+      renderSalesReport(salesReportCache);
+    }
+  } catch (e) {
+    console.error("흑염소 매출보고 로딩 실패:", e);
+  }
+}
+
+async function saveSalesReportToServer(reportData) {
+  await apiPost("/blackgoat-sales", reportData);
+  salesReportCache = reportData;
+}
+
+function openSalesModal() {
+  document.getElementById("salesModalBackdrop").classList.add("show");
+}
+
+function closeSalesModal() {
+  document.getElementById("salesModalBackdrop").classList.remove("show");
+}
+
+function toNumber(value) {
+  return Number(String(value || "0").replace(/,/g, "").trim()) || 0;
+}
+
+function formatDateKey(dateStr) {
+  return String(dateStr || "").slice(0, 10);
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function parseSalesRawRows(rawRows) {
+  return rawRows
+    .map((row) => row.split("\t"))
+    .filter((cols) => cols[0] && cols[0].startsWith("202"))
+    .map((cols) => {
+      const date = formatDateKey(cols[0]);
+
+      return {
+        date,
+        customers: toNumber(cols[2]),
+        orderCount: toNumber(cols[3]),
+        sales: toNumber(cols[5]),
+        qty: toNumber(cols[8]),
+        refundCount: toNumber(cols[14]),
+        refundAmount: toNumber(cols[15]),
+        refundQty: toNumber(cols[17]),
+      };
+    });
+}
+
+function buildSalesReportData(rawRows, start, end) {
+  const parsedRows = parseSalesRawRows(rawRows);
+
+  const baseDate = start || parsedRows[0]?.date;
+  if (!baseDate) return null;
+
+  const year = Number(baseDate.slice(0, 4));
+  const month = Number(baseDate.slice(5, 7));
+  const lastDay = getDaysInMonth(year, month);
+
+  const byDate = new Map();
+  parsedRows.forEach((row) => {
+    byDate.set(row.date, row);
+  });
+
+  const dailyRows = [];
+
+  for (let day = 1; day <= lastDay; day++) {
+    const dayText = String(day).padStart(2, "0");
+    const date = `${year}-${String(month).padStart(2, "0")}-${dayText}`;
+    const source = byDate.get(date);
+
+    const isOutOfRange =
+      (start && date < start) ||
+      (end && date > end);
+
+    dailyRows.push({
+      date,
+      day,
+      customers: source?.customers || 0,
+      orderCount: source?.orderCount || 0,
+      qty: Math.max((source?.qty || 0) - (source?.refundQty || 0), 0),
+      sales: Math.max((source?.sales || 0) - (source?.refundAmount || 0), 0),
+      refundCount: source?.refundCount || 0,
+      refundAmount: source?.refundAmount || 0,
+      isOutOfRange,
+    });
+  }
+
+  const validRows = dailyRows.filter((row) => !row.isOutOfRange);
+
+  const totalCustomer = validRows.reduce((sum, row) => sum + row.customers, 0);
+  const totalQty = validRows.reduce((sum, row) => sum + row.qty, 0);
+  const totalSales = validRows.reduce((sum, row) => sum + row.sales, 0);
+  const refundCount = validRows.reduce((sum, row) => sum + row.refundCount, 0);
+  const refundAmount = validRows.reduce((sum, row) => sum + row.refundAmount, 0);
+
+  const monthlyRows = Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    sales: i + 1 === month ? totalSales : 0,
+    isCurrent: i + 1 === month,
+  }));
+
+  return {
+    year,
+    month,
+    start,
+    end,
+    dailyRows,
+    monthlyRows,
+    totalCustomer,
+    totalQty,
+    totalSales,
+    refundCount,
+    refundAmount,
+    avgCustomer: totalCustomer ? Math.round(totalSales / totalCustomer) : 0,
+    avgSet: totalQty ? Math.round(totalSales / totalQty) : 0,
+    savedAt: new Date().toISOString(),
+  };
+}
+
+function applySalesRaw() {
+  const raw = document.getElementById("salesRawInput").value;
+  const start = document.getElementById("salesReportStart").value;
+  const end = document.getElementById("salesReportEnd").value;
+
+  if (!raw.trim()) {
+    alert("Raw 데이터를 입력해주세요.");
+    return;
+  }
+
+  if (!start || !end) {
+    alert("기준 시작일과 종료일을 입력해주세요.");
+    return;
+  }
+
+  const rows = raw.split("\n").filter(Boolean);
+  const reportData = buildSalesReportData(rows, start, end);
+
+  if (!reportData) {
+    alert("분석할 수 있는 매출 데이터가 없습니다.");
+    return;
+  }
+
+  saveSalesReportToServer(reportData)
+    .then(() => {
+      renderSalesReport(reportData);
+      closeSalesModal();
+      alert("흑염소 매출보고가 클라우드에 저장되었습니다.");
+    })
+    .catch((e) => {
+      console.error(e);
+      renderSalesReport(reportData);
+      closeSalesModal();
+      alert("클라우드 저장은 실패했지만 화면에는 반영했습니다.");
+    });
+}
+
+function renderSalesReport(data) {
+  document.getElementById("salesTotalCustomers").innerText =
+    data.totalCustomer.toLocaleString() + "명";
+  document.getElementById("salesTotalQty").innerText =
+    data.totalQty.toLocaleString() + "세트";
+  document.getElementById("salesTotalAmount").innerText =
+    data.totalSales.toLocaleString() + "원";
+  document.getElementById("salesAvgCustomer").innerText =
+    data.avgCustomer.toLocaleString() + "원";
+  document.getElementById("salesAvgSet").innerText =
+    data.avgSet.toLocaleString() + "원";
+  document.getElementById("salesRefundCount").innerText =
+    data.refundCount.toLocaleString() + "건";
+  document.getElementById("salesRefundAmount").innerText =
+    data.refundAmount.toLocaleString() + "원";
+
+  renderSalesDailyTable(data.dailyRows);
+  renderSalesMonthlyTable(data.monthlyRows);
+  renderSalesDailyChart(data.dailyRows);
+}
+
+function renderSalesDailyTable(rows) {
+  let html = `
+    <table class="sales-report-table">
+      <tr>
+        <th>날짜</th>
+        <th>구매고객수</th>
+        <th>판매수량(세트)</th>
+        <th>매출(원)</th>
+      </tr>
+  `;
+
+  rows.forEach((row) => {
+    html += `
+      <tr class="${row.isOutOfRange ? "out-range" : ""}">
+        <td>${row.date.slice(5).replace("-", ".")}</td>
+        <td>${row.customers || "-"}</td>
+        <td>${row.qty || "-"}</td>
+        <td class="amount">${row.sales ? row.sales.toLocaleString() : "0"}</td>
+      </tr>
+    `;
+  });
+
+  html += "</table>";
+  document.getElementById("salesDailyTableWrap").innerHTML = html;
+}
+
+function renderSalesMonthlyTable(rows) {
+  let maxSales = Math.max(...rows.map((row) => row.sales), 1);
+
+  let html = `<div class="monthly-sales-list">`;
+
+  rows.forEach((row) => {
+    const width = row.sales ? Math.max((row.sales / maxSales) * 100, 8) : 0;
+
+    html += `
+      <div class="monthly-sales-row ${row.isCurrent ? "current" : ""}">
+        <div class="month-label">${row.month}월</div>
+        <div class="month-bar-wrap">
+          <div class="month-bar" style="width:${width}%"></div>
+        </div>
+        <div class="month-amount">${row.sales ? row.sales.toLocaleString() : "-"}</div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  document.getElementById("salesMonthlyTableWrap").innerHTML = html;
+}
+
+function renderSalesDailyChart(rows) {
+  const canvas = document.getElementById("salesDailyChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const width = canvas.clientWidth;
+  const height = canvas.height;
+
+  canvas.width = width;
+  canvas.height = height;
+
+  ctx.clearRect(0, 0, width, height);
+
+  const chartRows = rows.filter((row) => !row.isOutOfRange);
+  const maxSales = Math.max(...chartRows.map((row) => row.sales), 1);
+
+  const padding = 30;
+  const gap = (width - padding * 2) / Math.max(chartRows.length - 1, 1);
+
+  ctx.beginPath();
+
+  chartRows.forEach((row, index) => {
+    const x = padding + gap * index;
+    const y = height - padding - (row.sales / maxSales) * (height - padding * 2);
+
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+
+  ctx.strokeStyle = "#1d5fd1";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  chartRows.forEach((row, index) => {
+    const x = padding + gap * index;
+    const y = height - padding - (row.sales / maxSales) * (height - padding * 2);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#1d5fd1";
+    ctx.fill();
+
+    if (row.sales > 0) {
+      ctx.font = "11px Pretendard";
+      ctx.fillText(row.sales.toLocaleString(), x - 18, y - 10);
+    }
+  });
+}
+
       // =========================
       // 초기 실행
       // =========================
@@ -4010,6 +4432,7 @@ async function handleDeliveryDelete() {
 
         loadMenusFromServer();
         loadPlansFromServer();
+        loadSalesReportFromServer();
       });
     </script>
   </body>
