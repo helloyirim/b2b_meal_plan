@@ -4373,26 +4373,47 @@ function renderSalesDailyChart(rows) {
   const canvas = document.getElementById("salesDailyChart");
   if (!canvas) return;
 
-  const ctx = canvas.getContext("2d");
-  const width = canvas.clientWidth;
-  const height = canvas.height;
+  const parent = canvas.parentElement;
+  const width = parent.clientWidth - 36;
+  const height = 300;
 
   canvas.width = width;
   canvas.height = height;
+  canvas.style.width = "100%";
+  canvas.style.height = height + "px";
 
+  const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, width, height);
 
   const chartRows = rows.filter((row) => !row.isOutOfRange);
   const maxSales = Math.max(...chartRows.map((row) => row.sales), 1);
 
-  const padding = 30;
-  const gap = (width - padding * 2) / Math.max(chartRows.length - 1, 1);
+  const paddingLeft = 48;
+  const paddingRight = 28;
+  const paddingTop = 32;
+  const paddingBottom = 34;
+
+  const chartWidth = width - paddingLeft - paddingRight;
+  const chartHeight = height - paddingTop - paddingBottom;
+
+  ctx.strokeStyle = "#e5eaf2";
+  ctx.lineWidth = 1;
+
+  for (let i = 0; i <= 5; i++) {
+    const y = paddingTop + (chartHeight / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, y);
+    ctx.lineTo(width - paddingRight, y);
+    ctx.stroke();
+  }
+
+  const gap = chartWidth / Math.max(chartRows.length - 1, 1);
 
   ctx.beginPath();
 
   chartRows.forEach((row, index) => {
-    const x = padding + gap * index;
-    const y = height - padding - (row.sales / maxSales) * (height - padding * 2);
+    const x = paddingLeft + gap * index;
+    const y = paddingTop + chartHeight - (row.sales / maxSales) * chartHeight;
 
     if (index === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
@@ -4403,8 +4424,8 @@ function renderSalesDailyChart(rows) {
   ctx.stroke();
 
   chartRows.forEach((row, index) => {
-    const x = padding + gap * index;
-    const y = height - padding - (row.sales / maxSales) * (height - padding * 2);
+    const x = paddingLeft + gap * index;
+    const y = paddingTop + chartHeight - (row.sales / maxSales) * chartHeight;
 
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -4413,8 +4434,15 @@ function renderSalesDailyChart(rows) {
 
     if (row.sales > 0) {
       ctx.font = "11px Pretendard";
-      ctx.fillText(row.sales.toLocaleString(), x - 18, y - 10);
+      ctx.fillStyle = "#1d5fd1";
+      ctx.textAlign = "center";
+      ctx.fillText(row.sales.toLocaleString(), x, y - 10);
     }
+
+    ctx.font = "11px Pretendard";
+    ctx.fillStyle = "#475569";
+    ctx.textAlign = "center";
+    ctx.fillText(row.date.slice(5).replace("-", "/"), x, height - 10);
   });
 }
 
