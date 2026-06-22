@@ -784,9 +784,90 @@
 
 .sales-main-grid {
   display: grid;
-  grid-template-columns: 2.3fr 1fr;
+  grid-template-columns: 1.75fr 0.8fr 1.05fr;
   gap: 16px;
   margin-bottom: 16px;
+}
+
+.channel-share-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.channel-donut {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #16a34a 0deg 0deg,
+    #f97316 0deg 0deg
+  );
+  position: relative;
+  margin: 8px auto 16px;
+}
+
+.channel-donut::after {
+  content: "";
+  position: absolute;
+  inset: 42px;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.channel-donut-center {
+  position: absolute;
+  inset: 58px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex-direction: column;
+  font-size: 13px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.channel-donut-center strong {
+  font-size: 16px;
+  margin-top: 4px;
+}
+
+.channel-share-legend {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.channel-legend-item {
+  text-align: center;
+  font-weight: 700;
+}
+
+.channel-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 4px;
+}
+
+.channel-dot.naver {
+  background: #16a34a;
+}
+
+.channel-dot.coupang {
+  background: #f97316;
+}
+
+.channel-legend-sub {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-weight: 600;
 }
 
 .sales-panel {
@@ -1259,7 +1340,12 @@
                 <div class="sales-panel-title">일별 매출 추이 <span>(단위 : 원)</span></div>
                 <canvas id="salesDailyChart" height="180"></canvas>
               </section>
-          
+            
+              <section class="sales-panel" id="salesChannelSharePanel">
+                <div class="sales-panel-title">채널별 매출 비중</div>
+                <div id="salesChannelShareWrap"></div>
+              </section>
+            
               <section class="sales-panel">
                 <div class="sales-panel-title">월별 매출 현황 <span>(단위 : 원)</span></div>
                 <div id="salesMonthlyTableWrap"></div>
@@ -4193,8 +4279,8 @@ function showSalesPage(channel = "all") {
   }
 
   if (salesReportCache) {
-    renderSalesReport(salesReportCache);
-  }
+    renderSalesReport(getVisibleSalesReport());
+}
 }
 
 let currentSalesChannel = "all";
@@ -4211,19 +4297,190 @@ let salesDailyChartInstance = null;
 async function loadSalesReportFromServer() {
   try {
     const data = await apiGet("/blackgoat-sales");
-    salesReportCache = data || null;
 
-    if (salesReportCache?.dailyRows) {
-      renderSalesReport(salesReportCache);
+    salesReportCache = normalizeSalesStorage(data);
+
+    if (salesReportCache) {
+      renderSalesReport(getVisibleSalesReport());
     }
   } catch (e) {
     console.error("흑염소 매출보고 로딩 실패:", e);
+    salesReportCache = normalizeSalesStorage(null);
   }
 }
 
 async function saveSalesReportToServer(reportData) {
-  await apiPost("/blackgoat-sales", reportData);
-  salesReportCache = reportData;
+  const channel = reportData.channel || "naver";
+
+  salesReportCache = normalizeSalesStorage(salesReportCache);
+  salesReportCache.channels[channel] = reportData;
+  salesReportCache.updatedAt = new Date().toISOString();
+
+  await apiPost("/blackgoat-sales", salesReportCache);
+}
+
+function normalizeSalesStorage(data) {
+  if (data?.channels) {
+    return {
+      productId: data.productId || "blackgoat_30",
+      productName: data.productName || "흑염소진액",
+      channels: {
+        naver: data.channels.naver || null,
+        coupang: data.channels.coupang || null,
+      },
+      updatedAt: data.updatedAt || null,
+    };
+  }
+
+  if (data?.dailyRows && data?.channel) {
+    return {
+      productId: "blackgoat_30",
+      productName: "흑염소진액",
+      channels: {
+        [data.channel]: data,
+      },
+      updatedAt: data.savedAt || new Date().toISOString(),
+    };
+  }
+
+  return {
+    productId: "blackgoat_30",
+    productName: "흑염소진액",
+    channels: {
+      naver: null,
+      coupang: null,
+    },
+    updatedAt: null,
+  };
+}
+
+function getVisibleSalesReport() {
+  salesReportCache = normalizeSalesStorage(salesReportCache);
+
+  if (currentSalesChannel === "naver") {
+    return salesReportCache.channels.naver || createEmptySalesReport("naver");
+  }
+
+  if (currentSalesChannel === "coupang") {
+    return salesReportCache.channels.coupang || createEmptySalesReport("coupang");
+  }
+
+  return buildIntegratedSalesReport(salesReportCache.channels);
+}
+
+function createEmptySalesReport(channel = "all") {
+  return {
+    channel,
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
+    start: "",
+    end: "",
+    dailyRows: [],
+    monthlyRows: Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1,
+      sales: 0,
+      isCurrent: false,
+    })),
+    totalCustomer: 0,
+    totalQty: 0,
+    totalSales: 0,
+    refundCount: 0,
+    refundAmount: 0,
+    avgCustomer: 0,
+    avgSet: 0,
+    savedAt: null,
+  };
+}
+
+function buildIntegratedSalesReport(channels = {}) {
+  const reports = Object.values(channels).filter(Boolean);
+
+  if (!reports.length) {
+    return createEmptySalesReport("all");
+  }
+
+  const base = reports[0];
+  const rowMap = new Map();
+
+  reports.forEach((report) => {
+    (report.dailyRows || []).forEach((row) => {
+      if (!rowMap.has(row.date)) {
+        rowMap.set(row.date, {
+          date: row.date,
+          day: row.day,
+          customers: 0,
+          orderCount: 0,
+          qty: 0,
+          sales: 0,
+          refundCount: 0,
+          refundAmount: 0,
+          refundQty: 0,
+          isOutOfRange: row.isOutOfRange,
+        });
+      }
+
+      const target = rowMap.get(row.date);
+      target.customers += Number(row.customers || 0);
+      target.orderCount += Number(row.orderCount || 0);
+      target.qty += Number(row.qty || 0);
+      target.sales += Number(row.sales || 0);
+      target.refundCount += Number(row.refundCount || 0);
+      target.refundAmount += Number(row.refundAmount || 0);
+      target.refundQty += Number(row.refundQty || 0);
+      target.isOutOfRange = target.isOutOfRange && row.isOutOfRange;
+    });
+  });
+
+  const dailyRows = Array.from(rowMap.values()).sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+
+  const validRows = dailyRows.filter((row) => !row.isOutOfRange);
+
+  const grossSales = validRows.reduce((sum, row) => sum + row.sales, 0);
+  const grossQty = validRows.reduce((sum, row) => sum + row.qty, 0);
+
+  const refundCount = validRows.reduce((sum, row) => sum + row.refundCount, 0);
+  const refundAmount = validRows.reduce((sum, row) => sum + row.refundAmount, 0);
+  const refundQty = validRows.reduce((sum, row) => sum + (row.refundQty || 0), 0);
+
+  const grossCustomer = validRows.reduce((sum, row) => sum + row.customers, 0);
+
+  const totalCustomer = Math.max(grossCustomer - refundCount, 0);
+  const totalQty = Math.max(grossQty - refundQty, 0);
+  const totalSales = Math.max(grossSales - refundAmount, 0);
+
+  const monthlyRows = Array.from({ length: 12 }, (_, i) => {
+    const monthNo = i + 1;
+    const sales = reports.reduce((sum, report) => {
+      const monthRow = (report.monthlyRows || []).find((r) => r.month === monthNo);
+      return sum + Number(monthRow?.sales || 0);
+    }, 0);
+
+    return {
+      month: monthNo,
+      sales,
+      isCurrent: monthNo === base.month,
+    };
+  });
+
+  return {
+    channel: "all",
+    year: base.year,
+    month: base.month,
+    start: base.start,
+    end: base.end,
+    dailyRows,
+    monthlyRows,
+    totalCustomer,
+    totalQty,
+    totalSales,
+    refundCount,
+    refundAmount,
+    avgCustomer: totalCustomer ? Math.round(totalSales / totalCustomer) : 0,
+    avgSet: totalQty ? Math.round(totalSales / totalQty) : 0,
+    savedAt: new Date().toISOString(),
+  };
 }
 
 function openSalesModal() {
@@ -4246,7 +4503,44 @@ function getDaysInMonth(year, month) {
   return new Date(year, month, 0).getDate();
 }
 
-function parseSalesRawRows(rawRows) {
+function parseSalesRawRows(rawRows, channel) {
+  if (channel === "coupang") {
+    return parseCoupangSalesRawRows(rawRows);
+  }
+
+  return parseNaverSalesRawRows(rawRows);
+}
+
+function parseNaverSalesRawRows(rawRows) {
+  return rawRows
+    .map((row) => row.split("\t"))
+    .filter((cols) => cols[0] && cols[0].startsWith("202"))
+    .map((cols) => {
+      const date = formatDateKey(cols[0]);
+
+      const sales = toNumber(cols[5]);
+      const refundAmount = toNumber(cols[15]);
+      const qty = toNumber(cols[8]);
+      const refundQty = toNumber(cols[17]);
+
+      return {
+        channel: "naver",
+        date,
+
+        customers: toNumber(cols[2]),      // 결제자수
+        orderCount: toNumber(cols[3]),     // 결제수
+
+        sales: toNumber(cols[5]),          // 결제금액
+        qty: toNumber(cols[8]),            // 결제상품수량
+
+        refundCount: toNumber(cols[14]),   // 환불건수
+        refundAmount: toNumber(cols[15]),  // 환불금액
+        refundQty: toNumber(cols[17]),     // 환불수량
+      };
+    });
+}
+
+function parseCoupangSalesRawRows(rawRows) {
   return rawRows
     .map((row) => row.split("\t"))
     .filter((cols) => cols[0] && cols[0].startsWith("202"))
@@ -4254,20 +4548,21 @@ function parseSalesRawRows(rawRows) {
       const date = formatDateKey(cols[0]);
 
       return {
+        channel: "coupang",
         date,
-        customers: toNumber(cols[2]),
-        orderCount: toNumber(cols[3]),
-        sales: toNumber(cols[5]),
-        qty: toNumber(cols[8]),
-        refundCount: toNumber(cols[14]),
-        refundAmount: toNumber(cols[15]),
-        refundQty: toNumber(cols[17]),
+        customers: toNumber(cols[4]),
+        orderCount: toNumber(cols[4]),
+        sales: toNumber(cols[7]),
+        qty: toNumber(cols[6]),
+        refundCount: 0,
+        refundAmount: 0,
+        refundQty: 0,
       };
     });
 }
 
 function buildSalesReportData(rawRows, start, end, channel = "naver") {
-  const parsedRows = parseSalesRawRows(rawRows);
+  const parsedRows = parseSalesRawRows(rawRows, channel);
 
   const baseDate = start || parsedRows[0]?.date;
   if (!baseDate) return null;
@@ -4297,17 +4592,21 @@ function buildSalesReportData(rawRows, start, end, channel = "naver") {
       day,
       customers: source?.customers || 0,
       orderCount: source?.orderCount || 0,
-      qty: Math.max((source?.qty || 0) - (source?.refundQty || 0), 0),
-      sales: Math.max((source?.sales || 0) - (source?.refundAmount || 0), 0),
+      qty: source?.qty || 0,
+      sales: source?.sales || 0,
       refundCount: source?.refundCount || 0,
       refundAmount: source?.refundAmount || 0,
+      refundQty: source?.refundQty || 0,
       isOutOfRange,
     });
   }
 
   const validRows = dailyRows.filter((row) => !row.isOutOfRange);
 
-  const totalCustomer = validRows.reduce((sum, row) => sum + row.customers, 0);
+  const totalCustomer = Math.max(
+    validRows.reduce((sum, row) => sum + row.customers, 0) - refundCount,
+    0
+  );
   const totalQty = validRows.reduce((sum, row) => sum + row.qty, 0);
   const totalSales = validRows.reduce((sum, row) => sum + row.sales, 0);
   const refundCount = validRows.reduce((sum, row) => sum + row.refundCount, 0);
@@ -4363,8 +4662,8 @@ function applySalesRaw() {
   }
 
   saveSalesReportToServer(reportData)
-    .then(() => {
-      renderSalesReport(reportData);
+      .then(() => {
+      renderSalesReport(getVisibleSalesReport());
       closeSalesModal();
       alert("흑염소 매출보고가 클라우드에 저장되었습니다.");
     })
@@ -4392,9 +4691,10 @@ function renderSalesReport(data) {
   document.getElementById("salesRefundAmount").innerText =
     data.refundAmount.toLocaleString() + "원";
 
-  renderSalesDailyTable(data.dailyRows);
-  renderSalesMonthlyTable(data.monthlyRows);
-  renderSalesDailyChart(data.dailyRows);
+    renderSalesDailyTable(data.dailyRows);
+    renderSalesMonthlyTable(data.monthlyRows);
+    renderSalesDailyChart(data.dailyRows);
+    renderSalesChannelShare();
 }
 
 function renderSalesDailyTable(rows) {
@@ -4421,6 +4721,57 @@ function renderSalesDailyTable(rows) {
 
   html += "</table>";
   document.getElementById("salesDailyTableWrap").innerHTML = html;
+}
+
+function renderSalesChannelShare() {
+  const panel = document.getElementById("salesChannelSharePanel");
+  const wrap = document.getElementById("salesChannelShareWrap");
+  if (!panel || !wrap) return;
+
+  if (currentSalesChannel !== "all") {
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "block";
+
+  const storage = normalizeSalesStorage(salesReportCache);
+  const naverSales = Number(storage.channels.naver?.totalSales || 0);
+  const coupangSales = Number(storage.channels.coupang?.totalSales || 0);
+  const total = naverSales + coupangSales;
+
+  const naverRatio = total ? Math.round((naverSales / total) * 1000) / 10 : 0;
+  const coupangRatio = total ? Math.round((coupangSales / total) * 1000) / 10 : 0;
+
+  const naverDeg = total ? (naverSales / total) * 360 : 0;
+
+  wrap.innerHTML = `
+    <div class="channel-share-box">
+      <div
+        class="channel-donut"
+        style="background: conic-gradient(#16a34a 0deg ${naverDeg}deg, #f97316 ${naverDeg}deg 360deg);"
+      >
+        <div class="channel-donut-center">
+          통합 매출
+          <strong>${total.toLocaleString()}원</strong>
+        </div>
+      </div>
+
+      <div class="channel-share-legend">
+        <div class="channel-legend-item">
+          <span class="channel-dot naver"></span>네이버
+          <span class="channel-legend-sub">${naverRatio}%</span>
+          <span class="channel-legend-sub">(${naverSales.toLocaleString()}원)</span>
+        </div>
+
+        <div class="channel-legend-item">
+          <span class="channel-dot coupang"></span>쿠팡
+          <span class="channel-legend-sub">${coupangRatio}%</span>
+          <span class="channel-legend-sub">(${coupangSales.toLocaleString()}원)</span>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderSalesMonthlyTable(rows) {
