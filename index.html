@@ -1281,6 +1281,15 @@
             </div>
 
             <div class="calendar-modal-body">
+
+              <div class="field" style="margin-bottom:12px;">
+                <label for="salesRawChannel">채널 선택</label>
+                <select id="salesRawChannel">
+                  <option value="naver">네이버 스마트스토어</option>
+                  <option value="coupang">쿠팡</option>
+                </select>
+              </div>
+            
               <div class="field" style="margin-bottom:12px;">
                 <label for="salesReportStart">기준 시작일</label>
                 <input type="date" id="salesReportStart" />
@@ -4257,7 +4266,7 @@ function parseSalesRawRows(rawRows) {
     });
 }
 
-function buildSalesReportData(rawRows, start, end) {
+function buildSalesReportData(rawRows, start, end, channel = "naver") {
   const parsedRows = parseSalesRawRows(rawRows);
 
   const baseDate = start || parsedRows[0]?.date;
@@ -4311,6 +4320,7 @@ function buildSalesReportData(rawRows, start, end) {
   }));
 
   return {
+    channel,
     year,
     month,
     start,
@@ -4330,6 +4340,7 @@ function buildSalesReportData(rawRows, start, end) {
 
 function applySalesRaw() {
   const raw = document.getElementById("salesRawInput").value;
+  const channel = document.getElementById("salesRawChannel").value;
   const start = document.getElementById("salesReportStart").value;
   const end = document.getElementById("salesReportEnd").value;
 
@@ -4344,7 +4355,7 @@ function applySalesRaw() {
   }
 
   const rows = raw.split("\n").filter(Boolean);
-  const reportData = buildSalesReportData(rows, start, end);
+  const reportData = buildSalesReportData(rows, start, end, channel);
 
   if (!reportData) {
     alert("분석할 수 있는 매출 데이터가 없습니다.");
