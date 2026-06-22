@@ -863,6 +863,14 @@
   background: #f97316;
 }
 
+.channel-dot.sales {
+  background: #1d5fd1;
+}
+
+.channel-dot.refund {
+  background: #ef4444;
+}
+
 .channel-legend-sub {
   display: block;
   margin-top: 4px;
@@ -4603,14 +4611,17 @@ function buildSalesReportData(rawRows, start, end, channel = "naver") {
 
   const validRows = dailyRows.filter((row) => !row.isOutOfRange);
 
-  const totalCustomer = Math.max(
-    validRows.reduce((sum, row) => sum + row.customers, 0) - refundCount,
-    0
-  );
-  const totalQty = validRows.reduce((sum, row) => sum + row.qty, 0);
-  const totalSales = validRows.reduce((sum, row) => sum + row.sales, 0);
+  const grossSales = validRows.reduce((sum, row) => sum + row.sales, 0);
+  const grossQty = validRows.reduce((sum, row) => sum + row.qty, 0);
+  const grossCustomer = validRows.reduce((sum, row) => sum + row.customers, 0);
+
   const refundCount = validRows.reduce((sum, row) => sum + row.refundCount, 0);
   const refundAmount = validRows.reduce((sum, row) => sum + row.refundAmount, 0);
+  const refundQty = validRows.reduce((sum, row) => sum + (row.refundQty || 0), 0);
+
+  const totalCustomer = Math.max(grossCustomer - refundCount, 0);
+  const totalQty = Math.max(grossQty - refundQty, 0);
+  const totalSales = Math.max(grossSales - refundAmount, 0);
 
   const monthlyRows = Array.from({ length: 12 }, (_, i) => ({
     month: i + 1,
@@ -4728,12 +4739,61 @@ function renderSalesChannelShare() {
   const wrap = document.getElementById("salesChannelShareWrap");
   if (!panel || !wrap) return;
 
+  panel.style.display = "block";
+
   if (currentSalesChannel !== "all") {
-    panel.style.display = "none";
+    const title = panel.querySelector(".sales-panel-title");
+    if (title) title.innerText = "매출 대비 환불 비중";
+
+    const report = getVisibleSalesReport();
+
+    const grossSales = (report.dailyRows || [])
+      .filter((row) => !row.isOutOfRange)
+      .reduce((sum, row) => sum + Number(row.sales || 0), 0);
+
+    const refundAmount = Number(report.refundAmount || 0);
+    const netSales = Math.max(grossSales - refundAmount, 0);
+
+    const refundRatio = grossSales
+      ? Math.round((refundAmount / grossSales) * 1000) / 10
+      : 0;
+
+    const netRatio = Math.max(100 - refundRatio, 0);
+    const netDeg = grossSales ? (netSales / grossSales) * 360 : 360;
+
+    wrap.innerHTML = `
+      <div class="channel-share-box">
+        <div
+          class="channel-donut"
+          style="background: conic-gradient(#1d5fd1 0deg ${netDeg}deg, #ef4444 ${netDeg}deg 360deg);"
+        >
+          <div class="channel-donut-center">
+            환불률
+            <strong>${refundRatio}%</strong>
+          </div>
+        </div>
+
+        <div class="channel-share-legend">
+          <div class="channel-legend-item">
+            <span class="channel-dot sales"></span>정상매출
+            <span class="channel-legend-sub">${netRatio}%</span>
+            <span class="channel-legend-sub">(${netSales.toLocaleString()}원)</span>
+          </div>
+
+          <div class="channel-legend-item">
+            <span class="channel-dot refund"></span>환불
+            <span class="channel-legend-sub">${refundRatio}%</span>
+            <span class="channel-legend-sub">(${refundAmount.toLocaleString()}원)</span>
+          </div>
+        </div>
+      </div>
+    `;
+
     return;
   }
 
-  panel.style.display = "block";
+  const title = panel.querySelector(".sales-panel-title");
+  if (title) title.innerText = "채널별 매출 비중";
 
   const storage = normalizeSalesStorage(salesReportCache);
   const naverSales = Number(storage.channels.naver?.totalSales || 0);
@@ -4742,7 +4802,6 @@ function renderSalesChannelShare() {
 
   const naverRatio = total ? Math.round((naverSales / total) * 1000) / 10 : 0;
   const coupangRatio = total ? Math.round((coupangSales / total) * 1000) / 10 : 0;
-
   const naverDeg = total ? (naverSales / total) * 360 : 0;
 
   wrap.innerHTML = `
