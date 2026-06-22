@@ -884,6 +884,17 @@
   font-weight: 700;
 }
 
+.sales-sub-nav {
+  margin-left: 8px;
+  margin-bottom: 10px;
+}
+
+.sales-sub-nav .nav-item {
+  font-size: 13px;
+  padding: 9px 12px;
+  margin-bottom: 4px;
+}
+
     </style>
   </head>
   <body>
@@ -973,13 +984,35 @@
         🗓️ 단체캘린더
       </div>
     
-      <div
-      class="nav-item"
-      id="nav-sales"
-      onclick="showPage('page-sales')"
-    >
-      📊 흑염소매출보고
-    </div>
+      <div class="nav-item" id="nav-sales-main">
+        📊 상품 매출보고
+      </div>
+      
+      <div class="sales-sub-nav">
+        <div
+          class="nav-item sales-channel-nav active"
+          id="nav-sales-all"
+          onclick="showSalesPage('all')"
+        >
+          └ 흑염소진액 통합
+        </div>
+      
+        <div
+          class="nav-item sales-channel-nav"
+          id="nav-sales-naver"
+          onclick="showSalesPage('naver')"
+        >
+          └ 네이버 스마트스토어
+        </div>
+      
+        <div
+          class="nav-item sales-channel-nav"
+          id="nav-sales-coupang"
+          onclick="showSalesPage('coupang')"
+        >
+          └ 쿠팡
+        </div>
+      </div>
 
       <div
         style="
@@ -2976,7 +3009,10 @@
           initDeliveryCalendarPage();
         }
         if (id === "page-sales") {
-          document.getElementById("nav-sales").classList.add("active");
+          document.getElementById("nav-sales-main").classList.add("active");
+
+          const activeNav = document.getElementById(`nav-sales-${currentSalesChannel}`);
+          if (activeNav) activeNav.classList.add("active");
         }
         if (id === "page-history") {
           document.getElementById("nav-his").classList.add("active");
@@ -4129,6 +4165,36 @@ async function handleDeliveryDelete() {
 // =========================
 // 흑염소 매출보고
 // =========================
+
+function showSalesPage(channel = "all") {
+  currentSalesChannel = channel;
+
+  showPage("page-sales");
+
+  document.querySelectorAll(".sales-channel-nav").forEach((el) => {
+    el.classList.remove("active");
+  });
+
+  const activeNav = document.getElementById(`nav-sales-${channel}`);
+  if (activeNav) activeNav.classList.add("active");
+
+  const title = document.querySelector("#page-sales .calendar-page-title");
+  if (title) {
+    title.innerText = SALES_CHANNEL_LABELS[channel] + " 매출보고";
+  }
+
+  if (salesReportCache) {
+    renderSalesReport(salesReportCache);
+  }
+}
+
+let currentSalesChannel = "all";
+
+const SALES_CHANNEL_LABELS = {
+  all: "흑염소진액 통합",
+  naver: "네이버 스마트스토어",
+  coupang: "쿠팡",
+};
 
 let salesReportCache = null;
 let salesDailyChartInstance = null;
