@@ -872,95 +872,6 @@
   color: #111827;
 }
 
-.channel-share-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.channel-donut {
-  width: 190px;
-  height: 190px;
-  border-radius: 50%;
-  background: conic-gradient(
-    #16a34a 0deg 0deg,
-    #f97316 0deg 0deg
-  );
-  position: relative;
-  margin: 8px auto 16px;
-}
-
-.channel-donut::after {
-  content: "";
-  position: absolute;
-  inset: 42px;
-  background: #fff;
-  border-radius: 50%;
-}
-
-.channel-donut-center {
-  position: absolute;
-  inset: 58px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  flex-direction: column;
-  font-size: 13px;
-  font-weight: 800;
-  color: #111827;
-}
-
-.channel-donut-center strong {
-  font-size: 16px;
-  margin-top: 4px;
-}
-
-.channel-share-legend {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.channel-legend-item {
-  text-align: center;
-  font-weight: 700;
-}
-
-.channel-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  margin-right: 4px;
-}
-
-.channel-dot.naver {
-  background: #16a34a;
-}
-
-.channel-dot.coupang {
-  background: #f97316;
-}
-
-.channel-dot.sales {
-  background: #1d5fd1;
-}
-
-.channel-dot.refund {
-  background: #ef4444;
-}
-
-.channel-legend-sub {
-  display: block;
-  margin-top: 4px;
-  color: #64748b;
-  font-weight: 600;
-}
-
 .sales-panel {
   background: #fff;
   border: 1px solid #e5eaf2;
@@ -1019,42 +930,8 @@
   color: #a0a7b4;
 }
 
-.monthly-sales-list {
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
-}
 
-.monthly-sales-row {
-  display: grid;
-  grid-template-columns: 42px 1fr 90px;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-}
 
-.month-label {
-  font-weight: 800;
-}
-
-.month-bar-wrap {
-  height: 18px;
-  background: #eef2f7;
-}
-
-.month-bar {
-  height: 100%;
-  background: #9aa8bd;
-}
-
-.monthly-sales-row.current .month-bar {
-  background: #1d5fd1;
-}
-
-.month-amount {
-  text-align: right;
-  font-weight: 700;
-}
 
 .sales-sub-nav {
   margin-left: 8px;
@@ -4496,7 +4373,6 @@ const SALES_CHANNEL_LABELS = {
 };
 
 let salesReportCache = null;
-let salesDailyChartInstance = null;
 
 async function loadSalesReportFromServer() {
   try {
@@ -4941,104 +4817,7 @@ function renderSalesDailyTable(rows) {
   document.getElementById("salesDailyTableWrap").innerHTML = html;
 }
 
-function renderSalesChannelShare() {
-  const panel = document.getElementById("salesChannelSharePanel");
-  const wrap = document.getElementById("salesChannelShareWrap");
-  if (!panel || !wrap) return;
 
-  panel.style.display = "block";
-
-  if (currentSalesChannel !== "all") {
-    const title = panel.querySelector(".sales-panel-title");
-    if (title) title.innerText = "매출 대비 환불 비중";
-
-    const report = getVisibleSalesReport();
-
-    const grossSales = (report.dailyRows || [])
-      .filter((row) => !row.isOutOfRange)
-      .reduce((sum, row) => sum + Number(row.sales || 0), 0);
-
-    const refundAmount = Number(report.refundAmount || 0);
-    const netSales = Math.max(grossSales - refundAmount, 0);
-
-    const refundRatio = grossSales
-      ? Math.round((refundAmount / grossSales) * 1000) / 10
-      : 0;
-
-    const netRatio = Math.max(100 - refundRatio, 0);
-    const netDeg = grossSales ? (netSales / grossSales) * 360 : 360;
-
-    wrap.innerHTML = `
-      <div class="channel-share-box">
-        <div
-          class="channel-donut"
-          style="background: conic-gradient(#1d5fd1 0deg ${netDeg}deg, #ef4444 ${netDeg}deg 360deg);"
-        >
-          <div class="channel-donut-center">
-            환불률
-            <strong>${refundRatio}%</strong>
-          </div>
-        </div>
-
-        <div class="channel-share-legend">
-          <div class="channel-legend-item">
-            <span class="channel-dot sales"></span>정상매출
-            <span class="channel-legend-sub">${netRatio}%</span>
-            <span class="channel-legend-sub">(${netSales.toLocaleString()}원)</span>
-          </div>
-
-          <div class="channel-legend-item">
-            <span class="channel-dot refund"></span>환불
-            <span class="channel-legend-sub">${refundRatio}%</span>
-            <span class="channel-legend-sub">(${refundAmount.toLocaleString()}원)</span>
-          </div>
-        </div>
-      </div>
-    `;
-
-    return;
-  }
-
-  const title = panel.querySelector(".sales-panel-title");
-  if (title) title.innerText = "채널별 매출 비중";
-
-  const storage = normalizeSalesStorage(salesReportCache);
-  const naverSales = Number(storage.channels.naver?.totalSales || 0);
-  const coupangSales = Number(storage.channels.coupang?.totalSales || 0);
-  const total = naverSales + coupangSales;
-
-  const naverRatio = total ? Math.round((naverSales / total) * 1000) / 10 : 0;
-  const coupangRatio = total ? Math.round((coupangSales / total) * 1000) / 10 : 0;
-  const naverDeg = total ? (naverSales / total) * 360 : 0;
-
-  wrap.innerHTML = `
-    <div class="channel-share-box">
-      <div
-        class="channel-donut"
-        style="background: conic-gradient(#16a34a 0deg ${naverDeg}deg, #f97316 ${naverDeg}deg 360deg);"
-      >
-        <div class="channel-donut-center">
-          통합 매출
-          <strong>${total.toLocaleString()}원</strong>
-        </div>
-      </div>
-
-      <div class="channel-share-legend">
-        <div class="channel-legend-item">
-          <span class="channel-dot naver"></span>네이버
-          <span class="channel-legend-sub">${naverRatio}%</span>
-          <span class="channel-legend-sub">(${naverSales.toLocaleString()}원)</span>
-        </div>
-
-        <div class="channel-legend-item">
-          <span class="channel-dot coupang"></span>쿠팡
-          <span class="channel-legend-sub">${coupangRatio}%</span>
-          <span class="channel-legend-sub">(${coupangSales.toLocaleString()}원)</span>
-        </div>
-      </div>
-    </div>
-  `;
-}
 
 function renderSalesMonthlyTable(rows) {
   const maxSales = Math.max(...rows.map((row) => Number(row.sales || 0)), 1);
