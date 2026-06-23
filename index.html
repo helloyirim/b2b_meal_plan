@@ -1340,14 +1340,22 @@
         <div class="sales-dashboard">
           <div class="calendar-topbar">
             <h1 class="calendar-page-title">흑염소진액 매출보고</h1>
-
-            <button
-            id="openSalesModalBtn"
-            class="btn btn-save"
-            onclick="openSalesModal()"
-          >
-            Raw 데이터 입력
-          </button>
+          
+            <div class="calendar-topbar-right">
+              <div class="calendar-month-nav">
+                <button onclick="moveSalesMonth(-1)">◀ 이전월</button>
+                <div class="calendar-month-label" id="salesMonthLabel"></div>
+                <button onclick="moveSalesMonth(1)">다음월 ▶</button>
+              </div>
+          
+              <button
+                id="openSalesModalBtn"
+                class="btn btn-save"
+                onclick="openSalesModal()"
+              >
+                Raw 데이터 입력
+              </button>
+            </div>
           </div>
 
           <div id="sales-report-area" class="sales-report-area">
@@ -4364,7 +4372,28 @@ function showSalesPage(channel = "all") {
 }
 }
 
+function moveSalesMonth(offset) {
+  currentSalesMonth.setMonth(currentSalesMonth.getMonth() + offset);
+  currentSalesMonth.setDate(1);
+
+  if (salesReportCache) {
+    renderSalesReport(getVisibleSalesReport());
+  }
+}
+
+function updateSalesMonthLabel() {
+  const label = document.getElementById("salesMonthLabel");
+  if (!label) return;
+
+  label.innerText = `${currentSalesMonth.getFullYear()}년 ${
+    currentSalesMonth.getMonth() + 1
+  }월`;
+}
+
 let currentSalesChannel = "all";
+
+let currentSalesMonth = new Date();
+currentSalesMonth.setDate(1);
 
 const SALES_CHANNEL_LABELS = {
   all: "흑염소진액 통합",
@@ -4393,7 +4422,13 @@ async function saveSalesReportToServer(reportData) {
   const channel = reportData.channel || "naver";
 
   salesReportCache = normalizeSalesStorage(salesReportCache);
-  salesReportCache.channels[channel] = reportData;
+  const monthKey = `${reportData.year}-${String(reportData.month).padStart(2, "0")}`;
+
+    if (!salesReportCache.channels[channel]) {
+      salesReportCache.channels[channel] = { months: {} };
+    }
+
+    salesReportCache.channels[channel].months[monthKey] = reportData;
   salesReportCache.updatedAt = new Date().toISOString();
 
   await apiPost("/blackgoat-sales", salesReportCache);
@@ -4766,8 +4801,9 @@ function applySalesRaw() {
       alert("클라우드 저장은 실패했지만 화면에는 반영했습니다.");
     });
 }
-
 function renderSalesReport(data) {
+  updateSalesMonthLabel();
+
   document.getElementById("salesTotalCustomers").innerText =
     data.totalCustomer.toLocaleString() + "명";
   document.getElementById("salesTotalQty").innerText =
