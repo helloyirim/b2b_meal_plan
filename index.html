@@ -1068,7 +1068,7 @@
 }
 
 .sales-left-col .sales-panel:nth-child(2) {
-  min-height: 230px;
+  height: 260px;
 }
 
 .monthly-sales-list.vertical {
@@ -1113,6 +1113,44 @@
   font-size: 11px;
   color: #111827;
   white-space: nowrap;
+}
+
+.sales-note-panel {
+  min-height: auto;
+}
+
+.sales-note-input {
+  width: 100%;
+  height: 52px;
+  min-height: 52px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  padding: 8px 12px;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #111827;
+  outline: none;
+}
+
+.sales-note-input:focus {
+  border-color: #4a90e2;
+}
+
+.sales-right-col .sales-panel:first-child {
+  padding-bottom: 10px;
+}
+
+.sales-right-col .sales-panel:first-child .sales-panel-title {
+  margin-bottom: 6px;
+}
+
+.top-sales-row {
+  padding: 19px 0;
+}
+
+.top-rank-icon {
+  font-size: 20px;
 }
 
     </style>
@@ -1501,6 +1539,19 @@
                   <div class="sales-panel-title">채널 요약 <span>(단위 : 원)</span></div>
                   <div id="salesChannelSummaryWrap"></div>
                 </section>
+
+                <section class="sales-panel sales-note-panel">
+                  <div class="sales-panel-title">특이사항</div>
+                  <textarea
+                  id="salesSpecialNote"
+                  class="sales-note-input"
+                  rows="2"
+                  maxlength="80"
+                  placeholder="특이사항을 입력하세요."
+                  oninput="saveSalesSpecialNote()"
+                ></textarea>
+                </section>
+
               </div>
             </div>
           
@@ -4861,6 +4912,7 @@ function renderSalesReport(data) {
     renderSalesDailyChart(data.dailyRows);
     renderSalesTopDays(data.dailyRows);
     renderSalesChannelSummary();
+    loadSalesSpecialNote();
 }
 
 function renderSalesDailyTable(rows) {
@@ -5183,6 +5235,25 @@ function renderSalesTopDays(rows) {
     .join("");
 }
 
+function getSalesNoteKey() {
+  return `blackgoat_sales_note_${currentSalesChannel}`;
+}
+
+
+
+function loadSalesSpecialNote() {
+  const noteEl = document.getElementById("salesSpecialNote");
+  if (!noteEl) return;
+
+  noteEl.value = localStorage.getItem(getSalesNoteKey()) || "";
+}
+
+function saveSalesSpecialNote() {
+  const noteEl = document.getElementById("salesSpecialNote");
+  if (!noteEl) return;
+
+  localStorage.setItem(getSalesNoteKey(), noteEl.value);
+}
 
 function renderSalesChannelSummary() {
   const wrap = document.getElementById("salesChannelSummaryWrap");
