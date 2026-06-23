@@ -4390,6 +4390,10 @@ function updateSalesMonthLabel() {
   }월`;
 }
 
+function getSalesMonthKey(date = currentSalesMonth) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 let currentSalesChannel = "all";
 
 let currentSalesMonth = new Date();
@@ -4435,49 +4439,69 @@ async function saveSalesReportToServer(reportData) {
 }
 
 function normalizeSalesStorage(data) {
-  if (data?.channels) {
-    return {
-      productId: data.productId || "blackgoat_30",
-      productName: data.productName || "흑염소진액",
-      channels: {
-        naver: data.channels.naver || null,
-        coupang: data.channels.coupang || null,
-      },
-      updatedAt: data.updatedAt || null,
-    };
-  }
-
-  if (data?.dailyRows && data?.channel) {
-    return {
-      productId: "blackgoat_30",
-      productName: "흑염소진액",
-      channels: {
-        [data.channel]: data,
-      },
-      updatedAt: data.savedAt || new Date().toISOString(),
-    };
-  }
-
-  return {
+  const emptyStorage = {
     productId: "blackgoat_30",
     productName: "흑염소진액",
     channels: {
-      naver: null,
-      coupang: null,
+      naver: { months: {} },
+      coupang: { months: {} },
     },
     updatedAt: null,
   };
+
+  if (!data) return emptyStorage;
+
+  const storage = {
+    productId: data.productId || "blackgoat_30",
+    productName: data.productName || "흑염소진액",
+    channels: {
+      naver: { months: {} },
+      coupang: { months: {} },
+    },
+    updatedAt: data.updatedAt || null,
+  };
+
+  ["naver", "coupang"].forEach((channel) => {
+    const channelData = data.channels?.[channel];
+
+    if (!channelData) return;
+
+    if (channelData.months) {
+      storage.channels[channel].months = channelData.months;
+      return;
+    }
+
+    if (channelData.dailyRows) {
+      const monthKey = `${channelData.year}-${String(channelData.month).padStart(2, "0")}`;
+      storage.channels[channel].months[monthKey] = channelData;
+    }
+  });
+
+  if (data.dailyRows && data.channel) {
+    const monthKey = `${data.year}-${String(data.month).padStart(2, "0")}`;
+    storage.channels[data.channel].months[monthKey] = data;
+  }
+
+  return storage;
 }
 
 function getVisibleSalesReport() {
   salesReportCache = normalizeSalesStorage(salesReportCache);
 
+  const monthKey = getSalesMonthKey();
+
   if (currentSalesChannel === "naver") {
-    return salesReportCache.channels.naver || createEmptySalesReport("naver");
+    return (
+      salesReportCache.channels.naver.months[monthKey] ||
+      createEmptySalesReport("naver")
+    );
   }
 
   if (currentSalesChannel === "coupang") {
-    return salesReportCache.channels.coupang || createEmptySalesReport("coupang");
+    return (
+      salesReportCache.channels.coupang.months[monthKey] ||
+      createEmptySalesReport("coupang")
+    );
   }
 
   return buildIntegratedSalesReport(salesReportCache.channels);
@@ -4508,7 +4532,12 @@ function createEmptySalesReport(channel = "all") {
 }
 
 function buildIntegratedSalesReport(channels = {}) {
-  const reports = Object.values(channels).filter(Boolean);
+  const monthKey = getSalesMonthKey();
+
+  const reports = [
+    channels.naver?.months?.[monthKey],
+    channels.coupang?.months?.[monthKey],
+  ].filter(Boolean);
 
   if (!reports.length) {
     return createEmptySalesReport("all");
@@ -4531,16 +4560,18 @@ function buildIntegratedSalesReport(channels = {}) {
           refundAmount: 0,
           refundQty: 0,
           naverSales: 0,
-          coupangSales: 0,  
+          coupangSales: 0,
           isOutOfRange: row.isOutOfRange,
         });
       }
 
       const target = rowMap.get(row.date);
+
       target.customers += Number(row.customers || 0);
       target.orderCount += Number(row.orderCount || 0);
       target.qty += Number(row.qty || 0);
       target.sales += Number(row.sales || 0);
+
       if (report.channel === "naver") {
         target.naverSales += Number(row.sales || 0);
       }
@@ -4548,6 +4579,7 @@ function buildIntegratedSalesReport(channels = {}) {
       if (report.channel === "coupang") {
         target.coupangSales += Number(row.sales || 0);
       }
+
       target.refundCount += Number(row.refundCount || 0);
       target.refundAmount += Number(row.refundAmount || 0);
       target.refundQty += Number(row.refundQty || 0);
@@ -4563,35 +4595,22 @@ function buildIntegratedSalesReport(channels = {}) {
 
   const grossSales = validRows.reduce((sum, row) => sum + row.sales, 0);
   const grossQty = validRows.reduce((sum, row) => sum + row.qty, 0);
+  const grossCustomer = validRows.reduce((sum, row) => sum + row.customers, 0);
 
   const refundCount = validRows.reduce((sum, row) => sum + row.refundCount, 0);
   const refundAmount = validRows.reduce((sum, row) => sum + row.refundAmount, 0);
-  const refundQty = validRows.reduce((sum, row) => sum + (row.refundQty || 0), 0);
-
-  const grossCustomer = validRows.reduce((sum, row) => sum + row.customers, 0);
+  const refundQty = validRows.reduce((sum, row) => sum + row.refundQty, 0);
 
   const totalCustomer = Math.max(grossCustomer - refundCount, 0);
   const totalQty = Math.max(grossQty - refundQty, 0);
   const totalSales = Math.max(grossSales - refundAmount, 0);
 
-  const monthlyRows = Array.from({ length: 12 }, (_, i) => {
-    const monthNo = i + 1;
-    const sales = reports.reduce((sum, report) => {
-      const monthRow = (report.monthlyRows || []).find((r) => r.month === monthNo);
-      return sum + Number(monthRow?.sales || 0);
-    }, 0);
-
-    return {
-      month: monthNo,
-      sales,
-      isCurrent: monthNo === base.month,
-    };
-  });
+  const monthlyRows = buildSalesMonthlyRows(channels);
 
   return {
     channel: "all",
-    year: base.year,
-    month: base.month,
+    year: currentSalesMonth.getFullYear(),
+    month: currentSalesMonth.getMonth() + 1,
     start: base.start,
     end: base.end,
     dailyRows,
@@ -4605,6 +4624,29 @@ function buildIntegratedSalesReport(channels = {}) {
     avgSet: totalQty ? Math.round(totalSales / totalQty) : 0,
     savedAt: new Date().toISOString(),
   };
+}
+
+function buildSalesMonthlyRows(channels = {}) {
+  const year = currentSalesMonth.getFullYear();
+
+  return Array.from({ length: 12 }, (_, i) => {
+    const monthNo = i + 1;
+    const monthKey = `${year}-${String(monthNo).padStart(2, "0")}`;
+
+    const naverSales = Number(
+      channels.naver?.months?.[monthKey]?.totalSales || 0
+    );
+
+    const coupangSales = Number(
+      channels.coupang?.months?.[monthKey]?.totalSales || 0
+    );
+
+    return {
+      month: monthNo,
+      sales: naverSales + coupangSales,
+      isCurrent: monthNo === currentSalesMonth.getMonth() + 1,
+    };
+  });
 }
 
 function openSalesModal() {
@@ -5114,8 +5156,15 @@ function renderSalesChannelSummary() {
 
   const storage = normalizeSalesStorage(salesReportCache);
 
-  const naverSales = Number(storage.channels.naver?.totalSales || 0);
-  const coupangSales = Number(storage.channels.coupang?.totalSales || 0);
+  const monthKey = getSalesMonthKey();
+
+  const naverSales = Number(
+    storage.channels.naver?.months?.[monthKey]?.totalSales || 0
+  );
+
+  const coupangSales = Number(
+    storage.channels.coupang?.months?.[monthKey]?.totalSales || 0
+  );
   const total = naverSales + coupangSales;
 
   const naverRatio = total
