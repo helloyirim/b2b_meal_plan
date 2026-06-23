@@ -784,9 +784,92 @@
 
 .sales-main-grid {
   display: grid;
-  grid-template-columns: 1.75fr 0.8fr 1.05fr;
+  grid-template-columns: 2.4fr 1fr;
   gap: 16px;
+  align-items: start;
   margin-bottom: 16px;
+}
+
+.sales-left-col,
+.sales-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.channel-summary-row,
+.top-sales-row {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px dashed #dbe3ef;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.channel-summary-row:last-child,
+.top-sales-row:last-child {
+  border-bottom: 0;
+}
+
+.channel-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+.channel-badge.naver {
+  background: #2DB400;
+}
+
+.channel-badge.coupang {
+  background: #E94B22;
+}
+
+.channel-summary-amount {
+  text-align: right;
+}
+
+.channel-summary-ratio {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.channel-summary-ratio.naver {
+  color: #2DB400;
+}
+
+.channel-summary-ratio.coupang {
+  color: #E94B22;
+}
+
+.top-rank-icon {
+  font-size: 24px;
+  text-align: center;
+}
+
+.top-sales-date {
+  color: #111827;
+}
+
+.top-sales-date span {
+  color: #64748b;
+  font-size: 13px;
+  margin-left: 4px;
+}
+
+.top-sales-amount {
+  text-align: right;
+  color: #111827;
 }
 
 .channel-share-box {
@@ -982,6 +1065,54 @@
   font-size: 13px;
   padding: 9px 12px;
   margin-bottom: 4px;
+}
+
+.sales-left-col .sales-panel:nth-child(2) {
+  min-height: 230px;
+}
+
+.monthly-sales-list.vertical {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  align-items: end;
+  height: 170px;
+  gap: 10px;
+  padding-top: 18px;
+}
+
+.monthly-sales-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.monthly-bar-vertical-wrap {
+  width: 100%;
+  height: 110px;
+  background: #eef2f7;
+  display: flex;
+  align-items: flex-end;
+}
+
+.monthly-bar-vertical {
+  width: 100%;
+  background: #9aa8bd;
+}
+
+.monthly-sales-col.current .monthly-bar-vertical {
+  background: #1d5fd1;
+}
+
+.monthly-amount-vertical {
+  height: 16px;
+  font-size: 11px;
+  color: #111827;
+  white-space: nowrap;
 }
 
     </style>
@@ -1345,20 +1476,32 @@
             </div>
           
             <div class="sales-main-grid">
-              <section class="sales-panel wide">
-                <div class="sales-panel-title">일별 매출 추이 <span>(단위 : 원)</span></div>
-                <canvas id="salesDailyChart" height="180"></canvas>
-              </section>
+              <div class="sales-left-col">
+                <section class="sales-panel wide">
+                  <div class="sales-panel-title">
+                    일별 매출 추이 
+                    <span id="salesChartLegend">(단위 : 원)</span>
+                  </div>
+                  <canvas id="salesDailyChart" height="180"></canvas>
+                </section>
             
-              <section class="sales-panel" id="salesChannelSharePanel">
-                <div class="sales-panel-title">채널별 매출 비중</div>
-                <div id="salesChannelShareWrap"></div>
-              </section>
+                <section class="sales-panel">
+                  <div class="sales-panel-title">월별 매출 현황 <span>(단위 : 원)</span></div>
+                  <div id="salesMonthlyTableWrap"></div>
+                </section>
+              </div>
             
-              <section class="sales-panel">
-                <div class="sales-panel-title">월별 매출 현황 <span>(단위 : 원)</span></div>
-                <div id="salesMonthlyTableWrap"></div>
-              </section>
+              <div class="sales-right-col">
+                <section class="sales-panel">
+                  <div class="sales-panel-title">TOP 매출일 <span>(단위 : 원)</span></div>
+                  <div id="salesTopDaysWrap"></div>
+                </section>
+            
+                <section class="sales-panel">
+                  <div class="sales-panel-title">채널 요약 <span>(단위 : 원)</span></div>
+                  <div id="salesChannelSummaryWrap"></div>
+                </section>
+              </div>
             </div>
           
             <section class="sales-panel">
@@ -4425,6 +4568,8 @@ function buildIntegratedSalesReport(channels = {}) {
           refundCount: 0,
           refundAmount: 0,
           refundQty: 0,
+          naverSales: 0,
+          coupangSales: 0,  
           isOutOfRange: row.isOutOfRange,
         });
       }
@@ -4434,6 +4579,13 @@ function buildIntegratedSalesReport(channels = {}) {
       target.orderCount += Number(row.orderCount || 0);
       target.qty += Number(row.qty || 0);
       target.sales += Number(row.sales || 0);
+      if (report.channel === "naver") {
+        target.naverSales += Number(row.sales || 0);
+      }
+
+      if (report.channel === "coupang") {
+        target.coupangSales += Number(row.sales || 0);
+      }
       target.refundCount += Number(row.refundCount || 0);
       target.refundAmount += Number(row.refundAmount || 0);
       target.refundQty += Number(row.refundQty || 0);
@@ -4707,7 +4859,8 @@ function renderSalesReport(data) {
     renderSalesDailyTable(data.dailyRows);
     renderSalesMonthlyTable(data.monthlyRows);
     renderSalesDailyChart(data.dailyRows);
-    renderSalesChannelShare();
+    renderSalesTopDays(data.dailyRows);
+    renderSalesChannelSummary();
 }
 
 function renderSalesDailyTable(rows) {
@@ -4836,20 +4989,23 @@ function renderSalesChannelShare() {
 }
 
 function renderSalesMonthlyTable(rows) {
-  let maxSales = Math.max(...rows.map((row) => row.sales), 1);
+  const maxSales = Math.max(...rows.map((row) => Number(row.sales || 0)), 1);
 
-  let html = `<div class="monthly-sales-list">`;
+  let html = `<div class="monthly-sales-list vertical">`;
 
   rows.forEach((row) => {
-    const width = row.sales ? Math.max((row.sales / maxSales) * 100, 8) : 0;
+    const sales = Number(row.sales || 0);
+    const height = sales ? Math.max((sales / maxSales) * 100, 8) : 0;
 
     html += `
-      <div class="monthly-sales-row ${row.isCurrent ? "current" : ""}">
-        <div class="month-label">${row.month}월</div>
-        <div class="month-bar-wrap">
-          <div class="month-bar" style="width:${width}%"></div>
+      <div class="monthly-sales-col ${row.isCurrent ? "current" : ""}">
+        <div class="monthly-amount-vertical">
+          ${sales ? sales.toLocaleString() : ""}
         </div>
-        <div class="month-amount">${row.sales ? row.sales.toLocaleString() : "-"}</div>
+        <div class="monthly-bar-vertical-wrap">
+          <div class="monthly-bar-vertical" style="height:${height}%"></div>
+        </div>
+        <div>${row.month}월</div>
       </div>
     `;
   });
@@ -4874,66 +5030,237 @@ function renderSalesDailyChart(rows) {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, width, height);
 
-  const chartRows = rows.filter((row) => !row.isOutOfRange);
-  const maxSales = Math.max(...chartRows.map((row) => row.sales), 1);
+  const chartRows = (rows || []).filter((row) => !row.isOutOfRange);
+  const maxSales = Math.max(...chartRows.map((row) => Number(row.sales || 0)), 1);
 
-  const paddingLeft = 48;
-  const paddingRight = 28;
-  const paddingTop = 32;
-  const paddingBottom = 34;
+  const paddingLeft = 56;
+  const paddingRight = 24;
+  const paddingTop = 34;
+  const paddingBottom = 42;
 
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
+  const NAVER_COLOR = "#2DB400";
+  const COUPANG_COLOR = "#E94B22";
+  const SINGLE_COLOR = "#1d5fd1";
+
+  const legend = document.getElementById("salesChartLegend");
+  if (legend) {
+    if (currentSalesChannel === "all") {
+      legend.innerHTML = `
+        <span style="color:${NAVER_COLOR}; font-weight:800;">■ 네이버</span>
+        &nbsp;&nbsp;
+        <span style="color:${COUPANG_COLOR}; font-weight:800;">■ 쿠팡</span>
+        &nbsp;&nbsp;
+        <span style="color:#53627c;">(단위 : 원)</span>
+      `;
+    } else {
+      legend.innerHTML = `(단위 : 원)`;
+    }
+  }
+
   ctx.strokeStyle = "#e5eaf2";
   ctx.lineWidth = 1;
+  ctx.font = "11px Pretendard";
+  ctx.fillStyle = "#64748b";
+  ctx.textAlign = "right";
 
   for (let i = 0; i <= 5; i++) {
     const y = paddingTop + (chartHeight / 5) * i;
+    const value = Math.round(maxSales - (maxSales / 5) * i);
+
     ctx.beginPath();
     ctx.moveTo(paddingLeft, y);
     ctx.lineTo(width - paddingRight, y);
     ctx.stroke();
+
+    ctx.fillText(value.toLocaleString(), paddingLeft - 8, y + 4);
   }
 
-  const gap = chartWidth / Math.max(chartRows.length - 1, 1);
-
-  ctx.beginPath();
-
-  chartRows.forEach((row, index) => {
-    const x = paddingLeft + gap * index;
-    const y = paddingTop + chartHeight - (row.sales / maxSales) * chartHeight;
-
-    if (index === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-
-  ctx.strokeStyle = "#1d5fd1";
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  const count = chartRows.length || 1;
+  const slotWidth = chartWidth / count;
+  const barWidth = Math.min(26, Math.max(10, slotWidth * 0.48));
 
   chartRows.forEach((row, index) => {
-    const x = paddingLeft + gap * index;
-    const y = paddingTop + chartHeight - (row.sales / maxSales) * chartHeight;
+    const totalSales = Number(row.sales || 0);
+    const naverSales =
+      currentSalesChannel === "all"
+        ? Number(row.naverSales || 0)
+        : totalSales;
+    const coupangSales =
+      currentSalesChannel === "all"
+        ? Number(row.coupangSales || 0)
+        : 0;
 
-    ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = "#1d5fd1";
-    ctx.fill();
+    const x = paddingLeft + slotWidth * index + slotWidth / 2 - barWidth / 2;
+    const baseY = paddingTop + chartHeight;
 
-    if (row.sales > 0) {
-      ctx.font = "11px Pretendard";
-      ctx.fillStyle = "#1d5fd1";
+    const totalHeight = totalSales ? (totalSales / maxSales) * chartHeight : 0;
+    const naverHeight = totalSales
+      ? (naverSales / maxSales) * chartHeight
+      : 0;
+    const coupangHeight = totalSales
+      ? (coupangSales / maxSales) * chartHeight
+      : 0;
+
+    if (currentSalesChannel === "all") {
+      ctx.fillStyle = NAVER_COLOR;
+      ctx.fillRect(x, baseY - naverHeight, barWidth, naverHeight);
+
+      ctx.fillStyle = COUPANG_COLOR;
+      ctx.fillRect(
+        x,
+        baseY - naverHeight - coupangHeight,
+        barWidth,
+        coupangHeight
+      );
+    } else {
+      ctx.fillStyle = SINGLE_COLOR;
+      ctx.fillRect(x, baseY - totalHeight, barWidth, totalHeight);
+    }
+
+    if (totalSales > 0) {
+      ctx.font = "10px Pretendard";
+      ctx.fillStyle = "#111827";
       ctx.textAlign = "center";
-      ctx.fillText(row.sales.toLocaleString(), x, y - 10);
+      ctx.fillText(
+        totalSales.toLocaleString(),
+        x + barWidth / 2,
+        baseY - totalHeight - 8
+      );
     }
 
     ctx.font = "11px Pretendard";
     ctx.fillStyle = "#475569";
     ctx.textAlign = "center";
-    ctx.fillText(row.date.slice(5).replace("-", "/"), x, height - 10);
+    ctx.fillText(
+      row.date.slice(5).replace("-", "/"),
+      x + barWidth / 2,
+      height - 12
+    );
   });
 }
+
+
+function renderSalesTopDays(rows) {
+  const wrap = document.getElementById("salesTopDaysWrap");
+  if (!wrap) return;
+
+  const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+
+  const topRows = (rows || [])
+    .filter((row) => !row.isOutOfRange && Number(row.sales || 0) > 0)
+    .sort((a, b) => Number(b.sales || 0) - Number(a.sales || 0))
+    .slice(0, 3);
+
+  if (!topRows.length) {
+    wrap.innerHTML = `<div style="padding:24px 0; color:#94a3b8; font-weight:700;">매출 데이터가 없습니다.</div>`;
+    return;
+  }
+
+  const icons = ["🏆", "🥈", "🥉"];
+
+  wrap.innerHTML = topRows
+    .map((row, index) => {
+      const dateObj = new Date(row.date);
+      const dayName = dayNames[dateObj.getDay()];
+      const dateText = row.date.slice(5).replace("-", "/");
+
+      return `
+        <div class="top-sales-row">
+          <div class="top-rank-icon">${icons[index]}</div>
+          <div class="top-sales-date">
+            ${dateText}
+            <span>(${dayName})</span>
+          </div>
+          <div class="top-sales-amount">
+            ${Number(row.sales || 0).toLocaleString()}원
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+
+function renderSalesChannelSummary() {
+  const wrap = document.getElementById("salesChannelSummaryWrap");
+  if (!wrap) return;
+
+  if (currentSalesChannel !== "all") {
+    const report = getVisibleSalesReport();
+
+    const grossSales = (report.dailyRows || [])
+      .filter((row) => !row.isOutOfRange)
+      .reduce((sum, row) => sum + Number(row.sales || 0), 0);
+
+    const refundAmount = Number(report.refundAmount || 0);
+    const netSales = Math.max(grossSales - refundAmount, 0);
+
+    const refundRatio = grossSales
+      ? Math.round((refundAmount / grossSales) * 1000) / 10
+      : 0;
+
+    const netRatio = Math.max(100 - refundRatio, 0);
+
+    wrap.innerHTML = `
+      <div class="channel-summary-row">
+        <div class="channel-badge naver">S</div>
+        <div>정상매출</div>
+        <div class="channel-summary-amount">
+          ${netSales.toLocaleString()}원
+          <span class="channel-summary-ratio naver">${netRatio}%</span>
+        </div>
+      </div>
+
+      <div class="channel-summary-row">
+        <div class="channel-badge coupang">R</div>
+        <div>환불</div>
+        <div class="channel-summary-amount">
+          ${refundAmount.toLocaleString()}원
+          <span class="channel-summary-ratio coupang">${refundRatio}%</span>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const storage = normalizeSalesStorage(salesReportCache);
+
+  const naverSales = Number(storage.channels.naver?.totalSales || 0);
+  const coupangSales = Number(storage.channels.coupang?.totalSales || 0);
+  const total = naverSales + coupangSales;
+
+  const naverRatio = total
+    ? Math.round((naverSales / total) * 1000) / 10
+    : 0;
+
+  const coupangRatio = total
+    ? Math.round((coupangSales / total) * 1000) / 10
+    : 0;
+
+  wrap.innerHTML = `
+    <div class="channel-summary-row">
+      <div class="channel-badge naver">N</div>
+      <div>네이버</div>
+      <div class="channel-summary-amount">
+        ${naverSales.toLocaleString()}원
+        <span class="channel-summary-ratio naver">${naverRatio}%</span>
+      </div>
+    </div>
+
+    <div class="channel-summary-row">
+      <div class="channel-badge coupang">C</div>
+      <div>쿠팡</div>
+      <div class="channel-summary-amount">
+        ${coupangSales.toLocaleString()}원
+        <span class="channel-summary-ratio coupang">${coupangRatio}%</span>
+      </div>
+    </div>
+  `;
+}
+
 
       // =========================
       // 초기 실행
