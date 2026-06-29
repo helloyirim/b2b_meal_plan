@@ -1357,7 +1357,7 @@
               </button>
             </div>
           </div>
-
+          <div class="sales-product-filter" id="salesProductFilter"></div>
           <div id="sales-report-area" class="sales-report-area">
 
             <div class="sales-kpi-grid">
@@ -1456,6 +1456,10 @@
 
             <div class="calendar-modal-body">
 
+              <div class="field" style="margin-bottom:12px;">
+                <label for="salesRawProduct">상품 선택</label>
+                <select id="salesRawProduct"></select>
+              </div>
               <div class="field" style="margin-bottom:12px;">
                 <label for="salesRawChannel">채널 선택</label>
                 <select id="salesRawChannel">
@@ -4364,7 +4368,7 @@ function showSalesPage(channel = "all") {
 
   const title = document.querySelector("#page-sales .calendar-page-title");
   if (title) {
-    title.innerText = SALES_CHANNEL_LABELS[channel] + " 매출보고";
+    title.innerText = `${getSalesProductTitle()} ${SALES_CHANNEL_LABELS[channel]} 매출보고`;
   }
 
   if (salesReportCache) {
@@ -4394,13 +4398,82 @@ function getSalesMonthKey(date = currentSalesMonth) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function renderSalesProductFilter() {
+  const wrap = document.getElementById("salesProductFilter");
+  const rawSelect = document.getElementById("salesRawProduct");
+
+  if (wrap) {
+    wrap.innerHTML = `
+      <label>
+        <input type="checkbox" id="salesProductAll" onchange="toggleAllSalesProducts(this)" checked>
+        전체
+      </label>
+      ${Object.entries(SALES_PRODUCTS)
+        .map(([id, name]) => `
+          <label>
+            <input type="checkbox" class="sales-product-check" value="${id}" checked onchange="updateSelectedSalesProducts()">
+            ${name}
+          </label>
+        `)
+        .join("")}
+    `;
+  }
+
+  if (rawSelect) {
+    rawSelect.innerHTML = Object.entries(SALES_PRODUCTS)
+      .map(([id, name]) => `<option value="${id}">${name}</option>`)
+      .join("");
+  }
+}
+
+function toggleAllSalesProducts(el) {
+  document.querySelectorAll(".sales-product-check").forEach((check) => {
+    check.checked = el.checked;
+  });
+
+  updateSelectedSalesProducts();
+}
+
+function updateSelectedSalesProducts() {
+  const checked = Array.from(
+    document.querySelectorAll(".sales-product-check:checked")
+  ).map((el) => el.value);
+
+  currentSalesProducts = checked.length ? checked : Object.keys(SALES_PRODUCTS);
+
+  const allCheck = document.getElementById("salesProductAll");
+  if (allCheck) {
+    allCheck.checked =
+      currentSalesProducts.length === Object.keys(SALES_PRODUCTS).length;
+  }
+
+  renderSalesReport(getVisibleSalesReport());
+}
+
+function getSalesProductTitle() {
+  const allIds = Object.keys(SALES_PRODUCTS);
+
+  if (currentSalesProducts.length === allIds.length) return "전체 상품";
+  if (currentSalesProducts.length === 1) return SALES_PRODUCTS[currentSalesProducts[0]];
+
+  return `${currentSalesProducts.length}개 상품`;
+}
+
 let currentSalesChannel = "all";
+const SALES_PRODUCTS = {
+  blackgoat_30: "흑염소진액",
+  maesil_500: "매실 500ml",
+  maesil_1500: "매실 1.5L",
+  cheongmaesil_10: "우리땅청매실 10개입",
+};
+
+let currentSalesProducts = Object.keys(SALES_PRODUCTS);
 
 let currentSalesMonth = new Date();
 currentSalesMonth.setDate(1);
 
 const SALES_CHANNEL_LABELS = {
-  all: "흑염소진액 통합",
+  all: "통합",
   naver: "네이버 스마트스토어",
   coupang: "쿠팡",
 };
@@ -4412,6 +4485,7 @@ async function loadSalesReportFromServer() {
     const data = await apiGet("/blackgoat-sales");
 
     salesReportCache = normalizeSalesStorage(data);
+    renderSalesProductFilter();
 
     if (salesReportCache) {
       renderSalesReport(getVisibleSalesReport());
@@ -4419,20 +4493,31 @@ async function loadSalesReportFromServer() {
   } catch (e) {
     console.error("흑염소 매출보고 로딩 실패:", e);
     salesReportCache = normalizeSalesStorage(null);
+    renderSalesProductFilter();
   }
 }
 
 async function saveSalesReportToServer(reportData) {
+  const productId = reportData.productId || "blackgoat_30";
   const channel = reportData.channel || "naver";
-
-  salesReportCache = normalizeSalesStorage(salesReportCache);
   const monthKey = `${reportData.year}-${String(reportData.month).padStart(2, "0")}`;
 
-    if (!salesReportCache.channels[channel]) {
-      salesReportCache.channels[channel] = { months: {} };
-    }
+  salesReportCache = normalizeSalesStorage(salesReportCache);
 
-    salesReportCache.channels[channel].months[monthKey] = reportData;
+  if (!salesReportCache.products[productId]) {
+    salesReportCache.products[productId] = {
+      productId,
+      productName: SALES_PRODUCTS[productId] || productId,
+      channels: {
+        naver: { months: {} },
+        coupang: { months: {} },
+      },
+    };
+  }
+
+  salesReportCache.products[productId].channels[channel].months[monthKey] =
+    reportData;
+
   salesReportCache.updatedAt = new Date().toISOString();
 
   await apiPost("/blackgoat-sales", salesReportCache);
