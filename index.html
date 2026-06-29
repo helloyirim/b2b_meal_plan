@@ -4514,8 +4514,27 @@ function updateSelectedSalesProducts() {
 function getSalesProductTitle() {
   const allIds = Object.keys(SALES_PRODUCTS);
 
-  if (currentSalesProducts.length === allIds.length) return "전체 상품";
-  if (currentSalesProducts.length === 1) return SALES_PRODUCTS[currentSalesProducts[0]];
+  const maesilIds = [
+    "maesil_500",
+    "maesil_1500",
+    "cheongmaesil_10",
+  ];
+
+  if (currentSalesProducts.length === allIds.length) {
+    return "전체 상품";
+  }
+
+  if (currentSalesProducts.length === 1) {
+    return SALES_PRODUCTS[currentSalesProducts[0]];
+  }
+
+  const onlyMaesil = currentSalesProducts.every((id) =>
+    maesilIds.includes(id)
+  );
+
+  if (onlyMaesil) {
+    return `매실 ${currentSalesProducts.length}개 상품`;
+  }
 
   return `${currentSalesProducts.length}개 상품`;
 }
