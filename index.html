@@ -3102,19 +3102,34 @@
         const session = getCurrentUser();
         if (session.role !== "VIEWER") return;
 
-        document.querySelectorAll("button, input, textarea, select").forEach((el) => {
-          if (el.closest("#login-overlay")) return;
+        // 상품 매출보고로 강제 이동
+        showSalesPage("all");
 
-          el.disabled = true;
+        // 상품매출보고 외 메뉴는 보이되 클릭 막기
+        ["nav-calendar", "nav-gen", "nav-his", "nav-set"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+
+          el.style.opacity = "0.45";
+          el.style.cursor = "not-allowed";
+          el.onclick = () => {
+            alert("조회전용 계정은 상품 매출보고만 확인 가능합니다.");
+          };
         });
 
-        document.querySelectorAll(".btn-red").forEach((el) => {
-          el.style.display = "none";
-        });
+        // 입력 버튼 숨김
+        const salesBtn = document.getElementById("openSalesModalBtn");
+        if (salesBtn) salesBtn.style.display = "none";
 
-        document.querySelectorAll("#openModalBtn, #openSalesModalBtn").forEach((el) => {
-          el.style.display = "none";
-        });
+        // 상품/월 조회용 컨트롤은 살리고, 나머지 입력은 막기
+        document.querySelectorAll("#page-sales input, #page-sales textarea, #page-sales select, #page-sales button")
+          .forEach((el) => {
+            if (el.closest(".calendar-month-nav")) return;
+            if (el.id === "salesProductAll") return;
+            if (el.classList.contains("sales-product-check")) return;
+
+            el.disabled = true;
+          });
       }
 
       function logout() {
