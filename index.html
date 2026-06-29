@@ -4524,47 +4524,53 @@ async function saveSalesReportToServer(reportData) {
 }
 
 function normalizeSalesStorage(data) {
-  const emptyStorage = {
-    productId: "blackgoat_30",
-    productName: "흑염소진액",
+  const emptyProduct = () => ({
     channels: {
       naver: { months: {} },
       coupang: { months: {} },
     },
-    updatedAt: null,
-  };
-
-  if (!data) return emptyStorage;
-
-  const storage = {
-    productId: data.productId || "blackgoat_30",
-    productName: data.productName || "흑염소진액",
-    channels: {
-      naver: { months: {} },
-      coupang: { months: {} },
-    },
-    updatedAt: data.updatedAt || null,
-  };
-
-  ["naver", "coupang"].forEach((channel) => {
-    const channelData = data.channels?.[channel];
-
-    if (!channelData) return;
-
-    if (channelData.months) {
-      storage.channels[channel].months = channelData.months;
-      return;
-    }
-
-    if (channelData.dailyRows) {
-      const monthKey = `${channelData.year}-${String(channelData.month).padStart(2, "0")}`;
-      storage.channels[channel].months[monthKey] = channelData;
-    }
   });
 
-  if (data.dailyRows && data.channel) {
-    const monthKey = `${data.year}-${String(data.month).padStart(2, "0")}`;
-    storage.channels[data.channel].months[monthKey] = data;
+  const storage = {
+    products: {},
+    updatedAt: data?.updatedAt || null,
+  };
+
+  Object.entries(SALES_PRODUCTS).forEach(([productId, productName]) => {
+    storage.products[productId] = {
+      productId,
+      productName,
+      ...emptyProduct(),
+    };
+  });
+
+  if (!data) return storage;
+
+  if (data.products) {
+    Object.entries(data.products).forEach(([productId, productData]) => {
+      if (!storage.products[productId]) {
+        storage.products[productId] = {
+          productId,
+          productName: productData.productName || productId,
+          ...emptyProduct(),
+        };
+      }
+
+      ["naver", "coupang"].forEach((channel) => {
+        storage.products[productId].channels[channel] =
+          productData.channels?.[channel] || { months: {} };
+      });
+    });
+
+    return storage;
+  }
+
+  // 기존 흑염소 단일 구조 자동 이관
+  if (data.channels) {
+    storage.products.blackgoat_30.channels = {
+      naver: data.channels.naver || { months: {} },
+      coupang: data.channels.coupang || { months: {} },
+    };
   }
 
   return storage;
@@ -4572,24 +4578,35 @@ function normalizeSalesStorage(data) {
 
 function getVisibleSalesReport() {
   salesReportCache = normalizeSalesStorage(salesReportCache);
+  return buildSelectedProductsSalesReport();
+}
 
+function buildSelectedProductsSalesReport() {
   const monthKey = getSalesMonthKey();
+  const reports = [];
 
-  if (currentSalesChannel === "naver") {
-    return (
-      salesReportCache.channels.naver.months[monthKey] ||
-      createEmptySalesReport("naver")
-    );
+  currentSalesProducts.forEach((productId) => {
+    const product = salesReportCache.products?.[productId];
+    if (!product) return;
+
+    if (currentSalesChannel === "naver" || currentSalesChannel === "all") {
+      const naverReport = product.channels.naver?.months?.[monthKey];
+      if (naverReport) reports.push(naverReport);
+    }
+
+    if (currentSalesChannel === "coupang" || currentSalesChannel === "all") {
+      const coupangReport = product.channels.coupang?.months?.[monthKey];
+      if (coupangReport) reports.push(coupangReport);
+    }
+  });
+
+  if (!reports.length) {
+    const empty = createEmptySalesReport(currentSalesChannel);
+    empty.monthlyRows = buildSalesMonthlyRows();
+    return empty;
   }
 
-  if (currentSalesChannel === "coupang") {
-    return (
-      salesReportCache.channels.coupang.months[monthKey] ||
-      createEmptySalesReport("coupang")
-    );
-  }
-
-  return buildIntegratedSalesReport(salesReportCache.channels);
+  return mergeSalesReports(reports);
 }
 
 function createEmptySalesReport(channel = "all") {
@@ -4616,19 +4633,7 @@ function createEmptySalesReport(channel = "all") {
   };
 }
 
-function buildIntegratedSalesReport(channels = {}) {
-  const monthKey = getSalesMonthKey();
-
-  const reports = [
-    channels.naver?.months?.[monthKey],
-    channels.coupang?.months?.[monthKey],
-  ].filter(Boolean);
-
-  if (!reports.length) {
-    return createEmptySalesReport("all");
-  }
-
-  const base = reports[0];
+function mergeSalesReports(reports = []) {
   const rowMap = new Map();
 
   reports.forEach((report) => {
@@ -4690,16 +4695,14 @@ function buildIntegratedSalesReport(channels = {}) {
   const totalQty = Math.max(grossQty - refundQty, 0);
   const totalSales = Math.max(grossSales - refundAmount, 0);
 
-  const monthlyRows = buildSalesMonthlyRows(channels);
-
   return {
-    channel: "all",
+    channel: currentSalesChannel,
     year: currentSalesMonth.getFullYear(),
     month: currentSalesMonth.getMonth() + 1,
-    start: base.start,
-    end: base.end,
+    start: reports[0]?.start || "",
+    end: reports[0]?.end || "",
     dailyRows,
-    monthlyRows,
+    monthlyRows: buildSalesMonthlyRows(),
     totalCustomer,
     totalQty,
     totalSales,
@@ -4711,24 +4714,33 @@ function buildIntegratedSalesReport(channels = {}) {
   };
 }
 
-function buildSalesMonthlyRows(channels = {}) {
+
+
+function buildSalesMonthlyRows() {
   const year = currentSalesMonth.getFullYear();
 
   return Array.from({ length: 12 }, (_, i) => {
     const monthNo = i + 1;
     const monthKey = `${year}-${String(monthNo).padStart(2, "0")}`;
 
-    const naverSales = Number(
-      channels.naver?.months?.[monthKey]?.totalSales || 0
-    );
+    let sales = 0;
 
-    const coupangSales = Number(
-      channels.coupang?.months?.[monthKey]?.totalSales || 0
-    );
+    currentSalesProducts.forEach((productId) => {
+      const product = salesReportCache.products?.[productId];
+      if (!product) return;
+
+      if (currentSalesChannel === "naver" || currentSalesChannel === "all") {
+        sales += Number(product.channels.naver?.months?.[monthKey]?.totalSales || 0);
+      }
+
+      if (currentSalesChannel === "coupang" || currentSalesChannel === "all") {
+        sales += Number(product.channels.coupang?.months?.[monthKey]?.totalSales || 0);
+      }
+    });
 
     return {
       month: monthNo,
-      sales: naverSales + coupangSales,
+      sales,
       isCurrent: monthNo === currentSalesMonth.getMonth() + 1,
     };
   });
@@ -5240,16 +5252,19 @@ function renderSalesChannelSummary() {
   }
 
   const storage = normalizeSalesStorage(salesReportCache);
-
   const monthKey = getSalesMonthKey();
 
-  const naverSales = Number(
-    storage.channels.naver?.months?.[monthKey]?.totalSales || 0
-  );
+  let naverSales = 0;
+  let coupangSales = 0;
 
-  const coupangSales = Number(
-    storage.channels.coupang?.months?.[monthKey]?.totalSales || 0
-  );
+  currentSalesProducts.forEach((productId) => {
+    const product = storage.products?.[productId];
+    if (!product) return;
+
+    naverSales += Number(product.channels.naver?.months?.[monthKey]?.totalSales || 0);
+    coupangSales += Number(product.channels.coupang?.months?.[monthKey]?.totalSales || 0);
+  });
+
   const total = naverSales + coupangSales;
 
   const naverRatio = total
