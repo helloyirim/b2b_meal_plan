@@ -1939,6 +1939,7 @@
         "jaeyong.choi": { pw: "jy1234", role: "ADMIN", name: "최재용" },
         "jeongmun.lee": { pw: "jm1234", role: "ADMIN", name: "이정문" },
         bondo: { pw: "bondo1234", role: "USER", name: "스태프" },
+        viewer: { pw: "viewer", role: "VIEWER", name: "조회전용" },
       };
 
       const API_URL = "https://b2b-meal-api.wispy-river-05a7.workers.dev";
@@ -3095,6 +3096,25 @@
         }
 
         return true;
+      }
+
+      function applyViewerMode() {
+        const session = getCurrentUser();
+        if (session.role !== "VIEWER") return;
+
+        document.querySelectorAll("button, input, textarea, select").forEach((el) => {
+          if (el.closest("#login-overlay")) return;
+
+          el.disabled = true;
+        });
+
+        document.querySelectorAll(".btn-red").forEach((el) => {
+          el.style.display = "none";
+        });
+
+        document.querySelectorAll("#openModalBtn, #openSalesModalBtn").forEach((el) => {
+          el.style.display = "none";
+        });
       }
 
       function logout() {
@@ -5339,6 +5359,7 @@ function renderSalesChannelSummary() {
         localStorage.removeItem("b2b_menus_cache");
 
         showPage("page-calendar");
+        setTimeout(applyViewerMode, 300);
 
         loadMenusFromServer();
         loadPlansFromServer();
