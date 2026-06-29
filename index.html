@@ -4507,6 +4507,7 @@ function updateSelectedSalesProducts() {
       currentSalesProducts.length === Object.keys(SALES_PRODUCTS).length;
   }
 
+  updateSalesReportTitle();
   renderSalesReport(getVisibleSalesReport());
 }
 
@@ -4517,6 +4518,13 @@ function getSalesProductTitle() {
   if (currentSalesProducts.length === 1) return SALES_PRODUCTS[currentSalesProducts[0]];
 
   return `${currentSalesProducts.length}개 상품`;
+}
+
+function updateSalesReportTitle() {
+  const title = document.querySelector("#page-sales .calendar-page-title");
+  if (!title) return;
+
+  title.innerText = `${getSalesProductTitle()} ${SALES_CHANNEL_LABELS[currentSalesChannel]} 매출보고`;
 }
 
 let currentSalesChannel = "all";
