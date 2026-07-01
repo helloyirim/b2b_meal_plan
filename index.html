@@ -4877,6 +4877,10 @@ function buildSalesMonthlyRows() {
 }
 
 function openSalesModal() {
+  document.getElementById("salesRawInput").value = "";
+  document.getElementById("salesReportStart").value = "";
+  document.getElementById("salesReportEnd").value = "";
+
   document.getElementById("salesModalBackdrop").classList.add("show");
 }
 
@@ -4907,30 +4911,43 @@ function parseSalesRawRows(rawRows, channel) {
 function parseNaverSalesRawRows(rawRows) {
   return rawRows
     .map((row) => row.split("\t"))
-    .filter((cols) => cols[0] && cols[0].startsWith("202"))
+    .filter((cols) => cols[0] && (cols[0].includes("월") || cols[0].startsWith("202")))
     .map((cols) => {
-      const date = formatDateKey(cols[0]);
+      const dateText = String(cols[0] || "").trim();
 
-      const sales = toNumber(cols[5]);
-      const refundAmount = toNumber(cols[15]);
-      const qty = toNumber(cols[8]);
-      const refundQty = toNumber(cols[17]);
+      let date = "";
+
+      // 07월 01일 형식 대응
+      if (dateText.includes("월")) {
+        const monthMatch = dateText.match(/(\d{1,2})월\s*(\d{1,2})일/);
+        const year = currentSalesMonth.getFullYear();
+
+        if (monthMatch) {
+          const month = String(monthMatch[1]).padStart(2, "0");
+          const day = String(monthMatch[2]).padStart(2, "0");
+          date = `${year}-${month}-${day}`;
+        }
+      } else {
+        // 2026-07-01 형식 대응
+        date = formatDateKey(dateText);
+      }
 
       return {
         channel: "naver",
         date,
 
-        customers: toNumber(cols[2]),      // 결제자수
-        orderCount: toNumber(cols[3]),     // 결제수
+        customers: toNumber(cols[1]),      // 상품결제건수 = 결제건수
+        orderCount: toNumber(cols[1]),     // 결제건수 동일 반영
 
-        sales: toNumber(cols[5]),          // 결제금액
-        qty: toNumber(cols[8]),            // 결제상품수량
+        sales: toNumber(cols[3]),          // 판매금액(총) = 결제금액
+        qty: toNumber(cols[5]),            // 결제상품수량 = 판매수량
 
-        refundCount: toNumber(cols[14]),   // 환불건수
-        refundAmount: toNumber(cols[15]),  // 환불금액
-        refundQty: toNumber(cols[17]),     // 환불수량
+        refundCount: toNumber(cols[2]),    // 환불건수
+        refundAmount: toNumber(cols[4]),   // 환불금액
+        refundQty: toNumber(cols[6]),      // 환불상품수량
       };
-    });
+    })
+    .filter((row) => row.date);
 }
 
 function parseCoupangSalesRawRows(rawRows) {
@@ -5447,6 +5464,16 @@ function renderSalesChannelSummary() {
         loadMenusFromServer();
         loadPlansFromServer();
         loadSalesReportFromServer();
+
+        const resetSalesRawBtn = document.getElementById("resetSalesRawBtn");
+
+        if (resetSalesRawBtn) {
+          resetSalesRawBtn.addEventListener("click", () => {
+            document.getElementById("salesRawInput").value = "";
+            document.getElementById("salesReportStart").value = "";
+            document.getElementById("salesReportEnd").value = "";
+          });
+        }
       });
     </script>
   </body>
