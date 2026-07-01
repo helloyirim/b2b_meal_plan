@@ -888,10 +888,24 @@
   margin-bottom: 12px;
 }
 
+
 .sales-panel-title span {
   float: right;
   font-size: 12px;
   color: #53627c;
+}
+
+.sales-chart-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.sales-chart-unit {
+  font-size: 11px;
+  color: #7b8794;
 }
 
 .sales-report-table {
@@ -1054,6 +1068,30 @@
 
 .sales-product-filter input[type="checkbox"] {
   cursor: pointer;
+}
+
+.sales-chart-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.sales-chart-title > span:first-child {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0b2d66;
+}
+
+.sales-chart-title .sales-chart-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.sales-chart-title .sales-chart-unit {
+  font-size: 11px;
+  color: #7b8794;
 }
 
     </style>
@@ -1388,13 +1426,13 @@
 
             <div class="sales-kpi-grid">
               <div class="sales-kpi-card">
-                <div class="kpi-label">구매고객</div>
+                <div class="kpi-label">결제건수</div>
                 <div class="kpi-value" id="salesTotalCustomers">0명</div>
                 <div class="kpi-sub">(환불반영)</div>
               </div>
           
               <div class="sales-kpi-card">
-                <div class="kpi-label">판매수량(세트)</div>
+                <div class="kpi-label">판매수량</div>
                 <div class="kpi-value" id="salesTotalQty">0세트</div>
                 <div class="kpi-sub">(체험팩 포함/환불반영)</div>
               </div>
@@ -1408,13 +1446,13 @@
               <div class="sales-kpi-card">
                 <div class="kpi-label">객단가</div>
                 <div class="kpi-value" id="salesAvgCustomer">0원</div>
-                <div class="kpi-sub">(1인당 평균)</div>
+                <div class="kpi-sub">(결제건당 평균)</div>
               </div>
           
               <div class="sales-kpi-card">
-                <div class="kpi-label">세트당 매출</div>
+                <div class="kpi-label">평균 판매금액</div>
                 <div class="kpi-value" id="salesAvgSet">0원</div>
-                <div class="kpi-sub">(세트당 평균)</div>
+                <div class="kpi-sub">(상품 1개당 평균)</div>
               </div>
           
               <div class="sales-kpi-card refund">
@@ -1427,10 +1465,15 @@
             <div class="sales-main-grid">
               <div class="sales-left-col">
                 <section class="sales-panel wide">
-                  <div class="sales-panel-title">
-                    일별 매출 추이 
-                    <span id="salesChartLegend">(단위 : 원)</span>
-                  </div>
+                  <div class="sales-panel-title sales-chart-title">
+                    <span>일별 매출 추이</span>
+                
+                    <div class="sales-chart-header-right">
+                        <div id="salesChartLegend"></div>
+                        <span class="sales-chart-unit">(단위 : 원 / 환불미반영)</span>
+                    </div>
+                </div>
+                  
                   <canvas id="salesDailyChart" height="180"></canvas>
                 </section>
             
@@ -5148,11 +5191,9 @@ function renderSalesDailyChart(rows) {
         <span style="color:${NAVER_COLOR}; font-weight:800;">■ 네이버</span>
         &nbsp;&nbsp;
         <span style="color:${COUPANG_COLOR}; font-weight:800;">■ 쿠팡</span>
-        &nbsp;&nbsp;
-        <span style="color:#53627c;">(단위 : 원)</span>
       `;
     } else {
-      legend.innerHTML = `(단위 : 원)`;
+      legend.innerHTML = "";
     }
   }
 
