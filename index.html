@@ -1427,13 +1427,13 @@
             <div class="sales-kpi-grid">
               <div class="sales-kpi-card">
                 <div class="kpi-label">결제건수</div>
-                <div class="kpi-value" id="salesTotalCustomers">0명</div>
+                <div class="kpi-value" id="salesTotalCustomers">0건</div>
                 <div class="kpi-sub">(환불반영)</div>
               </div>
           
               <div class="sales-kpi-card">
                 <div class="kpi-label">판매수량</div>
-                <div class="kpi-value" id="salesTotalQty">0세트</div>
+                <div class="kpi-value" id="salesTotalQty">0개</div>
                 <div class="kpi-sub">(체험팩 포함/환불반영)</div>
               </div>
           
@@ -5094,9 +5094,9 @@ function renderSalesReport(data) {
   updateSalesMonthLabel();
 
   document.getElementById("salesTotalCustomers").innerText =
-    data.totalCustomer.toLocaleString() + "명";
+    data.totalCustomer.toLocaleString() + "건";
   document.getElementById("salesTotalQty").innerText =
-    data.totalQty.toLocaleString() + "세트";
+    data.totalQty.toLocaleString() + "개";
   document.getElementById("salesTotalAmount").innerText =
     data.totalSales.toLocaleString() + "원";
   document.getElementById("salesAvgCustomer").innerText =
@@ -5121,8 +5121,8 @@ function renderSalesDailyTable(rows) {
     <table class="sales-report-table">
       <tr>
         <th>날짜</th>
-        <th>구매고객수</th>
-        <th>판매수량(세트)</th>
+        <th>결제건수</th>
+        <th>판매수량(개)</th>
         <th>매출(원)</th>
       </tr>
   `;
