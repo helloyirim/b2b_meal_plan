@@ -1008,19 +1008,19 @@
 }
 
 .sales-note-panel {
-  min-height: auto;
+  min-height: 132px;
 }
 
 .sales-note-input {
   width: 100%;
-  height: 52px;
-  min-height: 52px;
+  height: 62px;
+  min-height: 62px;
   border: 1px solid #dbe3ef;
   border-radius: 8px;
   padding: 8px 12px;
   resize: none;
   font-size: 14px;
-  line-height: 1.35;
+  line-height: 1.5;
   color: #111827;
   outline: none;
 }
@@ -5302,21 +5302,27 @@ function renderSalesTopDays(rows) {
   if (!wrap) return;
 
   const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+  const icons = ["🏆", "🥈", "🥉"];
 
   const topRows = (rows || [])
     .filter((row) => !row.isOutOfRange && Number(row.sales || 0) > 0)
     .sort((a, b) => Number(b.sales || 0) - Number(a.sales || 0))
     .slice(0, 3);
 
-  if (!topRows.length) {
-    wrap.innerHTML = `<div style="padding:24px 0; color:#94a3b8; font-weight:700;">매출 데이터가 없습니다.</div>`;
-    return;
-  }
+  const fixedRows = [0, 1, 2].map((index) => topRows[index] || null);
 
-  const icons = ["🏆", "🥈", "🥉"];
-
-  wrap.innerHTML = topRows
+  wrap.innerHTML = fixedRows
     .map((row, index) => {
+      if (!row) {
+        return `
+          <div class="top-sales-row">
+            <div class="top-rank-icon">${icons[index]}</div>
+            <div class="top-sales-date">-</div>
+            <div class="top-sales-amount">-</div>
+          </div>
+        `;
+      }
+
       const dateObj = new Date(row.date);
       const dayName = dayNames[dateObj.getDay()];
       const dateText = row.date.slice(5).replace("-", "/");
