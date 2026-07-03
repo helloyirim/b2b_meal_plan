@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>B2B 영업관리시스템</title>
+    <title>B2B 업무관리시스템</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link
@@ -12,13 +12,23 @@
     />
     <style>
       :root {
-        --bg-body: #f5f5f5;
-        --bg-sidebar: #333333;
-        --bg-card: #ffffff;
-        --text-main: #333333;
-        --border-soft: #cccccc;
-        --border-light: #eeeeee;
-        --primary: #4a90e2;
+        --bg-body: #F5F5F7;
+        --bg-sidebar: #FFFFFF;
+        --bg-card: #FFFFFF;
+
+        --text-main: #1D1D1F;
+        --text-sub: #6E6E73;
+
+        --border-soft: #D2D2D7;
+        --border-light: #E5E5E7;
+
+        --primary: #0071E3;
+        --primary-soft: #E8F2FF;
+
+        --danger: #FF3B30;
+
+        --shadow-card: 0 1px 3px rgba(0,0,0,.08);
+        --radius: 16px;
       }
       * {
         box-sizing: border-box;
@@ -27,15 +37,15 @@
         font-family: "Pretendard", sans-serif;
       }
       body {
-        background-color: var(--bg-body);
-        color: var(--text-main);
-        display: flex;
-        min-height: 100vh;
+          background: var(--bg-body);
+          color: var(--text-main);
+          font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       }
 
       .sidebar {
         width: 220px;
-        background: var(--bg-sidebar);
+        background:#fff;
+        border-right:1px solid var(--border-light);
         color: white;
         padding: 30px 20px;
         position: fixed;
@@ -45,11 +55,12 @@
       .sidebar h2 {
         font-size: 18px;
         margin-bottom: 40px;
+        color: var(--text-main);
       }
       .nav-item {
         display: block;
         padding: 12px;
-        color: #bbb;
+        color: var(--text-sub);
         text-decoration: none;
         font-weight: 600;
         border-radius: 8px;
@@ -58,8 +69,9 @@
         transition: 0.3s;
       }
       .nav-item.active {
-        color: white !important;
-        background: rgba(255, 255, 255, 0.15) !important;
+        background:var(--primary-soft);
+        color:var(--primary);
+        font-weight:700
       }
 
       .main-content {
@@ -126,12 +138,12 @@
         background: #fff;
       }
       .meal-table th {
-        background: #f9f9f9;
+        background:#F5F5F7;
         padding: 10px;
         font-size: 13px;
         font-weight: 800;
         border: 1px solid var(--border-soft);
-        color: #666;
+        color: var(--text-sub);
       }
       .meal-table td {
         border: 1px solid var(--border-soft);
@@ -218,7 +230,7 @@
 
       .extra-info {
         font-size: 11px;
-        color: #666;
+        color: var(--text-sub);
         display: none;
         margin-top: 2px;
         border-top: none;
@@ -344,8 +356,9 @@
         border-color: var(--primary);
       }
       .history-card.active {
-        border-color: var(--primary);
-        background: #f0f7ff;
+        background:var(--primary-soft);
+        color:var(--primary);
+        font-weight:700;
       }
       .history-card b {
         display: block;
@@ -370,7 +383,7 @@
         display: block;
         font-size: 12px;
         font-weight: 800;
-        color: #666;
+        color: var(--text-sub);
         margin-bottom: 6px;
       }
       .form-group input,
@@ -406,6 +419,102 @@
         width: 100%;
         table-layout: fixed;
       }
+
+/* =========================
+   로그인 화면
+========================= */
+
+#login-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at top left, #eef4ff 0, transparent 32%),
+    linear-gradient(135deg, #f7f9fc 0%, #eef2f7 100%);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-card {
+  width: 610px;
+  min-height: 520px;
+  background: #ffffff;
+  border: 1px solid #eef1f5;
+  border-radius: 14px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.14);
+  padding: 88px 84px 64px;
+  text-align: center;
+}
+
+.login-card h2 {
+  font-size: 30px;
+  font-weight: 900;
+  color: #111827;
+  margin-bottom: 14px;
+  letter-spacing: -0.8px;
+}
+
+.login-card .login-sub {
+  font-size: 16px;
+  font-weight: 600;
+  color: #7b8794;
+  margin-bottom: 40px;
+}
+
+.login-input-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.login-input-wrap .login-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7b8794;
+  font-size: 18px;
+}
+
+.login-card input {
+  width: 100%;
+  height: 58px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  padding: 0 18px 0 54px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  outline: none;
+  background: #fff;
+}
+
+.login-card input:focus {
+  border-color: #0066f5;
+  box-shadow: 0 0 0 3px rgba(0, 102, 245, 0.12);
+}
+
+.login-card button {
+  width: 100%;
+  height: 58px;
+  margin-top: 6px;
+  background: linear-gradient(135deg, #006bff 0%, #0052e8 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(0, 91, 234, 0.24);
+}
+
+.login-card button:hover {
+  filter: brightness(0.96);
+}
+
+
 
 /* =========================
    단체캘린더 CSS
@@ -496,7 +605,7 @@
 
 .calendar-kpi-label {
   font-size: 12px;
-  color: #666;
+  color: var(--text-sub);
   font-weight: 700;
 }
 
@@ -590,7 +699,7 @@
   opacity: 0.7;
   text-decoration: line-through;
   background: #e0e0e0 !important;
-  color: #777;
+  color: var(--text-sub);
 }
 
 .calendar-summary-top {
@@ -673,7 +782,7 @@
   display: block;
   font-size: 12px;
   font-weight: 700;
-  color: #666;
+  color: var(--text-sub);
   margin-bottom: 6px;
 }
 
@@ -705,7 +814,7 @@
 }
 
 .muted {
-  color: #777;
+  color: var(--text-sub);
   font-size: 12px;
   margin-top: 8px;
 }
@@ -884,7 +993,7 @@
 .sales-panel-title {
   font-size: 17px;
   font-weight: 800;
-  color: #0b2d66;
+  color:var(--text-main);
   margin-bottom: 12px;
 }
 
@@ -915,7 +1024,7 @@
 }
 
 .sales-report-table th {
-  background: #52627d;
+  background:#F5F5F7;
   color: #fff;
   padding: 8px;
   text-align: center;
@@ -1079,7 +1188,7 @@
 .sales-chart-title > span:first-child {
   font-size: 17px;
   font-weight: 800;
-  color: #0b2d66;
+  color:var(--text-main);
 }
 
 .sales-chart-title .sales-chart-header-right {
@@ -1096,83 +1205,28 @@
 
     </style>
   </head>
-  <body>
-    <div
-      id="login-overlay"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: white;
-        z-index: 9999;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-      "
-    >
-      <div
-        style="
-          text-align: center;
-          padding: 40px;
-          border: 1px solid #ddd;
-          border-radius: 12px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-          background: white;
-        "
-      >
-        <h2 style="color: #333; margin-bottom: 25px; font-weight: 800">
-          B2B 영업관리시스템
-        </h2>
-        <input
-          type="text"
-          id="login-id"
-          placeholder="아이디"
-          style="
-            display: block;
-            width: 260px;
-            margin: 10px auto;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-          "
-        />
-        <input
-          type="password"
-          id="login-pw"
-          placeholder="비밀번호"
-          style="
-            display: block;
-            width: 260px;
-            margin: 10px auto;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-          "
-        />
-        <button
-          onclick="checkLogin()"
-          style="
-            width: 260px;
-            padding: 12px;
-            background: #333;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-            margin-top: 10px;
-          "
-        >
-          로그인
-        </button>
+    <body>
+      <div id="login-overlay">
+        <div class="login-card">
+          <h2>B2B 업무관리시스템</h2>
+          <p class="login-sub">본아이에프 B2B영업팀</p>
+      
+          <div class="login-input-wrap">
+            <span class="login-icon">👤</span>
+            <input type="text" id="login-id" placeholder="아이디" />
+          </div>
+      
+          <div class="login-input-wrap">
+            <span class="login-icon">🔒</span>
+            <input type="password" id="login-pw" placeholder="비밀번호" />
+          </div>
+      
+          <button onclick="checkLogin()">로그인</button>
+        </div>
       </div>
-    </div>
 
     <aside class="sidebar">
-      <h2>B2B 영업관리시스템</h2>
+      <h2>B2B 업무관리시스템</h2>
     
       <!-- 단체캘린더 -->
       <div
@@ -1248,7 +1302,7 @@
           id="user-info"
           style="
             font-size: 13px;
-            color: #fff;
+            color: var(--text-main);
             margin-bottom: 10px;
             font-weight: 600;
           "
@@ -3775,7 +3829,7 @@
                         <img src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;">
                     </td>
                     <td style="font-weight:600;">${escapeHtml(m.name || "")}</td>
-                    <td style="color:#666;">${escapeHtml(m.brand || "")}</td>
+                    <td style="color:var(--text-sub);">${escapeHtml(m.brand || "")}</td>
                     <td>${(m.price || 0).toLocaleString()}원</td>
                     <td style="text-align:center;">
                         <button class="btn btn-grey" style="padding:6px 12px; font-size:12px;" onclick="editMenu('${String(m.id)}')">수정</button>
