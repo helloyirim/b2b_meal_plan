@@ -3631,20 +3631,24 @@
       }
 
       function updateStats() {
-        const meals = Object.values(mealPlan);
-        const names = meals.map((m) => m.name);
-        const uniqueCount = new Set(names).size;
+        const meals = Object.values(mealPlan)
+          .map(resolveMenuData)
+          .filter(Boolean);
+
+        const uniqueCount = new Set(meals.map(m => m.name)).size;
+
         const avg =
           meals.length > 0
             ? Math.round(
-                meals.reduce((s, m) => s + (m.price || 0), 0) / meals.length,
+                meals.reduce((sum, m) => sum + Number(m.price || 0), 0) /
+                  meals.length
               )
             : 0;
 
         document.getElementById("stat-avg").innerText = avg.toLocaleString();
         document.getElementById("stat-total").innerText = meals.length + "개";
         document.getElementById("stat-unique").innerText =
-          meals.length > 0 ? `(중복 제외 ${uniqueCount}종)` : "";
+          meals.length ? `(중복 제외 ${uniqueCount}종)` : "";
       }
 
       function toggleInfo(cls, cb) {
