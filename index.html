@@ -1055,8 +1055,6 @@
 }
 
 
-
-
 .sales-sub-nav {
   margin-left: 8px;
   margin-bottom: 10px;
@@ -1203,6 +1201,17 @@
   color: #7b8794;
 }
 
+.meal-sub-nav {
+  margin-left: 8px;
+  margin-bottom: 10px;
+}
+
+.meal-sub-nav .nav-item {
+  font-size: 13px;
+  padding: 9px 12px;
+  margin-bottom: 4px;
+}
+
     </style>
   </head>
     <body>
@@ -1275,21 +1284,35 @@
         "
       ></div>
     
-      <!-- 식단관리 -->
-      <div
-        class="nav-item"
-        id="nav-gen"
-        onclick="showPage('page-generate')"
-      >
-        📅 식단 생성
+      <!-- 정기식 식단 -->
+      <div class="nav-item" id="nav-meal-main">
+        🍱 정기식 식단
       </div>
-    
-      <div class="nav-item" id="nav-his" onclick="showPage('page-history')">
-        📋 식단 관리
-      </div>
-    
-      <div class="nav-item" id="nav-set" onclick="showPage('page-settings')">
-        🍴 메뉴 관리
+
+      <div class="meal-sub-nav">
+        <div
+          class="nav-item meal-nav"
+          id="nav-gen"
+          onclick="showPage('page-generate')"
+        >
+          └ 📅 식단 생성
+        </div>
+
+        <div
+          class="nav-item meal-nav"
+          id="nav-his"
+          onclick="showPage('page-history')"
+        >
+          └ 📋 식단 관리
+        </div>
+
+        <div
+          class="nav-item meal-nav"
+          id="nav-set"
+          onclick="showPage('page-settings')"
+        >
+          └ 🍴 메뉴 관리
+        </div>
       </div>
 
       <div
@@ -3402,6 +3425,7 @@
         document.getElementById(id).classList.add("active");
 
         if (id === "page-generate") {
+          document.getElementById("nav-meal-main").classList.add("active");
           document.getElementById("nav-gen").classList.add("active");
           initGrid();
           populateLibBrandFilter();
@@ -3418,10 +3442,12 @@
           if (activeNav) activeNav.classList.add("active");
         }
         if (id === "page-history") {
+          document.getElementById("nav-meal-main").classList.add("active");
           document.getElementById("nav-his").classList.add("active");
           renderHistoryList();
         }
         if (id === "page-settings") {
+          document.getElementById("nav-meal-main").classList.add("active");
           document.getElementById("nav-set").classList.add("active");
           renderMgmt();
         }
