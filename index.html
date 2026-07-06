@@ -1291,6 +1291,15 @@
       <div class="nav-item" id="nav-set" onclick="showPage('page-settings')">
         🍴 메뉴 관리
       </div>
+
+      <div
+        class="nav-item"
+        id="nav-admin"
+        onclick="showPage('page-admin')"
+        style="display:none;"
+      >
+        ⚙️ 관리자
+      </div>
       <div
         style="
           margin-top: auto;
@@ -2025,19 +2034,40 @@
           </div>
         </div>
       </div>
+
+      <div id="page-admin" class="page">
+        <header style="margin-bottom: 20px">
+          <h1>관리자</h1>
+        </header>
+      
+        <div class="card">
+          <h3 style="margin-bottom: 16px;">계정 관리</h3>
+          <p style="color:#777; font-size:14px;">
+            계정 추가, 권한 변경, 비밀번호 초기화 기능을 여기에 추가할 예정입니다.
+          </p>
+        </div>
+      </div>
+
+      <div id="page-admin" class="page">
+        <header style="margin-bottom: 20px">
+          <h1>관리자</h1>
+        </header>
+      
+        <div class="card">
+          <h3 style="margin-bottom: 16px;">계정 관리</h3>
+          <p style="color:#777; font-size:14px;">
+            계정 추가, 권한 변경, 비밀번호 초기화 기능을 여기에 추가할 예정입니다.
+          </p>
+        </div>
+      </div>
+
     </main>
 
     <script>
       // =========================
       // 사용자 데이터 및 권한 정의
       // =========================
-      const USERS = {
-        "yirim.yu": { pw: "rim77", role: "ADMIN", name: "유이림" },
-        "jaeyong.choi": { pw: "jy1234", role: "ADMIN", name: "최재용" },
-        "jeongmun.lee": { pw: "jm1234", role: "ADMIN", name: "이정문" },
-        bondo: { pw: "bondo1234", role: "USER", name: "스태프" },
-        viewer: { pw: "viewer", role: "VIEWER", name: "조회전용" },
-      };
+
 
       const API_URL = "https://b2b-meal-api.wispy-river-05a7.workers.dev";
 
@@ -3105,6 +3135,11 @@
         return JSON.parse(sessionStorage.getItem("currentUser") || "{}");
       }
 
+      function isAdmin() {
+        const user = getCurrentUser();
+        return user && user.id === "yirim.yu" && user.role === "ADMIN";
+      }
+
       function getDefaultImage(src) {
         return src && src.trim() ? src : "https://via.placeholder.com/150";
       }
@@ -3148,23 +3183,35 @@
       // =========================
       // 인증/세션
       // =========================
-      function checkLogin() {
-        const id = document.getElementById("login-id").value;
-        const pw = document.getElementById("login-pw").value;
+      async function checkLogin() {
+        const id = document.getElementById("login-id").value.trim();
+        const pw = document.getElementById("login-pw").value.trim();
 
-        if (USERS[id] && USERS[id].pw === pw) {
-          sessionStorage.setItem(
-            "currentUser",
-            JSON.stringify({
-              id: id,
-              name: USERS[id].name,
-              role: USERS[id].role,
-            }),
-          );
-          alert(`${USERS[id].name}님 환영합니다.`);
+        if (!id || !pw) {
+          alert("아이디와 비밀번호를 입력해주세요.");
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, pw }),
+          });
+
+          if (!response.ok) {
+            alert("아이디 또는 비밀번호가 틀렸습니다.");
+            return;
+          }
+
+          const result = await response.json();
+
+          sessionStorage.setItem("currentUser", JSON.stringify(result.user));
+          alert(`${result.user.name}님 환영합니다.`);
           location.reload();
-        } else {
-          alert("아이디 또는 비밀번호가 틀렸습니다.");
+        } catch (e) {
+          console.error(e);
+          alert("로그인 처리 중 오류가 발생했습니다.");
         }
       }
 
@@ -3182,6 +3229,11 @@
         if (document.getElementById("current-user-name")) {
           document.getElementById("current-user-name").innerText =
             session.name || "로그인 사용자";
+
+            const adminNav = document.getElementById("nav-admin");
+            if (adminNav && isAdmin()) {
+              adminNav.style.display = "block";
+            }
         }
 
         if (session.role === "USER") {
@@ -3367,6 +3419,16 @@
           document.getElementById("nav-set").classList.add("active");
           renderMgmt();
         }
+        if (id === "page-admin") {
+          if (!isAdmin()) {
+            alert("관리자만 접근 가능합니다.");
+            showPage("page-calendar");
+            return;
+          }
+
+          document.getElementById("nav-admin").classList.add("active");
+        }
+
       }
 
       function validateMonday(input) {
@@ -3470,7 +3532,9 @@
         const menu = menus.find((m) => String(m.id) === String(mid));
         if (!menu) return;
 
-        mealPlan[currentCellId] = { ...menu };
+        mealPlan[currentCellId] = {
+          menuId: String(menu.id)
+        };
 
         const targetCell = document.getElementById(currentCellId);
         if (targetCell) {
@@ -3505,7 +3569,20 @@
         }
       }
 
+
+      function resolveMenuData(item) {
+        if (!item) return null;
+
+        const menuId = item.menuId || item.id;
+        const found = menus.find((m) => String(m.id) === String(menuId));
+
+        return found || item;
+      } 
+
       function renderCell(m) {
+        m = resolveMenuData(m);
+        if (!m) return "";
+
         return `
                 <div class="meal-content">
                     <div class="meal-thumb">
@@ -3665,7 +3742,12 @@
             name: currentUser.name || "알 수 없음",
             role: currentUser.role || "",
           },
-          data: mealPlan,
+          data: Object.fromEntries(
+            Object.entries(mealPlan).map(([cellId, item]) => {
+              const menuId = item.menuId || item.id;
+              return [cellId, { menuId: String(menuId) }];
+            })
+          ),
           weeks: document.getElementById("week-count").value,
           startDate: document.getElementById("start-date").value,
           selectedDays: getSelectedDays(),
