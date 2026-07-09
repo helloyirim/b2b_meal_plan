@@ -863,6 +863,11 @@
   text-align: center;
 }
 
+#salesNetAmount {
+  color: #0B5ED7;
+  font-weight: 800;
+}
+
 .kpi-sub {
   margin-top: 8px;
   font-size: 13px;
@@ -1518,7 +1523,7 @@
               </div>
             
               <div class="sales-kpi-card">
-                <div class="kpi-label">총 결제금액</div>
+                <div class="kpi-label">총매출</div>
                 <div class="kpi-value" id="salesTotalAmount">0원</div>
                 <div class="kpi-sub">(환불 미반영)</div>
               </div>
@@ -1543,7 +1548,7 @@
             
               <div class="sales-kpi-card refund">
                 <div class="kpi-label">환불 현황</div>
-                <div class="refund-row"><span>환불 건수</span><strong id="salesRefundCount">0건</strong></div>
+                <div class="refund-row"><span>환불 수</span><strong id="salesRefundCount">0건</strong></div>
                 <div class="refund-row"><span>환불 금액</span><strong id="salesRefundAmount">0원</strong></div>
               </div>
             </div>
@@ -5281,8 +5286,6 @@ function renderSalesReport(data) {
     data.totalSales.toLocaleString() + "원";
   document.getElementById("salesAvgCustomer").innerText =
     data.avgCustomer.toLocaleString() + "원";
-  document.getElementById("salesAvgSet").innerText =
-    data.avgSet.toLocaleString() + "원";
     document.getElementById("salesRefundCount").innerText =
       Number(data.refundQty || data.refundCount || 0).toLocaleString() + "개";
 
