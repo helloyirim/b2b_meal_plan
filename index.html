@@ -1512,35 +1512,35 @@
 
             <div class="sales-kpi-grid">
               <div class="sales-kpi-card">
+                <div class="kpi-label">실매출</div>
+                <div class="kpi-value" id="salesNetAmount">0원</div>
+                <div class="kpi-sub">(환불 반영)</div>
+              </div>
+            
+              <div class="sales-kpi-card">
+                <div class="kpi-label">총 결제금액</div>
+                <div class="kpi-value" id="salesTotalAmount">0원</div>
+                <div class="kpi-sub">(환불 미반영)</div>
+              </div>
+            
+              <div class="sales-kpi-card">
                 <div class="kpi-label">결제건수</div>
                 <div class="kpi-value" id="salesTotalCustomers">0건</div>
-                <div class="kpi-sub">(환불반영)</div>
+                <div class="kpi-sub">(환불 미반영)</div>
               </div>
-          
+            
               <div class="sales-kpi-card">
                 <div class="kpi-label">판매수량</div>
                 <div class="kpi-value" id="salesTotalQty">0개</div>
-                <div class="kpi-sub">(체험팩 포함/환불반영)</div>
+                <div class="kpi-sub">(체험팩 포함/환불 미반영)</div>
               </div>
-          
-              <div class="sales-kpi-card">
-                <div class="kpi-label">총 매출</div>
-                <div class="kpi-value" id="salesTotalAmount">0원</div>
-                <div class="kpi-sub">(환불반영)</div>
-              </div>
-          
+            
               <div class="sales-kpi-card">
                 <div class="kpi-label">객단가</div>
                 <div class="kpi-value" id="salesAvgCustomer">0원</div>
                 <div class="kpi-sub">(결제건당 평균)</div>
               </div>
-          
-              <div class="sales-kpi-card">
-                <div class="kpi-label">평균 판매금액</div>
-                <div class="kpi-value" id="salesAvgSet">0원</div>
-                <div class="kpi-sub">(상품 1개당 평균)</div>
-              </div>
-          
+            
               <div class="sales-kpi-card refund">
                 <div class="kpi-label">환불 현황</div>
                 <div class="refund-row"><span>환불 건수</span><strong id="salesRefundCount">0건</strong></div>
@@ -1564,7 +1564,7 @@
                 </section>
             
                 <section class="sales-panel">
-                  <div class="sales-panel-title">월별 매출 현황 <span>(단위 : 원)</span></div>
+                  <div class="sales-panel-title">월별 실매출 현황 <span>(단위 : 원)</span></div>
                   <div id="salesMonthlyTableWrap"></div>
                 </section>
               </div>
@@ -4928,6 +4928,7 @@ function createEmptySalesReport(channel = "all") {
     totalCustomer: 0,
     totalQty: 0,
     totalSales: 0,
+    netSales: 0,
     refundCount: 0,
     refundAmount: 0,
     avgCustomer: 0,
@@ -4994,9 +4995,10 @@ function mergeSalesReports(reports = []) {
   const refundAmount = validRows.reduce((sum, row) => sum + row.refundAmount, 0);
   const refundQty = validRows.reduce((sum, row) => sum + row.refundQty, 0);
 
-  const totalCustomer = Math.max(grossCustomer - refundCount, 0);
-  const totalQty = Math.max(grossQty - refundQty, 0);
-  const totalSales = Math.max(grossSales - refundAmount, 0);
+  const totalCustomer = grossCustomer;
+  const totalQty = grossQty;
+  const totalSales = grossSales;
+  const netSales = Math.max(grossSales - refundAmount, 0);
 
   return {
     channel: currentSalesChannel,
@@ -5009,6 +5011,7 @@ function mergeSalesReports(reports = []) {
     totalCustomer,
     totalQty,
     totalSales,
+    netSales,
     refundCount,
     refundAmount,
     avgCustomer: totalCustomer ? Math.round(totalSales / totalCustomer) : 0,
@@ -5033,11 +5036,13 @@ function buildSalesMonthlyRows() {
       if (!product) return;
 
       if (currentSalesChannel === "naver" || currentSalesChannel === "all") {
-        sales += Number(product.channels.naver?.months?.[monthKey]?.totalSales || 0);
+        const report = product.channels.naver?.months?.[monthKey];
+        sales += Number(report?.netSales ?? report?.totalSales ?? 0);
       }
 
       if (currentSalesChannel === "coupang" || currentSalesChannel === "all") {
-        sales += Number(product.channels.coupang?.months?.[monthKey]?.totalSales || 0);
+        const report = product.channels.coupang?.months?.[monthKey];
+        sales += Number(report?.netSales ?? report?.totalSales ?? 0);
       }
     });
 
@@ -5194,9 +5199,10 @@ function buildSalesReportData(rawRows, start, end, channel = "naver", productId 
   const refundAmount = validRows.reduce((sum, row) => sum + row.refundAmount, 0);
   const refundQty = validRows.reduce((sum, row) => sum + (row.refundQty || 0), 0);
 
-  const totalCustomer = Math.max(grossCustomer - refundCount, 0);
-  const totalQty = Math.max(grossQty - refundQty, 0);
-  const totalSales = Math.max(grossSales - refundAmount, 0);
+  const totalCustomer = grossCustomer;
+  const totalQty = grossQty;
+  const totalSales = grossSales;
+  const netSales = Math.max(grossSales - refundAmount, 0);
 
   const monthlyRows = Array.from({ length: 12 }, (_, i) => ({
     month: i + 1,
@@ -5217,6 +5223,7 @@ function buildSalesReportData(rawRows, start, end, channel = "naver", productId 
     totalCustomer,
     totalQty,
     totalSales,
+    netSales,
     refundCount,
     refundAmount,
     avgCustomer: totalCustomer ? Math.round(totalSales / totalCustomer) : 0,
@@ -5276,10 +5283,14 @@ function renderSalesReport(data) {
     data.avgCustomer.toLocaleString() + "원";
   document.getElementById("salesAvgSet").innerText =
     data.avgSet.toLocaleString() + "원";
-  document.getElementById("salesRefundCount").innerText =
-    data.refundCount.toLocaleString() + "건";
-  document.getElementById("salesRefundAmount").innerText =
-    data.refundAmount.toLocaleString() + "원";
+    document.getElementById("salesRefundCount").innerText =
+      Number(data.refundQty || data.refundCount || 0).toLocaleString() + "개";
+
+    document.getElementById("salesRefundAmount").innerText =
+      data.refundAmount.toLocaleString() + "원";
+
+    document.getElementById("salesNetAmount").innerText =
+      Number(data.netSales || 0).toLocaleString() + "원";
 
     renderSalesDailyTable(data.dailyRows);
     renderSalesMonthlyTable(data.monthlyRows);
