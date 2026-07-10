@@ -1548,7 +1548,7 @@
             
               <div class="sales-kpi-card refund">
                 <div class="kpi-label">환불 현황</div>
-                <div class="refund-row"><span>환불 수</span><strong id="salesRefundCount">0건</strong></div>
+                <div class="refund-row"><span>환불 수량</span><strong id="salesRefundCount">0건</strong></div>
                 <div class="refund-row"><span>환불 금액</span><strong id="salesRefundAmount">0원</strong></div>
               </div>
             </div>
@@ -5119,15 +5119,15 @@ function parseNaverSalesRawRows(rawRows) {
         channel: "naver",
         date,
 
-        customers: toNumber(cols[1]),      // 상품결제건수 = 결제건수
-        orderCount: toNumber(cols[1]),     // 결제건수 동일 반영
+        customers: toNumber(cols[1]),
+        orderCount: toNumber(cols[1]),
 
-        sales: toNumber(cols[3]),          // 판매금액(총) = 결제금액
-        qty: toNumber(cols[5]),            // 결제상품수량 = 판매수량
+        sales: toNumber(cols[2]),       // 판매금액
+        qty: toNumber(cols[4]),         // 결제상품수량
 
-        refundCount: toNumber(cols[2]),    // 환불건수
-        refundAmount: toNumber(cols[4]),   // 환불금액
-        refundQty: toNumber(cols[6]),      // 환불상품수량
+        refundCount: 0,                 // 더 이상 입력 안받음
+        refundAmount: toNumber(cols[3]),// 환불금액
+        refundQty: toNumber(cols[5]),   // 환불상품수량
       };
     })
     .filter((row) => row.date);
@@ -5136,22 +5136,48 @@ function parseNaverSalesRawRows(rawRows) {
 function parseCoupangSalesRawRows(rawRows) {
   return rawRows
     .map((row) => row.split("\t"))
-    .filter((cols) => cols[0] && cols[0].startsWith("202"))
+    .filter(
+      (cols) =>
+        cols[0] &&
+        (cols[0].includes("월") || /^\d{4}-\d{1,2}-\d{1,2}/.test(cols[0].trim()))
+    )
     .map((cols) => {
-      const date = formatDateKey(cols[0]);
+      const dateText = String(cols[0] || "").trim();
+
+      let date = "";
+
+      // 07월 01일 형식
+      if (dateText.includes("월")) {
+        const monthMatch = dateText.match(/(\d{1,2})월\s*(\d{1,2})일/);
+        const year = currentSalesMonth.getFullYear();
+
+        if (monthMatch) {
+          const month = String(monthMatch[1]).padStart(2, "0");
+          const day = String(monthMatch[2]).padStart(2, "0");
+          date = `${year}-${month}-${day}`;
+        }
+      } else {
+        // 2026-07-01 형식
+        date = formatDateKey(dateText);
+      }
 
       return {
         channel: "coupang",
         date,
-        customers: toNumber(cols[4]),
-        orderCount: toNumber(cols[4]),
-        sales: toNumber(cols[7]),
-        qty: toNumber(cols[6]),
+
+        customers: toNumber(cols[1]),
+        orderCount: toNumber(cols[1]),
+
+        sales: toNumber(cols[2]),
+        refundAmount: toNumber(cols[3]),
+
+        qty: toNumber(cols[4]),
+        refundQty: toNumber(cols[5]),
+
         refundCount: 0,
-        refundAmount: 0,
-        refundQty: 0,
       };
-    });
+    })
+    .filter((row) => row.date);
 }
 
 function buildSalesReportData(rawRows, start, end, channel = "naver", productId = "blackgoat_30") {
@@ -5287,7 +5313,7 @@ function renderSalesReport(data) {
   document.getElementById("salesAvgCustomer").innerText =
     data.avgCustomer.toLocaleString() + "원";
     document.getElementById("salesRefundCount").innerText =
-      Number(data.refundQty || data.refundCount || 0).toLocaleString() + "개";
+      Number(data.refundQty || 0).toLocaleString() + "개";
 
     document.getElementById("salesRefundAmount").innerText =
       data.refundAmount.toLocaleString() + "원";
