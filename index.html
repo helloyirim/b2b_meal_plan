@@ -2108,6 +2108,14 @@
             </div>
 
             <div id="channelDailySalesTableWrap"></div>
+            <div
+              id="channelDailySalesFootnote"
+              style="
+                margin-top: 10px;
+                font-size: 12px;
+                color: #64748b;
+              "
+            ></div>
           </section>
 
         </div>
@@ -7570,6 +7578,16 @@ function renderChannelDailySalesPage() {
 
   dateInput.value =
     selectedDate;
+    
+    const footnote =
+      document.getElementById(
+        "channelDailySalesFootnote"
+      );
+
+    if (footnote) {
+      footnote.innerText =
+        `조회일 ${selectedDate} 기준 · 판매금액과 판매수량은 환불 차감 전이며, 환불금액은 환불 발생일 기준으로 별도 표시됩니다.`;
+    }
 
     const title =
       document.getElementById(
