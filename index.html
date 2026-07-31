@@ -1218,7 +1218,7 @@
 }
 
 /* =========================
-   상품별 일매출 현황
+   상품별 일매출 현황 CSS
 ========================= */
 
 .product-daily-description {
@@ -1370,6 +1370,45 @@
   .product-daily-summary {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* =========================
+   채널별 일매출 탭
+========================= */
+
+.channel-daily-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 20px 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5eaf2;
+}
+
+.channel-daily-tab {
+  min-width: 110px;
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.channel-daily-tab:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.channel-daily-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
 }
 
 /* =========================
@@ -1747,7 +1786,7 @@
               </div>
             
               <div class="sales-kpi-card">
-                <div class="kpi-label">결제건수</div>
+                <div class="kpi-label">주문건수</div>
                 <div class="kpi-value" id="salesTotalCustomers">0건</div>
                 <div class="kpi-sub">(환불 미반영)</div>
               </div>
@@ -1890,16 +1929,23 @@
       
           <div class="calendar-topbar">
             <div>
-              <h1 class="calendar-page-title">상품별 일매출 현황</h1>
+              <h1
+                class="calendar-page-title"
+                id="productDailySalesTitle"
+              >
+                상품별 일매출 현황
+              </h1>
               <div class="product-daily-description">
-                선택한 날짜에 판매된 상품별 수량과 판매금액을 확인합니다.
-                환불은 판매금액에서 차감하지 않고 별도로 표시합니다.
+                선택한 날짜에 상품별로 얼마나 판매되었는지 전체 채널 합산 기준으로 확인합니다.
+                판매수량과 판매금액은 환불 차감 전이며, 환불은 별도로 표시합니다.
               </div>
             </div>
       
             <div class="product-daily-date-control">
-              <label for="productDailySalesDate">조회일</label>
-      
+              <label for="productDailySalesDate">
+                조회일
+              </label>
+            
               <input
                 type="date"
                 id="productDailySalesDate"
@@ -1910,9 +1956,9 @@
       
           <div class="product-daily-summary">
             <div class="sales-kpi-card product-daily-kpi">
-              <div class="kpi-label">판매 상품</div>
-              <div class="kpi-value" id="productDailySoldProductCount">0개</div>
-              <div class="kpi-sub">판매수량이 있는 상품</div>
+              <div class="kpi-label">총 주문건수</div>
+              <div class="kpi-value" id="productDailyOrderCount">0건</div>
+              <div class="kpi-sub">전체 결제건수</div>
             </div>
       
             <div class="sales-kpi-card product-daily-kpi">
@@ -1951,13 +1997,16 @@
 
           <div class="calendar-topbar">
             <div>
-              <h1 class="calendar-page-title">
+              <h1
+                class="calendar-page-title"
+                id="channelDailySalesTitle"
+              >
                 채널별 일매출 현황
               </h1>
 
               <div class="product-daily-description">
-                선택한 날짜의 판매 채널별 수량과 판매금액을 확인합니다.
-                전체 상품의 매출을 채널 기준으로 합산합니다.
+                채널을 선택하여 해당 채널에서 각 상품이 얼마나 판매되었는지 확인합니다.
+                판매수량과 판매금액은 환불 차감 전이며, 환불은 별도로 표시합니다.
               </div>
             </div>
 
@@ -1974,54 +2023,76 @@
             </div>
           </div>
 
+          <!-- 관리자 채널 목록으로 자동 생성되는 탭 -->
+          <div
+            id="channelDailySalesTabs"
+            class="channel-daily-tabs"
+          ></div>
+
           <div class="product-daily-summary">
             <div class="sales-kpi-card product-daily-kpi">
-              <div class="kpi-label">판매 채널</div>
+              <div class="kpi-label">
+                총 주문건수
+              </div>
+
               <div
                 class="kpi-value"
-                id="channelDailyActiveChannelCount"
+                id="channelDailyOrderCount"
               >
-                0개
+                0건
               </div>
+
               <div class="kpi-sub">
-                매출이 발생한 채널
+                선택 채널 결제건수
               </div>
             </div>
 
             <div class="sales-kpi-card product-daily-kpi">
-              <div class="kpi-label">총 판매수량</div>
+              <div class="kpi-label">
+                총 판매수량
+              </div>
+
               <div
                 class="kpi-value"
                 id="channelDailyTotalQty"
               >
                 0개
               </div>
+
               <div class="kpi-sub">
                 환불수량 차감 전
               </div>
             </div>
 
             <div class="sales-kpi-card product-daily-kpi">
-              <div class="kpi-label">총 판매금액</div>
+              <div class="kpi-label">
+                총 판매금액
+              </div>
+
               <div
                 class="kpi-value"
                 id="channelDailyTotalSales"
               >
                 0원
               </div>
+
               <div class="kpi-sub">
                 환불금액 차감 전
               </div>
             </div>
 
             <div class="sales-kpi-card product-daily-kpi refund">
-              <div class="kpi-label">당일 환불금액</div>
+              <div class="kpi-label">
+                총 환불금액
+              </div>
+
               <div
                 class="kpi-value"
                 id="channelDailyRefundAmount"
               >
                 0원
               </div>
+
               <div class="kpi-sub">
                 환불 발생일 기준
               </div>
@@ -2030,15 +2101,17 @@
 
           <section class="sales-panel product-daily-panel">
             <div class="sales-panel-title">
-              채널별 판매 현황
-              <span>전일 및 7일 전 판매금액 비교</span>
+              상품별 판매 현황
+              <span>
+                전일 및 7일 전 판매금액 비교
+              </span>
             </div>
 
             <div id="channelDailySalesTableWrap"></div>
           </section>
 
         </div>
-      </div>
+      </div>  
 
     
       <div id="page-generate" class="page">
@@ -5623,6 +5696,127 @@ function renderSalesRawChannelSelect() {
   }
 }
 
+function renderChannelDailySalesChannelSelect() {
+  const select =
+    document.getElementById(
+      "channelDailySalesChannel"
+    );
+
+  if (!select) return;
+
+  const channels =
+    getActiveSalesChannels();
+
+  const currentValue =
+    select.value;
+
+  select.innerHTML = channels
+    .map(
+      (channel) => `
+        <option value="${escapeHtml(channel.id)}">
+          ${escapeHtml(
+            channel.shortName ||
+            channel.name
+          )}
+        </option>
+      `
+    )
+    .join("");
+
+  if (
+    currentValue &&
+    channels.some(
+      (channel) =>
+        String(channel.id) ===
+        String(currentValue)
+    )
+  ) {
+    select.value = currentValue;
+  }
+}
+
+// 채널별 일매출에서 현재 선택한 채널
+let currentChannelDailySalesChannel = "";
+
+
+/**
+ * 관리자에서 등록한 활성 채널을 탭으로 생성
+ */
+function renderChannelDailySalesTabs() {
+  const container =
+    document.getElementById(
+      "channelDailySalesTabs"
+    );
+
+  if (!container) return;
+
+  const channels =
+    getActiveSalesChannels();
+
+  if (!channels.length) {
+    currentChannelDailySalesChannel = "";
+
+    container.innerHTML = `
+      <div class="product-daily-empty">
+        사용 중인 판매 채널이 없습니다.
+      </div>
+    `;
+
+    return;
+  }
+
+  const selectedChannelExists =
+    channels.some(
+      (channel) =>
+        String(channel.id) ===
+        String(currentChannelDailySalesChannel)
+    );
+
+  // 최초 진입 또는 기존 선택 채널이 사용중지된 경우
+  if (!selectedChannelExists) {
+    currentChannelDailySalesChannel =
+      String(channels[0].id);
+  }
+
+  container.innerHTML = channels
+    .map(
+      (channel) => `
+        <button
+          type="button"
+          class="channel-daily-tab ${
+            String(channel.id) ===
+            String(currentChannelDailySalesChannel)
+              ? "active"
+              : ""
+          }"
+          onclick="selectChannelDailySalesTab('${escapeHtml(
+            channel.id
+          )}')"
+        >
+          ${escapeHtml(
+            channel.shortName ||
+            channel.name
+          )}
+        </button>
+      `
+    )
+    .join("");
+}
+
+
+/**
+ * 채널 탭 선택
+ */
+function selectChannelDailySalesTab(
+  channelId
+) {
+  currentChannelDailySalesChannel =
+    String(channelId || "");
+
+  renderChannelDailySalesTabs();
+  renderChannelDailySalesPage();
+}
+
 
 function toggleAllSalesProducts(el) {
   document.querySelectorAll(".sales-product-check").forEach((check) => {
@@ -6334,6 +6528,28 @@ function formatDateKey(dateStr) {
   return String(dateStr || "").slice(0, 10);
 }
 
+function formatDateKey(dateStr) {
+  return String(dateStr || "").slice(0, 10);
+}
+
+/**
+ * 2026-08-01 → 08.01
+ */
+ function formatDailySalesTitleDate(dateKey) {
+  if (!dateKey) return "";
+
+  const parts = String(dateKey).split("-");
+
+  if (parts.length !== 3) {
+    return dateKey;
+  }
+
+  const month = parts[1];
+  const day = parts[2];
+
+  return `${month}.${day}`;
+}
+
 function getDaysInMonth(year, month) {
   return new Date(year, month, 0).getDate();
 }
@@ -6590,7 +6806,7 @@ function renderSalesDailyTable(rows) {
     <table class="sales-report-table">
       <tr>
         <th>날짜</th>
-        <th>결제건수</th>
+        <th>주문건수</th>
         <th>판매수량(개)</th>
         <th>매출(원)</th>
       </tr>
@@ -6813,14 +7029,7 @@ function renderSalesTopDays(rows) {
 }
 
 function getSalesNoteKey() {
-  const productKey = currentSalesProducts
-    .map(String)
-    .sort()
-    .join("_");
-
-  const monthKey = getSalesMonthKey();
-
-  return `product_sales_note_${productKey}_${currentSalesChannel}_${monthKey}`;
+  return `product_sales_note_${currentSalesChannel}_${getSalesMonthKey()}`;
 }
 
 let salesNoteSaveTimer = null;
@@ -6917,7 +7126,7 @@ function saveSalesSpecialNote() {
 
       setSalesNoteSaveStatus("저장 실패", "error");
     }
-  }, 700);
+  }, 200);
 }
 
 function saveSalesSpecialNote() {
@@ -7114,20 +7323,28 @@ function showProductDailySalesPage() {
 // =========================
 
 function showChannelDailySalesPage() {
-  showPage("page-channel-daily-sales");
+  showPage(
+    "page-channel-daily-sales"
+  );
 
   document
-    .querySelectorAll(".sales-channel-nav")
+    .querySelectorAll(
+      ".sales-channel-nav"
+    )
     .forEach((el) => {
       el.classList.remove("active");
     });
 
   document
-    .getElementById("nav-sales-channel-daily")
+    .getElementById(
+      "nav-sales-channel-daily"
+    )
     ?.classList.add("active");
 
   document
-    .getElementById("nav-sales-main")
+    .getElementById(
+      "nav-sales-main"
+    )
     ?.classList.add("active");
 
   const dateInput =
@@ -7135,12 +7352,16 @@ function showChannelDailySalesPage() {
       "channelDailySalesDate"
     );
 
-  if (dateInput && !dateInput.value) {
+  if (
+    dateInput &&
+    !dateInput.value
+  ) {
     dateInput.value =
       getLatestChannelDailySalesDate() ||
       getTodayDateKey();
   }
 
+  renderChannelDailySalesTabs();
   renderChannelDailySalesPage();
 }
 
@@ -7210,6 +7431,71 @@ function getChannelDailySalesData(
   return result;
 }
 
+/**
+ * 특정 채널·특정 상품·특정 날짜의 매출 조회
+ */
+ function getChannelProductDailySalesData(
+  channelId,
+  productId,
+  dateKey
+) {
+  salesReportCache =
+    normalizeSalesStorage(
+      salesReportCache
+    );
+
+  const monthKey =
+    getMonthKeyFromDateKey(
+      dateKey
+    );
+
+  const report =
+    salesReportCache
+      .products?.[productId]
+      ?.channels?.[channelId]
+      ?.months?.[monthKey];
+
+  const row =
+    getSalesDailyRowFromReport(
+      report,
+      dateKey
+    );
+
+  if (!row) {
+    return {
+      orderCount: 0,
+      qty: 0,
+      sales: 0,
+      refundAmount: 0,
+      refundQty: 0,
+    };
+  }
+
+  return {
+    orderCount: Number(
+      row.orderCount ??
+      row.customers ??
+      0
+    ),
+
+    qty: Number(
+      row.qty || 0
+    ),
+
+    sales: Number(
+      row.sales || 0
+    ),
+
+    refundAmount: Number(
+      row.refundAmount || 0
+    ),
+
+    refundQty: Number(
+      row.refundQty || 0
+    ),
+  };
+}
+
 
 function getLatestChannelDailySalesDate() {
   salesReportCache =
@@ -7273,14 +7559,44 @@ function renderChannelDailySalesPage() {
       "channelDailySalesTableWrap"
     );
 
-  if (!dateInput || !wrap) return;
+  if (!dateInput || !wrap) {
+    return;
+  }
 
   const selectedDate =
     dateInput.value ||
     getLatestChannelDailySalesDate() ||
     getTodayDateKey();
 
-  dateInput.value = selectedDate;
+  dateInput.value =
+    selectedDate;
+
+    const title =
+      document.getElementById(
+        "channelDailySalesTitle"
+      );
+
+    if (title) {
+      title.innerText =
+        `${formatDailySalesTitleDate(
+          selectedDate
+        )} 채널별 일매출 현황`;
+    }
+
+  const selectedChannelId =
+    currentChannelDailySalesChannel;
+
+  if (!selectedChannelId) {
+    renderChannelDailySummary([]);
+
+    wrap.innerHTML = `
+      <div class="product-daily-empty">
+        사용 중인 판매 채널이 없습니다.
+      </div>
+    `;
+
+    return;
+  }
 
   const previousDate =
     addDaysToDateKey(
@@ -7294,37 +7610,41 @@ function renderChannelDailySalesPage() {
       -7
     );
 
-  const channels =
-    getActiveSalesChannels();
+  const products =
+    getActiveSalesProducts();
 
-  const rows = channels.map(
-    (channel) => {
+  const rows = products
+    .map((product) => {
       const today =
-        getChannelDailySalesData(
-          channel.id,
+        getChannelProductDailySalesData(
+          selectedChannelId,
+          product.id,
           selectedDate
         );
 
       const yesterday =
-        getChannelDailySalesData(
-          channel.id,
+        getChannelProductDailySalesData(
+          selectedChannelId,
+          product.id,
           previousDate
         );
 
       const previousWeek =
-        getChannelDailySalesData(
-          channel.id,
+        getChannelProductDailySalesData(
+          selectedChannelId,
+          product.id,
           previousWeekDate
         );
 
       return {
-        channelId: channel.id,
-        channelName: channel.name,
-        channelShortName:
-          channel.shortName ||
-          channel.name,
+        productId:
+          product.id,
+
+        productName:
+          product.name,
+
         sortOrder: Number(
-          channel.sortOrder || 999
+          product.sortOrder || 999
         ),
 
         orderCount:
@@ -7342,6 +7662,12 @@ function renderChannelDailySalesPage() {
         refundQty:
           today.refundQty,
 
+        previousSales:
+          yesterday.sales,
+
+        previousWeekSales:
+          previousWeek.sales,
+
         dayChange:
           getProductSalesChange(
             today.sales,
@@ -7354,13 +7680,11 @@ function renderChannelDailySalesPage() {
             previousWeek.sales
           ),
       };
-    }
-  );
-
-  rows.sort(
-    (a, b) =>
-      a.sortOrder - b.sortOrder
-  );
+    })
+    .sort(
+      (a, b) =>
+        a.sortOrder - b.sortOrder
+    );
 
   renderChannelDailySummary(rows);
 
@@ -7372,26 +7696,32 @@ function renderChannelDailySalesPage() {
   );
 }
 
-function renderChannelDailySummary(rows) {
-  const activeChannelCount =
-    rows.filter(
-      (row) =>
-        row.sales > 0 ||
-        row.qty > 0 ||
-        row.refundAmount > 0
-    ).length;
+function renderChannelDailySummary(
+  rows
+) {
+  const totalOrderCount =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.orderCount || 0
+        ),
+      0
+    );
 
   const totalQty =
     rows.reduce(
       (sum, row) =>
-        sum + Number(row.qty || 0),
+        sum +
+        Number(row.qty || 0),
       0
     );
 
   const totalSales =
     rows.reduce(
       (sum, row) =>
-        sum + Number(row.sales || 0),
+        sum +
+        Number(row.sales || 0),
       0
     );
 
@@ -7406,9 +7736,9 @@ function renderChannelDailySummary(rows) {
     );
 
   document.getElementById(
-    "channelDailyActiveChannelCount"
+    "channelDailyOrderCount"
   ).innerText =
-    `${activeChannelCount.toLocaleString()}개`;
+    `${totalOrderCount.toLocaleString()}건`;
 
   document.getElementById(
     "channelDailyTotalQty"
@@ -7426,6 +7756,7 @@ function renderChannelDailySummary(rows) {
     `${refundAmount.toLocaleString()}원`;
 }
 
+
 function renderChannelDailySalesTable(
   rows,
   selectedDate,
@@ -7439,17 +7770,29 @@ function renderChannelDailySalesTable(
 
   if (!wrap) return;
 
-  if (!rows.length) {
+  // 실제 판매 또는 환불 데이터가 있는 상품만 표시
+  const visibleRows =
+    rows.filter(
+      (row) =>
+        row.orderCount > 0 ||
+        row.qty > 0 ||
+        row.sales > 0 ||
+        row.refundAmount > 0 ||
+        row.refundQty > 0
+    );
+
+  if (!visibleRows.length) {
     wrap.innerHTML = `
       <div class="product-daily-empty">
-        사용 중인 판매 채널이 없습니다.
+        ${escapeHtml(selectedDate)}에 판매된 상품이 없습니다.
       </div>
     `;
+
     return;
   }
 
   const totalOrderCount =
-    rows.reduce(
+    visibleRows.reduce(
       (sum, row) =>
         sum +
         Number(
@@ -7459,21 +7802,23 @@ function renderChannelDailySalesTable(
     );
 
   const totalQty =
-    rows.reduce(
+    visibleRows.reduce(
       (sum, row) =>
-        sum + Number(row.qty || 0),
+        sum +
+        Number(row.qty || 0),
       0
     );
 
   const totalSales =
-    rows.reduce(
+    visibleRows.reduce(
       (sum, row) =>
-        sum + Number(row.sales || 0),
+        sum +
+        Number(row.sales || 0),
       0
     );
 
   const totalRefund =
-    rows.reduce(
+    visibleRows.reduce(
       (sum, row) =>
         sum +
         Number(
@@ -7483,30 +7828,22 @@ function renderChannelDailySalesTable(
     );
 
   const totalPreviousSales =
-    rows.reduce(
-      (sum, row) => {
-        const data =
-          getChannelDailySalesData(
-            row.channelId,
-            previousDate
-          );
-
-        return sum + data.sales;
-      },
+    visibleRows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.previousSales || 0
+        ),
       0
     );
 
   const totalPreviousWeekSales =
-    rows.reduce(
-      (sum, row) => {
-        const data =
-          getChannelDailySalesData(
-            row.channelId,
-            previousWeekDate
-          );
-
-        return sum + data.sales;
-      },
+    visibleRows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.previousWeekSales || 0
+        ),
       0
     );
 
@@ -7525,19 +7862,19 @@ function renderChannelDailySalesTable(
   wrap.innerHTML = `
     <table class="product-daily-table">
       <colgroup>
-        <col style="width:18%;">
+        <col style="width:22%;">
         <col style="width:10%;">
         <col style="width:10%;">
         <col style="width:15%;">
         <col style="width:13%;">
-        <col style="width:17%;">
-        <col style="width:17%;">
+        <col style="width:15%;">
+        <col style="width:15%;">
       </colgroup>
 
       <thead>
         <tr>
-          <th>채널명</th>
-          <th>결제건수</th>
+          <th>상품명</th>
+          <th>주문건수</th>
           <th>판매수량</th>
           <th>판매금액</th>
           <th>환불금액</th>
@@ -7559,13 +7896,13 @@ function renderChannelDailySalesTable(
       </thead>
 
       <tbody>
-        ${rows
+        ${visibleRows
           .map(
             (row) => `
               <tr>
                 <td class="product-name">
                   ${escapeHtml(
-                    row.channelName
+                    row.productName
                   )}
                 </td>
 
@@ -7644,7 +7981,6 @@ function renderChannelDailySalesTable(
     </table>
   `;
 }
-
 
 
 /**
@@ -7961,6 +8297,18 @@ function renderProductDailySalesPage() {
 
   dateInput.value = selectedDate;
 
+  const title =
+    document.getElementById(
+      "productDailySalesTitle"
+    );
+
+  if (title) {
+    title.innerText =
+      `${formatDailySalesTitleDate(
+        selectedDate
+      )} 상품별 일매출 현황`;
+  }
+
   const previousDate =
     addDaysToDateKey(selectedDate, -1);
 
@@ -7996,6 +8344,7 @@ function renderProductDailySalesPage() {
         product.sortOrder || 999
       ),
 
+      orderCount: today.orderCount,
       qty: today.qty,
       sales: today.sales,
       refundAmount: today.refundAmount,
@@ -8031,9 +8380,12 @@ function renderProductDailySalesPage() {
  * 상단 KPI 렌더링
  */
 function renderProductDailySummary(rows) {
-  const soldProductCount = rows.filter(
-    (row) => row.qty > 0
-  ).length;
+
+  const totalOrderCount = rows.reduce(
+    (sum, row) =>
+      sum + Number(row.orderCount || 0),
+    0
+  );
 
   const totalQty = rows.reduce(
     (sum, row) => sum + row.qty,
@@ -8051,9 +8403,9 @@ function renderProductDailySummary(rows) {
   );
 
   document.getElementById(
-    "productDailySoldProductCount"
+    "productDailyOrderCount"
   ).innerText =
-    `${soldProductCount.toLocaleString()}개`;
+      `${totalOrderCount.toLocaleString()}건`;
 
   document.getElementById(
     "productDailyTotalQty"
@@ -8152,17 +8504,20 @@ function renderProductDailySalesTable(
   const html = `
     <table class="product-daily-table">
       <colgroup>
-        <col style="width:24%;">
-        <col style="width:11%;">
-        <col style="width:16%;">
-        <col style="width:15%;">
-        <col style="width:17%;">
-        <col style="width:17%;">
+          <col style="width:22%;">
+          <col style="width:10%;">
+          <col style="width:10%;">
+          <col style="width:15%;">
+          <col style="width:13%;">
+          <col style="width:15%;">
+          <col style="width:15%;">
       </colgroup>
+
 
       <thead>
         <tr>
           <th>상품명</th>
+          <th>주문건수</th>
           <th>판매수량</th>
           <th>판매금액</th>
           <th>환불금액</th>
@@ -8184,6 +8539,10 @@ function renderProductDailySalesTable(
               <tr>
                 <td class="product-name">
                   ${escapeHtml(row.productName)}
+                </td>
+
+                <td class="number">
+                  ${Number(row.orderCount || 0).toLocaleString()}건
                 </td>
 
                 <td class="number">
@@ -8221,6 +8580,10 @@ function renderProductDailySalesTable(
         <tr class="total-row">
           <td class="product-name">
             합계
+          </td>
+
+          <td class="number">
+            ${totalOrderCount.toLocaleString()}건
           </td>
 
           <td class="number">
@@ -9021,6 +9384,7 @@ function renderProductDailySalesTable(
           // 관리자 채널 변경 내용을 일반 화면에 즉시 반영
           renderSalesChannelNavigation();
           renderSalesRawChannelSelect();
+          renderChannelDailySalesTabs();
 
           alert(
             originalId
