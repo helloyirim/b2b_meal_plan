@@ -1488,21 +1488,7 @@
           └ 📅상품별 일매출 현황
         </div>
 
-        <div
-          class="nav-item sales-channel-nav"
-          id="nav-sales-naver"
-          onclick="showSalesPage('naver')"
-        >
-          └ 네이버 스마트스토어
-        </div>
-      
-        <div
-          class="nav-item sales-channel-nav"
-          id="nav-sales-coupang"
-          onclick="showSalesPage('coupang')"
-        >
-          └ 쿠팡
-        </div>
+        <div id="salesChannelNavList"></div>
       </div>
 
       <div
@@ -1848,10 +1834,7 @@
               </div>
               <div class="field" style="margin-bottom:12px;">
                 <label for="salesRawChannel">채널 선택</label>
-                <select id="salesRawChannel">
-                  <option value="naver">네이버 스마트스토어</option>
-                  <option value="coupang">쿠팡</option>
-                </select>
+                  <select id="salesRawChannel"></select>
               </div>
             
               <div class="field" style="margin-bottom:12px;">
@@ -5336,7 +5319,8 @@ function showSalesPage(channel = "all") {
 
   const title = document.querySelector("#page-sales .calendar-page-title");
   if (title) {
-    title.innerText = `${getSalesProductTitle()} ${SALES_CHANNEL_LABELS[channel]} 매출보고`;
+    title.innerText =
+  `${getSalesProductTitle()} ${getSalesChannelLabel(channel)} 매출보고`;
   }
 
   if (salesReportCache) {
@@ -5474,6 +5458,59 @@ function renderSalesRawProductSelect() {
     .join("");
 }
 
+function renderSalesChannelNavigation() {
+  const container =
+    document.getElementById("salesChannelNavList");
+
+  if (!container) return;
+
+  const channels = getActiveSalesChannels();
+
+  container.innerHTML = channels
+    .map(
+      (channel) => `
+        <div
+          class="nav-item sales-channel-nav"
+          id="nav-sales-${escapeHtml(channel.id)}"
+          onclick="showSalesPage('${escapeHtml(channel.id)}')"
+        >
+          └ ${escapeHtml(channel.name)}
+        </div>
+      `
+    )
+    .join("");
+}
+
+function renderSalesRawChannelSelect() {
+  const select =
+    document.getElementById("salesRawChannel");
+
+  if (!select) return;
+
+  const currentValue = select.value;
+  const channels = getActiveSalesChannels();
+
+  select.innerHTML = channels
+    .map(
+      (channel) => `
+        <option value="${escapeHtml(channel.id)}">
+          ${escapeHtml(channel.name)}
+        </option>
+      `
+    )
+    .join("");
+
+  if (
+    currentValue &&
+    channels.some(
+      (channel) =>
+        String(channel.id) === String(currentValue)
+    )
+  ) {
+    select.value = currentValue;
+  }
+}
+
 
 function toggleAllSalesProducts(el) {
   document.querySelectorAll(".sales-product-check").forEach((check) => {
@@ -5541,7 +5578,8 @@ function updateSalesReportTitle() {
   const title = document.querySelector("#page-sales .calendar-page-title");
   if (!title) return;
 
-  title.innerText = `${getSalesProductTitle()} ${SALES_CHANNEL_LABELS[currentSalesChannel]} 매출보고`;
+  title.innerText =
+  `${getSalesProductTitle()} ${getSalesChannelLabel(currentSalesChannel)} 매출보고`;
 }
 
 let currentSalesChannel = "all";
@@ -5849,11 +5887,13 @@ async function loadSalesChannelsFromServer() {
 let currentSalesMonth = new Date();
 currentSalesMonth.setDate(1);
 
-const SALES_CHANNEL_LABELS = {
-  all: "통합",
-  naver: "네이버 스마트스토어",
-  coupang: "쿠팡",
-};
+function getSalesChannelLabel(channelId) {
+  if (channelId === "all") {
+    return "통합";
+  }
+
+  return getSalesChannelName(channelId);
+}
 
 let salesReportCache = null;
 
@@ -8359,6 +8399,8 @@ function renderProductDailySalesTable(
 
         renderSalesProductFilter();
         renderSalesRawProductSelect();
+        renderSalesChannelNavigation();
+        renderSalesRawChannelSelect();
 
         await loadSalesReportFromServer();
 
