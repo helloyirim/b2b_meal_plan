@@ -3835,13 +3835,48 @@
       }
 
       async function apiPost(path = "", body = {}) {
-        const response = await fetch(`${API_URL}${path}`, {
+        const url = `${API_URL}${path}`;
+
+        console.log("[API POST 요청]", {
+          url,
+          path,
+          body,
+        });
+
+        const response = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify(body),
         });
-        if (!response.ok) throw new Error(`POST 실패: ${response.status}`);
-        return response.json().catch(() => ({}));
+
+        const responseText = await response.text();
+
+        console.log("[API POST 응답]", {
+          url,
+          status: response.status,
+          ok: response.ok,
+          responseText,
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `POST ${path} 실패 / 상태코드: ${response.status} / 응답: ${responseText}`
+          );
+        }
+
+        if (!responseText) {
+          return {};
+        }
+
+        try {
+          return JSON.parse(responseText);
+        } catch (e) {
+          return {
+            message: responseText,
+          };
+        }
       }
 
       async function apiDelete(path = "") {
@@ -7543,8 +7578,11 @@ function renderProductDailySalesTable(
 
           await renderAdminUsers();
         } catch (e) {
-          console.error(e);
-          alert("계정 저장에 실패했습니다. API에 /users/item 저장 경로가 필요합니다.");
+          console.error("계정 저장 실패:", e);
+
+          alert(
+            `계정 저장에 실패했습니다.\n\n${e.message}`
+          );
         }
       }
 
@@ -7749,10 +7787,10 @@ function renderProductDailySalesTable(
 
           alert("상품이 저장되었습니다.");
         } catch (e) {
-          console.error(e);
+          console.error("상품 저장 실패:", e);
 
           alert(
-            "상품 저장에 실패했습니다. API에 /sales-products/item 경로가 필요합니다."
+            `상품 저장에 실패했습니다.\n\n${e.message}`
           );
         }
       }
@@ -8131,13 +8169,10 @@ function renderProductDailySalesTable(
               : "채널이 등록되었습니다."
           );
         } catch (e) {
-          console.error(
-            "채널 저장 실패:",
-            e
-          );
+          console.error("채널 저장 실패:", e);
 
           alert(
-            "채널 저장에 실패했습니다. API에 /sales-channels/item 저장 경로가 필요합니다."
+            `채널 저장에 실패했습니다.\n\n${e.message}`
           );
         }
       }
