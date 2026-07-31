@@ -1372,6 +1372,66 @@
   }
 }
 
+/* =========================
+   관리자 화면 탭
+========================= */
+
+.admin-tab-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.admin-tab-button {
+  min-width: 140px;
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-sub);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-tab-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.admin-tab-button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.admin-tab-content {
+  display: none;
+}
+
+.admin-tab-content.active {
+  display: block;
+}
+
+.admin-section-header {
+  margin-bottom: 18px;
+}
+
+.admin-section-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.admin-section-description {
+  font-size: 13px;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+
 
     </style>
   </head>
@@ -2289,133 +2349,258 @@
         </div>
       </div>
 
+
       <div id="page-admin" class="page">
-        <header style="margin-bottom: 20px">
+        <header style="margin-bottom:20px;">
           <h1>관리자</h1>
         </header>
       
-        <div class="card">
-          <h3 style="margin-bottom: 16px;">계정 관리</h3>
+        <div class="admin-tab-nav">
+          <button
+            type="button"
+            id="adminTabAccountButton"
+            class="admin-tab-button active"
+            onclick="showAdminTab('account')"
+          >
+            계정 관리
+          </button>
       
-          <div style="display:flex; gap:10px; margin-bottom:16px;">
-            <input id="adminUserId" placeholder="아이디" style="padding:10px; border:1px solid #ccc; border-radius:6px;" />
-            <input id="adminUserName" placeholder="이름" style="padding:10px; border:1px solid #ccc; border-radius:6px;" />
-            <input id="adminUserPw" placeholder="비밀번호" style="padding:10px; border:1px solid #ccc; border-radius:6px;" />
-            <select id="adminUserRole" style="padding:10px; border:1px solid #ccc; border-radius:6px;">
-              <option value="ADMIN">관리자</option>
-              <option value="USER">일반사용</option>
-              <option value="VIEWER">조회전용</option>
-            </select>
-            <button class="btn btn-save" onclick="saveAdminUser()">계정 저장</button>
-          </div>
-      
-          <table style="width:100%; border-collapse:collapse; font-size:14px;">
-            <thead>
-              <tr style="background:#f5f5f7;">
-                <th style="padding:10px;">아이디</th>
-                <th style="padding:10px;">이름</th>
-                <th style="padding:10px;">권한</th>
-                <th style="padding:10px;">관리</th>
-              </tr>
-            </thead>
-            <tbody id="adminUserList"></tbody>
-          </table>
+          <button
+            type="button"
+            id="adminTabSalesButton"
+            class="admin-tab-button"
+            onclick="showAdminTab('sales')"
+          >
+            매출보고 관리
+          </button>
         </div>
-
-
-        <div class="card">
-          <h3 style="margin-bottom:16px;">상품 관리</h3>
-        
-          <input type="hidden" id="adminSalesProductOriginalId" />
-        
-          <div
-          style="
-            display:flex;
-            gap:10px;
-            align-items:flex-end;
-            flex-wrap:wrap;
-            margin-bottom:16px;
-          "
+      
+        <!-- 계정 관리 탭 -->
+        <div
+          id="adminTabAccount"
+          class="admin-tab-content active"
         >
-          <div class="field" style="width:160px;">
-            <label for="adminSalesProductId">상품 ID</label>
-            <input
-              id="adminSalesProductId"
-              placeholder="예: maesil_stick"
-            />
+          <div class="admin-section-header">
+            <div class="admin-section-title">
+              계정 관리
+            </div>
+      
+            <div class="admin-section-description">
+              시스템 계정과 사용자 권한을 등록하고 관리합니다.
+            </div>
           </div>
-        
-          <div class="field" style="width:220px;">
-            <label for="adminSalesProductName">상품명</label>
-            <input
-              id="adminSalesProductName"
-              placeholder="상품명"
-            />
+      
+          <div class="card">
+            <div
+              style="
+                display:flex;
+                gap:10px;
+                margin-bottom:16px;
+                align-items:flex-end;
+                flex-wrap:wrap;
+              "
+            >
+              <div class="field" style="width:180px;">
+                <label for="adminUserId">아이디</label>
+                <input
+                  id="adminUserId"
+                  placeholder="아이디"
+                />
+              </div>
+      
+              <div class="field" style="width:160px;">
+                <label for="adminUserName">이름</label>
+                <input
+                  id="adminUserName"
+                  placeholder="이름"
+                />
+              </div>
+      
+              <div class="field" style="width:180px;">
+                <label for="adminUserPw">비밀번호</label>
+                <input
+                  type="password"
+                  id="adminUserPw"
+                  placeholder="비밀번호"
+                />
+              </div>
+      
+              <div class="field" style="width:140px;">
+                <label for="adminUserRole">권한</label>
+      
+                <select id="adminUserRole">
+                  <option value="ADMIN">관리자</option>
+                  <option value="USER">일반사용</option>
+                  <option value="VIEWER">조회전용</option>
+                </select>
+              </div>
+      
+              <button
+                type="button"
+                class="btn btn-save"
+                onclick="saveAdminUser()"
+                style="height:42px;"
+              >
+                계정 저장
+              </button>
+            </div>
+      
+            <table
+              style="
+                width:100%;
+                border-collapse:collapse;
+                font-size:14px;
+              "
+            >
+              <thead>
+                <tr style="background:#f5f5f7;">
+                  <th style="padding:10px;">아이디</th>
+                  <th style="padding:10px;">이름</th>
+                  <th style="padding:10px;">권한</th>
+                  <th style="padding:10px;">관리</th>
+                </tr>
+              </thead>
+      
+              <tbody id="adminUserList"></tbody>
+            </table>
           </div>
-        
-          <div class="field" style="width:150px;">
-            <label for="adminSalesProductGroup">상품군</label>
-            <input
-              id="adminSalesProductGroup"
-              placeholder="예: 매실"
-            />
-          </div>
-        
-          <div class="field" style="width:90px;">
-            <label for="adminSalesProductSortOrder">순서</label>
-            <input
-              type="number"
-              id="adminSalesProductSortOrder"
-              value="1"
-              min="1"
-            />
-          </div>
-        
-          <div class="field" style="width:110px;">
-            <label for="adminSalesProductActive">사용 여부</label>
-            <select id="adminSalesProductActive">
-              <option value="true">사용</option>
-              <option value="false">사용중지</option>
-            </select>
-          </div>
-        
-          <button
-            class="btn btn-save"
-            onclick="saveAdminSalesProduct()"
-            style="width:110px; height:42px;"
-          >
-            상품 저장
-          </button>
-        
-          <button
-            class="btn btn-grey"
-            onclick="resetAdminSalesProductForm()"
-            style="width:90px; height:42px;"
-          >
-            초기화
-          </button>
         </div>
-        
-          <table
-            style="
-              width:100%;
-              border-collapse:collapse;
-              font-size:14px;
-            "
-          >
-            <thead>
-              <tr style="background:#f5f5f7;">
-                <th style="padding:10px;">상품 ID</th>
-                <th style="padding:10px;">상품명</th>
-                <th style="padding:10px;">상품군</th>
-                <th style="padding:10px;">순서</th>
-                <th style="padding:10px;">상태</th>
-                <th style="padding:10px;">관리</th>
-              </tr>
-            </thead>
-        
-            <tbody id="adminSalesProductList"></tbody>
-          </table>
+      
+        <!-- 매출보고 관리 탭 -->
+        <div
+          id="adminTabSales"
+          class="admin-tab-content"
+        >
+          <div class="admin-section-header">
+            <div class="admin-section-title">
+              매출보고 관리
+            </div>
+      
+            <div class="admin-section-description">
+              매출보고에 사용되는 상품과 판매 채널을 관리합니다.
+            </div>
+          </div>
+      
+          <!-- 상품 관리 -->
+          <div class="card">
+            <h3 style="margin-bottom:16px;">
+              상품 관리
+            </h3>
+      
+            <input
+              type="hidden"
+              id="adminSalesProductOriginalId"
+            />
+      
+            <div
+              style="
+                display:flex;
+                gap:10px;
+                align-items:flex-end;
+                flex-wrap:wrap;
+                margin-bottom:16px;
+              "
+            >
+              <div class="field" style="width:160px;">
+                <label for="adminSalesProductId">
+                  상품 ID
+                </label>
+      
+                <input
+                  id="adminSalesProductId"
+                  placeholder="예: maesil_stick"
+                />
+              </div>
+      
+              <div class="field" style="width:220px;">
+                <label for="adminSalesProductName">
+                  상품명
+                </label>
+      
+                <input
+                  id="adminSalesProductName"
+                  placeholder="상품명"
+                />
+              </div>
+      
+              <div class="field" style="width:150px;">
+                <label for="adminSalesProductGroup">
+                  상품군
+                </label>
+      
+                <input
+                  id="adminSalesProductGroup"
+                  placeholder="예: 매실"
+                />
+              </div>
+      
+              <div class="field" style="width:90px;">
+                <label for="adminSalesProductSortOrder">
+                  순서
+                </label>
+      
+                <input
+                  type="number"
+                  id="adminSalesProductSortOrder"
+                  value="1"
+                  min="1"
+                />
+              </div>
+      
+              <div class="field" style="width:110px;">
+                <label for="adminSalesProductActive">
+                  사용 여부
+                </label>
+      
+                <select id="adminSalesProductActive">
+                  <option value="true">사용</option>
+                  <option value="false">사용중지</option>
+                </select>
+              </div>
+      
+              <button
+                type="button"
+                class="btn btn-save"
+                onclick="saveAdminSalesProduct()"
+                style="width:110px; height:42px;"
+              >
+                상품 저장
+              </button>
+      
+              <button
+                type="button"
+                class="btn btn-grey"
+                onclick="resetAdminSalesProductForm()"
+                style="width:90px; height:42px;"
+              >
+                초기화
+              </button>
+            </div>
+      
+            <table
+              style="
+                width:100%;
+                border-collapse:collapse;
+                font-size:14px;
+              "
+            >
+              <thead>
+                <tr style="background:#f5f5f7;">
+                  <th style="padding:10px;">상품 ID</th>
+                  <th style="padding:10px;">상품명</th>
+                  <th style="padding:10px;">상품군</th>
+                  <th style="padding:10px;">순서</th>
+                  <th style="padding:10px;">상태</th>
+                  <th style="padding:10px;">관리</th>
+                </tr>
+              </thead>
+      
+              <tbody id="adminSalesProductList"></tbody>
+            </table>
+          </div>
+      
+          <!-- 다음 단계에서 채널 관리가 들어갈 위치 -->
+          <div id="adminSalesChannelManagementArea"></div>
         </div>
       </div>
 
@@ -3794,9 +3979,11 @@
             return;
           }
 
-          document.getElementById("nav-admin").classList.add("active");
-          renderAdminUsers();
-          renderAdminSalesProducts();
+          document
+            .getElementById("nav-admin")
+            ?.classList.add("active");
+
+          showAdminTab("account");
         }
 
       }
@@ -7056,6 +7243,65 @@ function renderProductDailySalesTable(
 
   wrap.innerHTML = html;
 }
+
+      // =========================
+      // 관리자 탭 전환
+      // =========================
+
+      function showAdminTab(tabName = "account") {
+        const accountButton = document.getElementById(
+          "adminTabAccountButton"
+        );
+
+        const salesButton = document.getElementById(
+          "adminTabSalesButton"
+        );
+
+        const accountContent = document.getElementById(
+          "adminTabAccount"
+        );
+
+        const salesContent = document.getElementById(
+          "adminTabSales"
+        );
+
+        if (
+          !accountButton ||
+          !salesButton ||
+          !accountContent ||
+          !salesContent
+        ) {
+          return;
+        }
+
+        const isSalesTab = tabName === "sales";
+
+        accountButton.classList.toggle(
+          "active",
+          !isSalesTab
+        );
+
+        salesButton.classList.toggle(
+          "active",
+          isSalesTab
+        );
+
+        accountContent.classList.toggle(
+          "active",
+          !isSalesTab
+        );
+
+        salesContent.classList.toggle(
+          "active",
+          isSalesTab
+        );
+
+        if (isSalesTab) {
+          renderAdminSalesProducts();
+        } else {
+          renderAdminUsers();
+        }
+      }
 
       // =========================
       // 관리자 - 계정 관리
