@@ -7577,10 +7577,15 @@ function renderChannelDailySalesPage() {
       );
 
     if (title) {
+      const channelLabel =
+        getSalesChannelLabel(
+          currentChannelDailySalesChannel
+        );
+
       title.innerText =
         `${formatDailySalesTitleDate(
           selectedDate
-        )} 채널별 일매출 현황`;
+        )} ${channelLabel} 일매출 현황`;
     }
 
   const selectedChannelId =
@@ -7771,15 +7776,7 @@ function renderChannelDailySalesTable(
   if (!wrap) return;
 
   // 실제 판매 또는 환불 데이터가 있는 상품만 표시
-  const visibleRows =
-    rows.filter(
-      (row) =>
-        row.orderCount > 0 ||
-        row.qty > 0 ||
-        row.sales > 0 ||
-        row.refundAmount > 0 ||
-        row.refundQty > 0
-    );
+  const visibleRows = rows;
 
   if (!visibleRows.length) {
     wrap.innerHTML = `
@@ -8447,6 +8444,12 @@ function renderProductDailySalesTable(
     `;
     return;
   }
+
+  const totalOrderCount = rows.reduce(
+    (sum, row) =>
+      sum + Number(row.orderCount || 0),
+    0
+  );
 
   const totalQty = rows.reduce(
     (sum, row) => sum + row.qty,
