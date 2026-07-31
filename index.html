@@ -9385,6 +9385,7 @@ function renderProductDailySalesTable(
           renderAdminSalesChannels();
 
           // 관리자 채널 변경 내용을 일반 화면에 즉시 반영
+          renderSalesProductFilter();
           renderSalesChannelNavigation();
           renderSalesRawChannelSelect();
           renderChannelDailySalesTabs();
@@ -9427,6 +9428,7 @@ function renderProductDailySalesTable(
         renderSalesRawProductSelect();
         renderSalesChannelNavigation();
         renderSalesRawChannelSelect();
+        renderChannelDailySalesTabs();
 
         await loadSalesReportFromServer();
 
