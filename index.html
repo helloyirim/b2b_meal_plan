@@ -1217,6 +1217,162 @@
   margin-bottom: 4px;
 }
 
+/* =========================
+   상품별 일매출 현황
+========================= */
+
+.product-daily-description {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.product-daily-date-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.product-daily-date-control label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.product-daily-date-control input {
+  height: 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #fff;
+  font-size: 14px;
+  color: #111827;
+}
+
+.product-daily-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 20px 0 16px;
+}
+
+.product-daily-kpi {
+  min-height: 120px;
+}
+
+.product-daily-kpi.refund .kpi-value {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.product-daily-panel {
+  margin-top: 0;
+}
+
+.product-daily-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 14px;
+}
+
+.product-daily-table th {
+  background: #f5f5f7;
+  border: 1px solid #e5e7eb;
+  color: #334155;
+  padding: 12px 10px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.product-daily-table td {
+  border: 1px solid #e5e7eb;
+  padding: 12px 10px;
+  color: #222;
+  text-align: center;
+}
+
+.product-daily-table td.product-name {
+  text-align: left;
+  font-weight: 800;
+}
+
+.product-daily-table td.number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.product-daily-table td.sales-amount {
+  text-align: right;
+  color: #1d5fd1;
+  font-weight: 800;
+}
+
+.product-daily-table td.refund-amount {
+  text-align: right;
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.product-daily-table tr.total-row td {
+  background: #f8fafc;
+  font-weight: 800;
+  border-top: 2px solid #94a3b8;
+}
+
+.sales-change {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 88px;
+}
+
+.sales-change-rate {
+  font-weight: 800;
+}
+
+.sales-change-amount {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.sales-change.up .sales-change-rate {
+  color: #dc2626;
+}
+
+.sales-change.down .sales-change-rate {
+  color: #2563eb;
+}
+
+.sales-change.same .sales-change-rate,
+.sales-change.none .sales-change-rate {
+  color: #64748b;
+}
+
+.product-daily-empty {
+  padding: 50px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+@media (max-width: 1100px) {
+  .product-daily-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
     </style>
   </head>
     <body>
@@ -1261,9 +1417,17 @@
           id="nav-sales-all"
           onclick="showSalesPage('all')"
         >
-          └ 🐐통합매출🐐
+          └ 🍏통합매출
         </div>
       
+        <div
+          class="nav-item sales-channel-nav"
+          id="nav-sales-product-daily"
+          onclick="showProductDailySalesPage()"
+        >
+          └ 📅상품별 일매출 현황
+        </div>
+
         <div
           class="nav-item sales-channel-nav"
           id="nav-sales-naver"
@@ -1664,6 +1828,69 @@
         </div>
       </div>
     </div>
+
+    <!-- page-sales 끝 -->
+
+    <div id="page-product-daily-sales" class="page">
+        <div class="sales-dashboard">
+      
+          <div class="calendar-topbar">
+            <div>
+              <h1 class="calendar-page-title">상품별 일매출 현황</h1>
+              <div class="product-daily-description">
+                선택한 날짜에 판매된 상품별 수량과 판매금액을 확인합니다.
+                환불은 판매금액에서 차감하지 않고 별도로 표시합니다.
+              </div>
+            </div>
+      
+            <div class="product-daily-date-control">
+              <label for="productDailySalesDate">조회일</label>
+      
+              <input
+                type="date"
+                id="productDailySalesDate"
+                onchange="renderProductDailySalesPage()"
+              />
+            </div>
+          </div>
+      
+          <div class="product-daily-summary">
+            <div class="sales-kpi-card product-daily-kpi">
+              <div class="kpi-label">판매 상품</div>
+              <div class="kpi-value" id="productDailySoldProductCount">0개</div>
+              <div class="kpi-sub">판매수량이 있는 상품</div>
+            </div>
+      
+            <div class="sales-kpi-card product-daily-kpi">
+              <div class="kpi-label">총 판매수량</div>
+              <div class="kpi-value" id="productDailyTotalQty">0개</div>
+              <div class="kpi-sub">환불수량 차감 전</div>
+            </div>
+      
+            <div class="sales-kpi-card product-daily-kpi">
+              <div class="kpi-label">총 판매금액</div>
+              <div class="kpi-value" id="productDailyTotalSales">0원</div>
+              <div class="kpi-sub">환불 차감 전</div>
+            </div>
+      
+            <div class="sales-kpi-card product-daily-kpi refund">
+              <div class="kpi-label">당일 환불금액</div>
+              <div class="kpi-value" id="productDailyRefundAmount">0원</div>
+              <div class="kpi-sub">환불 발생일 기준</div>
+            </div>
+          </div>
+      
+          <section class="sales-panel product-daily-panel">
+            <div class="sales-panel-title">
+              상품별 판매 현황
+              <span>전일 및 7일 전 판매금액 비교</span>
+            </div>
+      
+            <div id="productDailySalesTableWrap"></div>
+          </section>
+        </div>
+      </div>
+
     
       <div id="page-generate" class="page">
         <div
@@ -3540,6 +3767,15 @@
 
           const activeNav = document.getElementById(`nav-sales-${currentSalesChannel}`);
           if (activeNav) activeNav.classList.add("active");
+        }
+        if (id === "page-product-daily-sales") {
+          document
+            .getElementById("nav-sales-main")
+            ?.classList.add("active");
+
+          document
+            .getElementById("nav-sales-product-daily")
+            ?.classList.add("active");
         }
         if (id === "page-history") {
           document.getElementById("nav-meal-main").classList.add("active");
@@ -5991,6 +6227,655 @@ function renderSalesChannelSummary() {
   `;
 }
 
+
+// =========================
+// 상품별 일매출 현황
+// =========================
+
+function showProductDailySalesPage() {
+  showPage("page-product-daily-sales");
+
+  document
+    .querySelectorAll(".sales-channel-nav")
+    .forEach((el) => el.classList.remove("active"));
+
+  document
+    .getElementById("nav-sales-product-daily")
+    ?.classList.add("active");
+
+  document
+    .getElementById("nav-sales-main")
+    ?.classList.add("active");
+
+  const dateInput = document.getElementById(
+    "productDailySalesDate"
+  );
+
+  if (dateInput && !dateInput.value) {
+    dateInput.value =
+      getLatestProductDailySalesDate() ||
+      getTodayDateKey();
+  }
+
+  renderProductDailySalesPage();
+}
+
+
+/**
+ * 로컬 시간 기준 오늘 날짜를 YYYY-MM-DD로 반환
+ */
+function getTodayDateKey() {
+  const today = new Date();
+
+  return [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+
+/**
+ * YYYY-MM-DD 날짜에 일수를 더하거나 뺌
+ * 예: addDaysToDateKey("2026-07-31", -1)
+ */
+function addDaysToDateKey(dateKey, amount) {
+  if (!dateKey) return "";
+
+  const [year, month, day] = dateKey
+    .split("-")
+    .map(Number);
+
+  const date = new Date(
+    Date.UTC(year, month - 1, day)
+  );
+
+  date.setUTCDate(date.getUTCDate() + amount);
+
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+
+/**
+ * YYYY-MM-DD에서 YYYY-MM 반환
+ */
+function getMonthKeyFromDateKey(dateKey) {
+  return String(dateKey || "").slice(0, 7);
+}
+
+
+/**
+ * 특정 보고서에서 특정 날짜 행 조회
+ */
+function getSalesDailyRowFromReport(report, dateKey) {
+  if (!report) return null;
+
+  return (report.dailyRows || []).find(
+    (row) =>
+      row.date === dateKey &&
+      !row.isOutOfRange
+  ) || null;
+}
+
+
+/**
+ * 상품 1개의 특정 날짜 판매 데이터를 채널 합산
+ *
+ * 판매금액과 판매수량은 환불 차감 전
+ * 환불은 별도 반환
+ */
+function getProductDailySalesData(
+  productId,
+  dateKey
+) {
+  salesReportCache =
+    normalizeSalesStorage(salesReportCache);
+
+  const monthKey =
+    getMonthKeyFromDateKey(dateKey);
+
+  const product =
+    salesReportCache.products?.[productId];
+
+  const result = {
+    qty: 0,
+    sales: 0,
+    refundAmount: 0,
+    refundQty: 0,
+    orderCount: 0,
+  };
+
+  if (!product || !monthKey) {
+    return result;
+  }
+
+  ["naver", "coupang"].forEach((channel) => {
+    const report =
+      product.channels?.[channel]?.months?.[
+        monthKey
+      ];
+
+    const row =
+      getSalesDailyRowFromReport(
+        report,
+        dateKey
+      );
+
+    if (!row) return;
+
+    result.qty += Number(row.qty || 0);
+    result.sales += Number(row.sales || 0);
+
+    result.refundAmount += Number(
+      row.refundAmount || 0
+    );
+
+    result.refundQty += Number(
+      row.refundQty || 0
+    );
+
+    result.orderCount += Number(
+      row.orderCount ??
+      row.customers ??
+      0
+    );
+  });
+
+  return result;
+}
+
+
+/**
+ * 매출 데이터가 저장된 가장 최근 날짜 조회
+ *
+ * 사용 중인 상품 기준
+ */
+function getLatestProductDailySalesDate() {
+  salesReportCache =
+    normalizeSalesStorage(salesReportCache);
+
+  const activeProductIds =
+    getActiveSalesProducts().map(
+      (product) => product.id
+    );
+
+  const dates = [];
+
+  activeProductIds.forEach((productId) => {
+    const product =
+      salesReportCache.products?.[productId];
+
+    if (!product) return;
+
+    ["naver", "coupang"].forEach((channel) => {
+      const months =
+        product.channels?.[channel]?.months ||
+        {};
+
+      Object.values(months).forEach(
+        (report) => {
+          (report?.dailyRows || []).forEach(
+            (row) => {
+              if (
+                !row.date ||
+                row.isOutOfRange
+              ) {
+                return;
+              }
+
+              const hasData =
+                Number(row.sales || 0) !== 0 ||
+                Number(row.qty || 0) !== 0 ||
+                Number(row.refundAmount || 0) !== 0 ||
+                Number(row.refundQty || 0) !== 0;
+
+              if (hasData) {
+                dates.push(row.date);
+              }
+            }
+          );
+        }
+      );
+    });
+  });
+
+  return dates.sort().at(-1) || "";
+}
+
+
+/**
+ * 전일·전주 대비 표시값 계산
+ *
+ * 비교일 0원, 당일 매출 발생 → 신규
+ * 비교일 매출 있음, 당일 0원 → ▼100%
+ * 둘 다 0원 → -
+ */
+function getProductSalesChange(
+  currentSales,
+  previousSales
+) {
+  const current =
+    Number(currentSales || 0);
+
+  const previous =
+    Number(previousSales || 0);
+
+  const amount = current - previous;
+
+  if (previous === 0 && current === 0) {
+    return {
+      type: "none",
+      label: "-",
+      amount: 0,
+    };
+  }
+
+  if (previous === 0 && current > 0) {
+    return {
+      type: "up",
+      label: "신규",
+      amount,
+    };
+  }
+
+  const rate =
+    ((current - previous) / previous) * 100;
+
+  if (rate > 0) {
+    return {
+      type: "up",
+      label: `▲ ${formatSalesChangeRate(rate)}`,
+      amount,
+    };
+  }
+
+  if (rate < 0) {
+    return {
+      type: "down",
+      label: `▼ ${formatSalesChangeRate(
+        Math.abs(rate)
+      )}`,
+      amount,
+    };
+  }
+
+  return {
+    type: "same",
+    label: "0.0%",
+    amount: 0,
+  };
+}
+
+
+function formatSalesChangeRate(rate) {
+  return `${Math.round(rate * 10) / 10}%`;
+}
+
+
+function formatSignedSalesAmount(amount) {
+  const value = Number(amount || 0);
+
+  if (value > 0) {
+    return `+${value.toLocaleString()}원`;
+  }
+
+  if (value < 0) {
+    return `${value.toLocaleString()}원`;
+  }
+
+  return "0원";
+}
+
+
+function renderProductSalesChange(change) {
+  return `
+    <div class="sales-change ${change.type}">
+      <span class="sales-change-rate">
+        ${change.label}
+      </span>
+
+      ${
+        change.type === "none"
+          ? ""
+          : `
+            <span class="sales-change-amount">
+              ${formatSignedSalesAmount(
+                change.amount
+              )}
+            </span>
+          `
+      }
+    </div>
+  `;
+}
+
+
+/**
+ * 상품별 일매출 페이지 렌더링
+ */
+function renderProductDailySalesPage() {
+  const dateInput = document.getElementById(
+    "productDailySalesDate"
+  );
+
+  const wrap = document.getElementById(
+    "productDailySalesTableWrap"
+  );
+
+  if (!dateInput || !wrap) return;
+
+  const selectedDate =
+    dateInput.value ||
+    getLatestProductDailySalesDate() ||
+    getTodayDateKey();
+
+  dateInput.value = selectedDate;
+
+  const previousDate =
+    addDaysToDateKey(selectedDate, -1);
+
+  const previousWeekDate =
+    addDaysToDateKey(selectedDate, -7);
+
+  // 사용 중인 상품만 자동 표시
+  const products = getActiveSalesProducts();
+
+  const rows = products.map((product) => {
+    const today =
+      getProductDailySalesData(
+        product.id,
+        selectedDate
+      );
+
+    const yesterday =
+      getProductDailySalesData(
+        product.id,
+        previousDate
+      );
+
+    const previousWeek =
+      getProductDailySalesData(
+        product.id,
+        previousWeekDate
+      );
+
+    return {
+      productId: product.id,
+      productName: product.name,
+      sortOrder: Number(
+        product.sortOrder || 999
+      ),
+
+      qty: today.qty,
+      sales: today.sales,
+      refundAmount: today.refundAmount,
+      refundQty: today.refundQty,
+
+      dayChange: getProductSalesChange(
+        today.sales,
+        yesterday.sales
+      ),
+
+      weekChange: getProductSalesChange(
+        today.sales,
+        previousWeek.sales
+      ),
+    };
+  });
+
+  rows.sort(
+    (a, b) => a.sortOrder - b.sortOrder
+  );
+
+  renderProductDailySummary(rows);
+  renderProductDailySalesTable(
+    rows,
+    selectedDate,
+    previousDate,
+    previousWeekDate
+  );
+}
+
+
+/**
+ * 상단 KPI 렌더링
+ */
+function renderProductDailySummary(rows) {
+  const soldProductCount = rows.filter(
+    (row) => row.qty > 0
+  ).length;
+
+  const totalQty = rows.reduce(
+    (sum, row) => sum + row.qty,
+    0
+  );
+
+  const totalSales = rows.reduce(
+    (sum, row) => sum + row.sales,
+    0
+  );
+
+  const refundAmount = rows.reduce(
+    (sum, row) => sum + row.refundAmount,
+    0
+  );
+
+  document.getElementById(
+    "productDailySoldProductCount"
+  ).innerText =
+    `${soldProductCount.toLocaleString()}개`;
+
+  document.getElementById(
+    "productDailyTotalQty"
+  ).innerText =
+    `${totalQty.toLocaleString()}개`;
+
+  document.getElementById(
+    "productDailyTotalSales"
+  ).innerText =
+    `${totalSales.toLocaleString()}원`;
+
+  document.getElementById(
+    "productDailyRefundAmount"
+  ).innerText =
+    `${refundAmount.toLocaleString()}원`;
+}
+
+
+/**
+ * 상품별 표 렌더링
+ */
+function renderProductDailySalesTable(
+  rows,
+  selectedDate,
+  previousDate,
+  previousWeekDate
+) {
+  const wrap = document.getElementById(
+    "productDailySalesTableWrap"
+  );
+
+  if (!wrap) return;
+
+  if (!rows.length) {
+    wrap.innerHTML = `
+      <div class="product-daily-empty">
+        사용 중인 상품이 없습니다.
+      </div>
+    `;
+    return;
+  }
+
+  const totalQty = rows.reduce(
+    (sum, row) => sum + row.qty,
+    0
+  );
+
+  const totalSales = rows.reduce(
+    (sum, row) => sum + row.sales,
+    0
+  );
+
+  const totalRefund = rows.reduce(
+    (sum, row) => sum + row.refundAmount,
+    0
+  );
+
+  const totalPreviousSales = rows.reduce(
+    (sum, row) => {
+      const productData =
+        getProductDailySalesData(
+          row.productId,
+          previousDate
+        );
+
+      return sum + productData.sales;
+    },
+    0
+  );
+
+  const totalPreviousWeekSales = rows.reduce(
+    (sum, row) => {
+      const productData =
+        getProductDailySalesData(
+          row.productId,
+          previousWeekDate
+        );
+
+      return sum + productData.sales;
+    },
+    0
+  );
+
+  const totalDayChange =
+    getProductSalesChange(
+      totalSales,
+      totalPreviousSales
+    );
+
+  const totalWeekChange =
+    getProductSalesChange(
+      totalSales,
+      totalPreviousWeekSales
+    );
+
+  const html = `
+    <table class="product-daily-table">
+      <colgroup>
+        <col style="width:24%;">
+        <col style="width:11%;">
+        <col style="width:16%;">
+        <col style="width:15%;">
+        <col style="width:17%;">
+        <col style="width:17%;">
+      </colgroup>
+
+      <thead>
+        <tr>
+          <th>상품명</th>
+          <th>판매수량</th>
+          <th>판매금액</th>
+          <th>환불금액</th>
+          <th>
+            전일 대비<br>
+            <small>${previousDate}</small>
+          </th>
+          <th>
+            전주 대비<br>
+            <small>${previousWeekDate}</small>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        ${rows
+          .map(
+            (row) => `
+              <tr>
+                <td class="product-name">
+                  ${escapeHtml(row.productName)}
+                </td>
+
+                <td class="number">
+                  ${row.qty.toLocaleString()}개
+                </td>
+
+                <td class="sales-amount">
+                  ${row.sales.toLocaleString()}원
+                </td>
+
+                <td class="refund-amount">
+                  ${
+                    row.refundAmount
+                      ? `${row.refundAmount.toLocaleString()}원`
+                      : "-"
+                  }
+                </td>
+
+                <td>
+                  ${renderProductSalesChange(
+                    row.dayChange
+                  )}
+                </td>
+
+                <td>
+                  ${renderProductSalesChange(
+                    row.weekChange
+                  )}
+                </td>
+              </tr>
+            `
+          )
+          .join("")}
+
+        <tr class="total-row">
+          <td class="product-name">
+            합계
+          </td>
+
+          <td class="number">
+            ${totalQty.toLocaleString()}개
+          </td>
+
+          <td class="sales-amount">
+            ${totalSales.toLocaleString()}원
+          </td>
+
+          <td class="refund-amount">
+            ${
+              totalRefund
+                ? `${totalRefund.toLocaleString()}원`
+                : "-"
+            }
+          </td>
+
+          <td>
+            ${renderProductSalesChange(
+              totalDayChange
+            )}
+          </td>
+
+          <td>
+            ${renderProductSalesChange(
+              totalWeekChange
+            )}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="muted">
+      조회일 ${selectedDate} 기준 · 판매금액과 판매수량은 환불 차감 전이며,
+      환불은 환불 발생일 기준으로 별도 표시됩니다.
+    </div>
+  `;
+
+  wrap.innerHTML = html;
+}
 
       // =========================
       // 관리자 - 계정 관리
