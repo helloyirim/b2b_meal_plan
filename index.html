@@ -1810,7 +1810,10 @@
                 </section>
 
                 <section class="sales-panel sales-note-panel">
-                  <div class="sales-panel-title">특이사항</div>
+                  <div class="sales-panel-title">
+                    특이사항
+                    <span id="salesNoteSaveStatus">자동 저장</span>
+                  </div>
                   <textarea
                   id="salesSpecialNote"
                   class="sales-note-input"
@@ -5912,6 +5915,10 @@ function normalizeSalesStorage(data) {
 
   const storage = {
     products: {},
+    notes:
+      data?.notes && typeof data.notes === "object"
+        ? { ...data.notes }
+        : {},
     updatedAt: data?.updatedAt || null,
   };
 
@@ -6649,27 +6656,180 @@ function renderSalesTopDays(rows) {
 }
 
 function getSalesNoteKey() {
-  const productKey = currentSalesProducts.join("_");
+  const productKey = currentSalesProducts
+    .map(String)
+    .sort()
+    .join("_");
+
   const monthKey = getSalesMonthKey();
 
   return `product_sales_note_${productKey}_${currentSalesChannel}_${monthKey}`;
 }
 
-
+let salesNoteSaveTimer = null;
 
 function loadSalesSpecialNote() {
-  const noteEl = document.getElementById("salesSpecialNote");
+  const noteEl =
+    document.getElementById("salesSpecialNote");
+
   if (!noteEl) return;
 
-  noteEl.value = localStorage.getItem(getSalesNoteKey()) || "";
+  salesReportCache =
+    normalizeSalesStorage(salesReportCache);
+
+  const noteKey = getSalesNoteKey();
+
+  noteEl.value =
+    salesReportCache.notes?.[noteKey]?.text || "";
+
+  setSalesNoteSaveStatus(
+    noteEl.value ? "저장됨" : "자동 저장"
+  );
+}
+
+function setSalesNoteSaveStatus(text, type = "") {
+  const statusEl =
+    document.getElementById("salesNoteSaveStatus");
+
+  if (!statusEl) return;
+
+  statusEl.innerText = text;
+
+  if (type === "success") {
+    statusEl.style.color = "#16a34a";
+  } else if (type === "error") {
+    statusEl.style.color = "#dc2626";
+  } else {
+    statusEl.style.color = "#64748b";
+  }
 }
 
 function saveSalesSpecialNote() {
-  const noteEl = document.getElementById("salesSpecialNote");
+  const noteEl =
+    document.getElementById("salesSpecialNote");
+
   if (!noteEl) return;
 
-  localStorage.setItem(getSalesNoteKey(), noteEl.value);
+  clearTimeout(salesNoteSaveTimer);
+
+  setSalesNoteSaveStatus("입력 중");
+
+  salesNoteSaveTimer = setTimeout(async () => {
+    try {
+      setSalesNoteSaveStatus("저장 중");
+
+      salesReportCache =
+        normalizeSalesStorage(salesReportCache);
+
+      const noteKey = getSalesNoteKey();
+      const text = noteEl.value.trim();
+      const currentUser = getCurrentUser();
+
+      if (text) {
+        salesReportCache.notes[noteKey] = {
+          text,
+          productIds: currentSalesProducts
+            .map(String)
+            .sort(),
+          channel: currentSalesChannel,
+          monthKey: getSalesMonthKey(),
+          savedBy: {
+            id: currentUser?.id || "",
+            name: currentUser?.name || "",
+          },
+          updatedAt: new Date().toISOString(),
+        };
+      } else {
+        delete salesReportCache.notes[noteKey];
+      }
+
+      salesReportCache.updatedAt =
+        new Date().toISOString();
+
+      await apiPost(
+        "/blackgoat-sales",
+        salesReportCache
+      );
+
+      setSalesNoteSaveStatus("저장됨", "success");
+    } catch (e) {
+      console.error(
+        "특이사항 클라우드 저장 실패:",
+        e
+      );
+
+      setSalesNoteSaveStatus("저장 실패", "error");
+    }
+  }, 700);
 }
+
+function saveSalesSpecialNote() {
+  const noteEl =
+    document.getElementById("salesSpecialNote");
+
+  if (!noteEl) return;
+
+  clearTimeout(salesNoteSaveTimer);
+
+  setSalesNoteSaveStatus("입력 중", "saving");
+
+  salesNoteSaveTimer = setTimeout(async () => {
+    try {
+      setSalesNoteSaveStatus("저장 중", "saving");
+
+      salesReportCache =
+        normalizeSalesStorage(salesReportCache);
+
+      const noteKey = getSalesNoteKey();
+      const currentUser = getCurrentUser();
+      const text = noteEl.value.trim();
+
+      if (text) {
+        salesReportCache.notes[noteKey] = {
+          text,
+          productIds: currentSalesProducts
+            .map(String)
+            .sort(),
+          channel: currentSalesChannel,
+          monthKey: getSalesMonthKey(),
+          savedBy: {
+            id: currentUser?.id || "",
+            name: currentUser?.name || "",
+          },
+          updatedAt: new Date().toISOString(),
+        };
+      } else {
+        delete salesReportCache.notes[noteKey];
+      }
+
+      salesReportCache.updatedAt =
+        new Date().toISOString();
+
+      await apiPost(
+        "/blackgoat-sales",
+        salesReportCache
+      );
+
+      setSalesNoteSaveStatus("저장됨", "success");
+
+      console.log(
+        "특이사항 클라우드 저장 완료:",
+        noteKey
+      );
+    } catch (e) {
+      console.error(
+        "특이사항 클라우드 저장 실패:",
+        e
+      );
+
+      setSalesNoteSaveStatus(
+        "저장 실패",
+        "error"
+      );
+    }
+  }, 700);
+}
+
 
 function renderSalesChannelSummary() {
   const wrap = document.getElementById("salesChannelSummaryWrap");
