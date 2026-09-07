@@ -246,9 +246,10 @@ function renderDeliveryCalendar() {
 
   const monthlyEvents = getMonthlyEvents();
   const weekSegments = buildWeeklySegments(monthlyEvents, weeks);
+  const eventLaneMap = new Map();
 
   weekSegments.forEach((segments, weekIndex) => {
-    const lanes = assignLanes(segments);
+    const lanes = assignLanes(segments, eventLaneMap);
     const layer = weeksContainer.querySelector(
       `.week-events-layer[data-week-index="${weekIndex}"]`
     );
@@ -315,7 +316,7 @@ function diffDays(baseDate, targetDate) {
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
 
-function assignLanes(segments) {
+function assignLanes(segments, eventLaneMap) {
   const sorted = [...segments].sort((a, b) => {
     if (a.startCol !== b.startCol) return a.startCol - b.startCol;
     return b.endCol - b.startCol - (a.endCol - a.startCol);
@@ -324,15 +325,27 @@ function assignLanes(segments) {
   const lanes = [];
 
   sorted.forEach((seg) => {
+    const savedLaneIndex = eventLaneMap.get(seg.event.id);
+    if (typeof savedLaneIndex === "undefined") return;
+
+    while (lanes.length <= savedLaneIndex) lanes.push([]);
+    lanes[savedLaneIndex].push(seg);
+  });
+
+  sorted.forEach((seg) => {
+    if (eventLaneMap.has(seg.event.id)) return;
+
     let placed = false;
 
-    for (const lane of lanes) {
+    for (let laneIndex = 0; laneIndex < lanes.length; laneIndex++) {
+      const lane = lanes[laneIndex];
       const overlaps = lane.some((existing) => {
         return !(seg.endCol < existing.startCol || seg.startCol > existing.endCol);
       });
 
       if (!overlaps) {
         lane.push(seg);
+        eventLaneMap.set(seg.event.id, laneIndex);
         placed = true;
         break;
       }
@@ -340,6 +353,7 @@ function assignLanes(segments) {
 
     if (!placed) {
       lanes.push([seg]);
+      eventLaneMap.set(seg.event.id, lanes.length - 1);
     }
   });
 
