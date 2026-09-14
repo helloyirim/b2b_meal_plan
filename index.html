@@ -4118,13 +4118,8 @@
         }
 
         if (isMealOnlyUser()) {
-          ["nav-calendar", "nav-sales-main", "nav-admin"].forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = "none";
-          });
-
-          const salesSubNav = document.querySelector(".sales-sub-nav");
-          if (salesSubNav) salesSubNav.style.display = "none";
+          const adminNav = document.getElementById("nav-admin");
+          if (adminNav) adminNav.style.display = "block";
 
           showPage("page-generate");
         } else if (session.role === "USER") {
