@@ -3977,6 +3977,10 @@
         return JSON.parse(sessionStorage.getItem("currentUser") || "{}");
       }
 
+      function isMealOnlyUser() {
+        return getCurrentUser()?.id === "hyoungjun.kim";
+      }
+
       function isAdmin() {
         const user = getCurrentUser();
         return user && user.id === "yirim.yu" && user.role === "ADMIN";
@@ -4113,7 +4117,17 @@
             }
         }
 
-        if (session.role === "USER") {
+        if (isMealOnlyUser()) {
+          ["nav-calendar", "nav-sales-main", "nav-admin"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "none";
+          });
+
+          const salesSubNav = document.querySelector(".sales-sub-nav");
+          if (salesSubNav) salesSubNav.style.display = "none";
+
+          showPage("page-generate");
+        } else if (session.role === "USER") {
           const historyNav = document.getElementById("nav-his");
           const settingsNav = document.getElementById("nav-set");
           showPage("page-generate");
@@ -4124,6 +4138,7 @@
 
       function applyViewerMode() {
         const session = getCurrentUser();
+        if (isMealOnlyUser()) return;
         if (session.role !== "VIEWER") return;
 
         // 상품 매출보고로 강제 이동
@@ -4261,6 +4276,17 @@
       // 페이지
       // =========================
       function showPage(id) {
+        const mealOnlyAllowedPages = [
+          "page-generate",
+          "page-history",
+          "page-settings",
+        ];
+
+        if (isMealOnlyUser() && !mealOnlyAllowedPages.includes(id)) {
+          alert("식단 전용 계정입니다.");
+          return;
+        }
+
         document
           .querySelectorAll(".page")
           .forEach((p) => p.classList.remove("active"));
@@ -9432,7 +9458,7 @@ function renderProductDailySalesTable(
         localStorage.removeItem("b2b_plans_cache");
         localStorage.removeItem("b2b_menus_cache");
 
-        showPage("page-calendar");
+        showPage(isMealOnlyUser() ? "page-generate" : "page-calendar");
         setTimeout(applyViewerMode, 300);
 
         //10. loadSalesReportFromServer() 실행 순서 수정
