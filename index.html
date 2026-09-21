@@ -2932,11 +2932,21 @@
       }
 
       async function saveDeliveryEventToServer(eventData) {
+        if (isCalendarSalesViewer()) {
+          alert("조회 전용 계정입니다.");
+          return;
+        }
+
         await apiPost("/delivery-events/item", eventData);
         await loadDeliveryEventsFromServer();
       }
 
       async function deleteDeliveryEventFromServer(id) {
+        if (isCalendarSalesViewer()) {
+          alert("조회 전용 계정입니다.");
+          return;
+        }
+
         await apiDelete(`/delivery-events/${id}`);
         await loadDeliveryEventsFromServer();
       }
@@ -3981,6 +3991,10 @@
         return getCurrentUser()?.id === "hyoungjun.kim";
       }
 
+      function isCalendarSalesViewer() {
+        return getCurrentUser()?.id === "heejun.kim";
+      }
+
       function isAdmin() {
         const user = getCurrentUser();
         return user && user.id === "yirim.yu" && user.role === "ADMIN";
@@ -4122,6 +4136,11 @@
           if (adminNav) adminNav.style.display = "block";
 
           showPage("page-generate");
+        } else if (isCalendarSalesViewer()) {
+          const adminNav = document.getElementById("nav-admin");
+          if (adminNav) adminNav.style.display = "block";
+
+          showPage("page-calendar");
         } else if (session.role === "USER") {
           const historyNav = document.getElementById("nav-his");
           const settingsNav = document.getElementById("nav-set");
@@ -4134,26 +4153,33 @@
       function applyViewerMode() {
         const session = getCurrentUser();
         if (isMealOnlyUser()) return;
-        if (session.role !== "VIEWER") return;
+        if (session.role !== "VIEWER" && !isCalendarSalesViewer()) return;
 
-        // 상품 매출보고로 강제 이동
-        showSalesPage("all");
+        if (!isCalendarSalesViewer()) {
+          // 상품 매출보고로 강제 이동
+          showSalesPage("all");
 
-        // 상품매출보고 외 메뉴는 보이되 클릭 막기
-        ["nav-calendar", "nav-gen", "nav-his", "nav-set"].forEach((id) => {
-          const el = document.getElementById(id);
-          if (!el) return;
+          // 상품매출보고 외 메뉴는 보이되 클릭 막기
+          ["nav-calendar", "nav-gen", "nav-his", "nav-set"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
 
-          el.style.opacity = "0.45";
-          el.style.cursor = "not-allowed";
-          el.onclick = () => {
-            alert("조회전용 계정은 상품 매출보고만 확인 가능합니다.");
-          };
-        });
+            el.style.opacity = "0.45";
+            el.style.cursor = "not-allowed";
+            el.onclick = () => {
+              alert("조회전용 계정은 상품 매출보고만 확인 가능합니다.");
+            };
+          });
+        }
 
         // 입력 버튼 숨김
         const salesBtn = document.getElementById("openSalesModalBtn");
         if (salesBtn) salesBtn.style.display = "none";
+
+        if (isCalendarSalesViewer()) {
+          const calendarInputBtn = document.getElementById("openModalBtn");
+          if (calendarInputBtn) calendarInputBtn.style.display = "none";
+        }
 
         // 상품/월 조회용 컨트롤은 살리고, 나머지 입력은 막기
         document.querySelectorAll("#page-sales input, #page-sales textarea, #page-sales select, #page-sales button")
@@ -4279,6 +4305,21 @@
 
         if (isMealOnlyUser() && !mealOnlyAllowedPages.includes(id)) {
           alert("식단 전용 계정입니다.");
+          return;
+        }
+
+        const calendarSalesAllowedPages = [
+          "page-calendar",
+          "page-sales",
+          "page-product-daily-sales",
+          "page-channel-daily-sales",
+        ];
+
+        if (
+          isCalendarSalesViewer() &&
+          !calendarSalesAllowedPages.includes(id)
+        ) {
+          alert("조회 전용 계정입니다.");
           return;
         }
 
@@ -5091,6 +5132,11 @@ function bindDeliveryCalendarEvents() {
 }
 
 function openNewDeliveryModal() {
+  if (isCalendarSalesViewer()) {
+    alert("조회 전용 계정입니다.");
+    return;
+  }
+
   resetDeliveryForm();
   openModal();
 }
@@ -5407,6 +5453,11 @@ function renderDeliverySummaryTable() {
 async function handleDeliverySubmit(e) {
   e.preventDefault();
 
+  if (isCalendarSalesViewer()) {
+    alert("조회 전용 계정입니다.");
+    return;
+  }
+
   const id = document.getElementById("eventId").value || generateDeliveryId();
   const startDate = document.getElementById("startDate").value;
   const endDate = document.getElementById("endDate").value;
@@ -5482,6 +5533,17 @@ function loadDeliveryEventToForm(id) {
   document.getElementById("menuName").value = event.menuName || "";
   document.getElementById("status").value = event.status || "확정";
 
+  if (isCalendarSalesViewer()) {
+    document
+      .querySelectorAll("#eventForm input, #eventForm select, #eventForm textarea")
+      .forEach((el) => {
+        el.disabled = true;
+      });
+
+    const formActions = document.querySelector("#eventForm .form-actions");
+    if (formActions) formActions.style.display = "none";
+  }
+
   openModal();
 }
 
@@ -5493,6 +5555,11 @@ function resetDeliveryForm() {
 }
 
 async function handleDeliveryDelete() {
+  if (isCalendarSalesViewer()) {
+    alert("조회 전용 계정입니다.");
+    return;
+  }
+
   const id = document.getElementById("eventId").value;
 
   if (!id) {
