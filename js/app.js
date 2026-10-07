@@ -2385,21 +2385,13 @@ function buildSelectedProductsSalesReport() {
     const product = salesReportCache.products?.[productId];
     if (!product) return;
 
-    if (currentSalesChannel === "naver" || currentSalesChannel === "all") {
-      const naverReport = product.channels.naver?.months?.[monthKey];
-      if (naverReport) reports.push(naverReport);
-    }
-
-    if (currentSalesChannel === "coupang" || currentSalesChannel === "all") {
-      const coupangReport = product.channels.coupang?.months?.[monthKey];
-      if (coupangReport) reports.push(coupangReport);
-    }
-
-    if (
-      currentSalesChannel !== "naver" &&
-      currentSalesChannel !== "coupang" &&
-      currentSalesChannel !== "all"
-    ) {
+    if (currentSalesChannel === "all") {
+      getActiveSalesChannelIds().forEach((channelId) => {
+        const channelReport =
+          product.channels[channelId]?.months?.[monthKey];
+        if (channelReport) reports.push(channelReport);
+      });
+    } else {
       const channelReport =
         product.channels[currentSalesChannel]?.months?.[monthKey];
       if (channelReport) reports.push(channelReport);
@@ -2458,6 +2450,7 @@ function mergeSalesReports(reports = []) {
           refundQty: 0,
           naverSales: 0,
           coupangSales: 0,
+          channelSales: {},
           isOutOfRange: row.isOutOfRange,
         });
       }
@@ -2475,6 +2468,12 @@ function mergeSalesReports(reports = []) {
 
       if (report.channel === "coupang") {
         target.coupangSales += Number(row.sales || 0);
+      }
+
+      if (report.channel) {
+        target.channelSales[report.channel] =
+          Number(target.channelSales[report.channel] || 0) +
+          Number(row.sales || 0);
       }
 
       target.refundCount += Number(row.refundCount || 0);
@@ -2539,21 +2538,13 @@ function buildSalesMonthlyRows() {
       const product = salesReportCache.products?.[productId];
       if (!product) return;
 
-      if (currentSalesChannel === "naver" || currentSalesChannel === "all") {
-        const report = product.channels.naver?.months?.[monthKey];
-        sales += Number(report?.netSales ?? report?.totalSales ?? 0);
-      }
-
-      if (currentSalesChannel === "coupang" || currentSalesChannel === "all") {
-        const report = product.channels.coupang?.months?.[monthKey];
-        sales += Number(report?.netSales ?? report?.totalSales ?? 0);
-      }
-
-      if (
-        currentSalesChannel !== "naver" &&
-        currentSalesChannel !== "coupang" &&
-        currentSalesChannel !== "all"
-      ) {
+      if (currentSalesChannel === "all") {
+        getActiveSalesChannelIds().forEach((channelId) => {
+          const report =
+            product.channels[channelId]?.months?.[monthKey];
+          sales += Number(report?.netSales ?? report?.totalSales ?? 0);
+        });
+      } else {
         const report =
           product.channels[currentSalesChannel]?.months?.[monthKey];
         sales += Number(report?.netSales ?? report?.totalSales ?? 0);
@@ -2963,15 +2954,36 @@ function renderSalesDailyChart(rows) {
   const NAVER_COLOR = "#2DB400";
   const COUPANG_COLOR = "#E94B22";
   const SINGLE_COLOR = "#1d5fd1";
+  const CHANNEL_COLORS = [
+    "#1d5fd1",
+    "#8b5cf6",
+    "#f59e0b",
+    "#06b6d4",
+    "#ec4899",
+    "#64748b",
+  ];
+  const activeSalesChannels =
+    currentSalesChannel === "all"
+      ? getActiveSalesChannels()
+      : [];
+  const getChannelChartColor = (channel, index) => {
+    if (channel.id === "naver") return NAVER_COLOR;
+    if (channel.id === "coupang") return COUPANG_COLOR;
+    return CHANNEL_COLORS[index % CHANNEL_COLORS.length];
+  };
 
   const legend = document.getElementById("salesChartLegend");
   if (legend) {
     if (currentSalesChannel === "all") {
-      legend.innerHTML = `
-        <span style="color:${NAVER_COLOR}; font-weight:800;">■ 네이버</span>
-        &nbsp;&nbsp;
-        <span style="color:${COUPANG_COLOR}; font-weight:800;">■ 쿠팡</span>
-      `;
+      legend.innerHTML = activeSalesChannels
+        .map(
+          (channel, index) => `
+            <span style="color:${getChannelChartColor(channel, index)}; font-weight:800;">
+              ■ ${escapeHtml(getSalesChannelShortName(channel.id))}
+            </span>
+          `
+        )
+        .join("&nbsp;&nbsp;");
     } else {
       legend.innerHTML = "";
     }
@@ -3001,37 +3013,33 @@ function renderSalesDailyChart(rows) {
 
   chartRows.forEach((row, index) => {
     const totalSales = Number(row.sales || 0);
-    const naverSales =
-      currentSalesChannel === "all"
-        ? Number(row.naverSales || 0)
-        : totalSales;
-    const coupangSales =
-      currentSalesChannel === "all"
-        ? Number(row.coupangSales || 0)
-        : 0;
 
     const x = paddingLeft + slotWidth * index + slotWidth / 2 - barWidth / 2;
     const baseY = paddingTop + chartHeight;
 
     const totalHeight = totalSales ? (totalSales / maxSales) * chartHeight : 0;
-    const naverHeight = totalSales
-      ? (naverSales / maxSales) * chartHeight
-      : 0;
-    const coupangHeight = totalSales
-      ? (coupangSales / maxSales) * chartHeight
-      : 0;
 
     if (currentSalesChannel === "all") {
-      ctx.fillStyle = NAVER_COLOR;
-      ctx.fillRect(x, baseY - naverHeight, barWidth, naverHeight);
+      let stackedHeight = 0;
 
-      ctx.fillStyle = COUPANG_COLOR;
-      ctx.fillRect(
-        x,
-        baseY - naverHeight - coupangHeight,
-        barWidth,
-        coupangHeight
-      );
+      activeSalesChannels.forEach((channel, channelIndex) => {
+        const channelSales = Number(
+          row.channelSales?.[channel.id] || 0
+        );
+        const channelHeight = channelSales
+          ? (channelSales / maxSales) * chartHeight
+          : 0;
+
+        ctx.fillStyle = getChannelChartColor(channel, channelIndex);
+        ctx.fillRect(
+          x,
+          baseY - stackedHeight - channelHeight,
+          barWidth,
+          channelHeight
+        );
+
+        stackedHeight += channelHeight;
+      });
     } else {
       ctx.fillStyle = SINGLE_COLOR;
       ctx.fillRect(x, baseY - totalHeight, barWidth, totalHeight);
@@ -3319,47 +3327,62 @@ function renderSalesChannelSummary() {
 
   const storage = normalizeSalesStorage(salesReportCache);
   const monthKey = getSalesMonthKey();
+  const channels = getActiveSalesChannels();
 
-  let naverSales = 0;
-  let coupangSales = 0;
+  const channelRows = channels.map((channel) => {
+    let sales = 0;
 
-  currentSalesProducts.forEach((productId) => {
-    const product = storage.products?.[productId];
-    if (!product) return;
+    currentSalesProducts.forEach((productId) => {
+      const product = storage.products?.[productId];
+      if (!product) return;
 
-    naverSales += Number(product.channels.naver?.months?.[monthKey]?.totalSales || 0);
-    coupangSales += Number(product.channels.coupang?.months?.[monthKey]?.totalSales || 0);
+      sales += Number(
+        product.channels?.[channel.id]?.months?.[monthKey]?.totalSales || 0
+      );
+    });
+
+    return {
+      channel,
+      sales,
+    };
   });
 
-  const total = naverSales + coupangSales;
+  const total = channelRows.reduce(
+    (sum, row) => sum + row.sales,
+    0
+  );
 
-  const naverRatio = total
-    ? Math.round((naverSales / total) * 1000) / 10
-    : 0;
+  wrap.innerHTML = channelRows
+    .map(({ channel, sales }) => {
+      const ratio = total
+        ? Math.round((sales / total) * 1000) / 10
+        : 0;
+      const channelClass =
+        channel.id === "naver" || channel.id === "coupang"
+          ? channel.id
+          : "";
+      const shortName = getSalesChannelShortName(channel.id);
+      const badge =
+        channel.id === "naver"
+          ? "N"
+          : channel.id === "coupang"
+            ? "C"
+            : String(shortName || channel.name || channel.id)
+                .slice(0, 1)
+                .toUpperCase();
 
-  const coupangRatio = total
-    ? Math.round((coupangSales / total) * 1000) / 10
-    : 0;
-
-  wrap.innerHTML = `
-    <div class="channel-summary-row">
-      <div class="channel-badge naver">N</div>
-      <div>네이버</div>
-      <div class="channel-summary-amount">
-        ${naverSales.toLocaleString()}원
-        <span class="channel-summary-ratio naver">${naverRatio}%</span>
-      </div>
-    </div>
-
-    <div class="channel-summary-row">
-      <div class="channel-badge coupang">C</div>
-      <div>쿠팡</div>
-      <div class="channel-summary-amount">
-        ${coupangSales.toLocaleString()}원
-        <span class="channel-summary-ratio coupang">${coupangRatio}%</span>
-      </div>
-    </div>
-  `;
+      return `
+        <div class="channel-summary-row">
+          <div class="channel-badge ${channelClass}">${escapeHtml(badge)}</div>
+          <div>${escapeHtml(shortName)}</div>
+          <div class="channel-summary-amount">
+            ${sales.toLocaleString()}원
+            <span class="channel-summary-ratio ${channelClass}">${ratio}%</span>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
 }
 
 
