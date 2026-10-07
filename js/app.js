@@ -2179,105 +2179,6 @@ function updateSalesReportTitle() {
 let currentSalesChannel = "all";
 let currentSalesProducts = [];
 
-// =========================
-// 매출 채널 기준정보
-// =========================
-
-const DEFAULT_SALES_CHANNELS = [
-  {
-    id: "naver",
-    name: "네이버 스마트스토어",
-    shortName: "네이버",
-    active: true,
-    sortOrder: 1,
-    isLegacy: true,
-  },
-  {
-    id: "coupang",
-    name: "쿠팡",
-    shortName: "쿠팡",
-    active: true,
-    sortOrder: 2,
-    isLegacy: true,
-  },
-];
-
-let salesChannelsCache = [];
-
-
-/**
- * 사용 중인 채널만 정렬하여 반환
- */
-function getActiveSalesChannels() {
-  return salesChannelsCache
-    .filter((channel) => channel.active !== false)
-    .sort(
-      (a, b) =>
-        Number(a.sortOrder || 999) -
-        Number(b.sortOrder || 999)
-    );
-}
-
-
-/**
- * 사용중지 채널을 포함한 전체 채널 반환
- */
-function getAllSalesChannels() {
-  return [...salesChannelsCache].sort(
-    (a, b) =>
-      Number(a.sortOrder || 999) -
-      Number(b.sortOrder || 999)
-  );
-}
-
-
-/**
- * 채널 ID로 채널 정보 조회
- */
-function getSalesChannelById(channelId) {
-  return salesChannelsCache.find(
-    (channel) =>
-      String(channel.id) === String(channelId)
-  );
-}
-
-
-/**
- * 채널 ID로 전체 채널명 조회
- */
-function getSalesChannelName(channelId) {
-  return (
-    getSalesChannelById(channelId)?.name ||
-    channelId
-  );
-}
-
-
-/**
- * 채널 ID로 화면용 짧은 이름 조회
- */
-function getSalesChannelShortName(channelId) {
-  const channel =
-    getSalesChannelById(channelId);
-
-  return (
-    channel?.shortName ||
-    channel?.name ||
-    channelId
-  );
-}
-
-
-/**
- * 활성 채널 ID 목록 반환
- */
-function getActiveSalesChannelIds() {
-  return getActiveSalesChannels().map(
-    (channel) => channel.id
-  );
-}
-
-
 /**
  * 채널 저장용 빈 데이터 구조 생성
  *
@@ -2297,79 +2198,8 @@ function createEmptySalesChannelsStorage() {
 }
 
 
-/**
- * 서버에서 채널 기준정보 조회
- */
-async function loadSalesChannelsFromServer() {
-  try {
-    const serverChannels =
-      await apiGet("/sales-channels");
-
-    const serverChannelList =
-      Array.isArray(serverChannels)
-        ? serverChannels
-        : [];
-
-    const mergedMap = new Map();
-
-    DEFAULT_SALES_CHANNELS.forEach(
-      (channel) => {
-        mergedMap.set(
-          String(channel.id),
-          { ...channel }
-        );
-      }
-    );
-
-    serverChannelList.forEach((channel) => {
-      if (!channel || !channel.id) return;
-
-      const channelId =
-        String(channel.id);
-
-      const defaultChannel =
-        mergedMap.get(channelId) || {};
-
-      mergedMap.set(channelId, {
-        ...defaultChannel,
-        ...channel,
-        id: channelId,
-      });
-    });
-
-    salesChannelsCache =
-      Array.from(mergedMap.values()).sort(
-        (a, b) =>
-          Number(a.sortOrder || 999) -
-          Number(b.sortOrder || 999)
-      );
-  } catch (e) {
-    console.error(
-      "매출 채널 목록 로딩 실패:",
-      e
-    );
-
-    salesChannelsCache =
-      DEFAULT_SALES_CHANNELS.map(
-        (channel) => ({ ...channel })
-      );
-  }
-
-  return salesChannelsCache;
-}
-
-
-
 let currentSalesMonth = new Date();
 currentSalesMonth.setDate(1);
-
-function getSalesChannelLabel(channelId) {
-  if (channelId === "all") {
-    return "통합";
-  }
-
-  return getSalesChannelName(channelId);
-}
 
 let salesReportCache = null;
 
@@ -2411,6 +2241,16 @@ async function saveSalesReportToServer(reportData) {
     };
   }
 
+  if (!salesReportCache.products[productId].channels[channel]) {
+    salesReportCache.products[productId].channels[channel] = {
+      months: {},
+    };
+  }
+
+  if (!salesReportCache.products[productId].channels[channel].months) {
+    salesReportCache.products[productId].channels[channel].months = {};
+  }
+
   salesReportCache.products[productId].channels[channel].months[monthKey] =
     reportData;
 
@@ -2426,6 +2266,7 @@ function normalizeSalesStorage(data) {
     channels: {
       naver: { months: {} },
       coupang: { months: {} },
+      ...createEmptySalesChannelsStorage(),
     },
   });
 
@@ -2469,11 +2310,24 @@ function normalizeSalesStorage(data) {
           productData.productName ||
           productId;
 
-        storage.products[productId].channels.naver =
-          productData.channels?.naver || { months: {} };
+        Object.entries(productData.channels || {}).forEach(
+          ([channelId, channelData]) => {
+            const normalizedChannel =
+              channelData && typeof channelData === "object"
+                ? channelData
+                : {};
 
-        storage.products[productId].channels.coupang =
-          productData.channels?.coupang || { months: {} };
+            storage.products[productId].channels[channelId] =
+              {
+                ...normalizedChannel,
+                months:
+                  normalizedChannel.months &&
+                  typeof normalizedChannel.months === "object"
+                    ? normalizedChannel.months
+                    : {},
+              };
+          }
+        );
       }
     );
 
@@ -2486,8 +2340,29 @@ function normalizeSalesStorage(data) {
       productId: "blackgoat_30",
       productName: getSalesProductName("blackgoat_30"),
       channels: {
-        naver: data.channels.naver || { months: {} },
-        coupang: data.channels.coupang || { months: {} },
+        ...emptyProduct().channels,
+        ...Object.fromEntries(
+          Object.entries(data.channels).map(
+            ([channelId, channelData]) => {
+              const normalizedChannel =
+                channelData && typeof channelData === "object"
+                  ? channelData
+                  : {};
+
+              return [
+                channelId,
+                {
+                  ...normalizedChannel,
+                  months:
+                    normalizedChannel.months &&
+                    typeof normalizedChannel.months === "object"
+                      ? normalizedChannel.months
+                      : {},
+                },
+              ];
+            }
+          )
+        ),
       },
     };
   }
