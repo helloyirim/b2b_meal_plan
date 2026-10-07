@@ -2394,6 +2394,16 @@ function buildSelectedProductsSalesReport() {
       const coupangReport = product.channels.coupang?.months?.[monthKey];
       if (coupangReport) reports.push(coupangReport);
     }
+
+    if (
+      currentSalesChannel !== "naver" &&
+      currentSalesChannel !== "coupang" &&
+      currentSalesChannel !== "all"
+    ) {
+      const channelReport =
+        product.channels[currentSalesChannel]?.months?.[monthKey];
+      if (channelReport) reports.push(channelReport);
+    }
   });
 
   if (!reports.length) {
@@ -2538,6 +2548,16 @@ function buildSalesMonthlyRows() {
         const report = product.channels.coupang?.months?.[monthKey];
         sales += Number(report?.netSales ?? report?.totalSales ?? 0);
       }
+
+      if (
+        currentSalesChannel !== "naver" &&
+        currentSalesChannel !== "coupang" &&
+        currentSalesChannel !== "all"
+      ) {
+        const report =
+          product.channels[currentSalesChannel]?.months?.[monthKey];
+        sales += Number(report?.netSales ?? report?.totalSales ?? 0);
+      }
     });
 
     return {
@@ -2551,6 +2571,19 @@ function buildSalesMonthlyRows() {
 function openSalesModal() {
   // RAW 입력창을 열 때 현재 관리자 채널 목록으로 다시 생성
   renderSalesRawChannelSelect();
+
+  const rawChannelSelect =
+    document.getElementById("salesRawChannel");
+
+  if (
+    rawChannelSelect &&
+    currentSalesChannel !== "all" &&
+    Array.from(rawChannelSelect.options).some(
+      (option) => option.value === currentSalesChannel
+    )
+  ) {
+    rawChannelSelect.value = currentSalesChannel;
+  }
 
   document.getElementById("salesRawInput").value = "";
   document.getElementById("salesReportStart").value = "";
