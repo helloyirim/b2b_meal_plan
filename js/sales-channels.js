@@ -91,9 +91,13 @@ function getSalesChannelShortName(channelId) {
  * 활성 채널 ID 목록 반환
  */
 function getActiveSalesChannelIds() {
-  return getActiveSalesChannels().map(
-    (channel) => channel.id
-  );
+  return [
+    ...new Set(
+      getActiveSalesChannels().map(
+        (channel) => channel.id
+      )
+    ),
+  ];
 }
 
 
