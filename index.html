@@ -6330,11 +6330,16 @@ async function saveSalesReportToServer(reportData) {
     salesReportCache.products[productId] = {
       productId,
       productName: getSalesProductName(productId),
-      channels: {
-        naver: { months: {} },
-        coupang: { months: {} },
-      },
+      channels: createEmptySalesChannelsStorage(),
     };
+  }
+
+  if (!salesReportCache.products[productId].channels[channel]) {
+    salesReportCache.products[productId].channels[channel] = { months: {} };
+  }
+
+  if (!salesReportCache.products[productId].channels[channel].months) {
+    salesReportCache.products[productId].channels[channel].months = {};
   }
 
   salesReportCache.products[productId].channels[channel].months[monthKey] =
@@ -6349,10 +6354,7 @@ async function saveSalesReportToServer(reportData) {
 //7. normalizeSalesStorage() 수정
 function normalizeSalesStorage(data) {
   const emptyProduct = () => ({
-    channels: {
-      naver: { months: {} },
-      coupang: { months: {} },
-    },
+    channels: createEmptySalesChannelsStorage(),
   });
 
   const storage = {
@@ -6395,11 +6397,12 @@ function normalizeSalesStorage(data) {
           productData.productName ||
           productId;
 
-        storage.products[productId].channels.naver =
-          productData.channels?.naver || { months: {} };
-
-        storage.products[productId].channels.coupang =
-          productData.channels?.coupang || { months: {} };
+        Object.entries(productData.channels || {}).forEach(
+          ([channelId, channelData]) => {
+            storage.products[productId].channels[channelId] =
+              channelData || { months: {} };
+          }
+        );
       }
     );
 
@@ -6411,11 +6414,13 @@ function normalizeSalesStorage(data) {
     storage.products.blackgoat_30 = {
       productId: "blackgoat_30",
       productName: getSalesProductName("blackgoat_30"),
-      channels: {
-        naver: data.channels.naver || { months: {} },
-        coupang: data.channels.coupang || { months: {} },
-      },
+      ...emptyProduct(),
     };
+
+    Object.entries(data.channels).forEach(([channelId, channelData]) => {
+      storage.products.blackgoat_30.channels[channelId] =
+        channelData || { months: {} };
+    });
   }
 
   return storage;
@@ -6436,15 +6441,15 @@ function buildSelectedProductsSalesReport() {
     const product = salesReportCache.products?.[productId];
     if (!product) return;
 
-    if (currentSalesChannel === "naver" || currentSalesChannel === "all") {
-      const naverReport = product.channels.naver?.months?.[monthKey];
-      if (naverReport) reports.push(naverReport);
-    }
+    const channelIds =
+      currentSalesChannel === "all"
+        ? getActiveSalesChannelIds()
+        : [currentSalesChannel];
 
-    if (currentSalesChannel === "coupang" || currentSalesChannel === "all") {
-      const coupangReport = product.channels.coupang?.months?.[monthKey];
-      if (coupangReport) reports.push(coupangReport);
-    }
+    channelIds.forEach((channelId) => {
+      const report = product.channels?.[channelId]?.months?.[monthKey];
+      if (report) reports.push(report);
+    });
   });
 
   if (!reports.length) {
@@ -6580,15 +6585,15 @@ function buildSalesMonthlyRows() {
       const product = salesReportCache.products?.[productId];
       if (!product) return;
 
-      if (currentSalesChannel === "naver" || currentSalesChannel === "all") {
-        const report = product.channels.naver?.months?.[monthKey];
-        sales += Number(report?.netSales ?? report?.totalSales ?? 0);
-      }
+      const channelIds =
+        currentSalesChannel === "all"
+          ? getActiveSalesChannelIds()
+          : [currentSalesChannel];
 
-      if (currentSalesChannel === "coupang" || currentSalesChannel === "all") {
-        const report = product.channels.coupang?.months?.[monthKey];
+      channelIds.forEach((channelId) => {
+        const report = product.channels?.[channelId]?.months?.[monthKey];
         sales += Number(report?.netSales ?? report?.totalSales ?? 0);
-      }
+      });
     });
 
     return {
