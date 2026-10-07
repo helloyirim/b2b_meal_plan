@@ -61,7 +61,7 @@ function getProductDailySalesData(
     return result;
   }
 
-  ["naver", "coupang"].forEach((channel) => {
+  getActiveSalesChannelIds().forEach((channel) => {
     const report =
       product.channels?.[channel]?.months?.[
         monthKey
@@ -119,7 +119,7 @@ function getLatestProductDailySalesDate() {
 
     if (!product) return;
 
-    ["naver", "coupang"].forEach((channel) => {
+    getActiveSalesChannelIds().forEach((channel) => {
       const months =
         product.channels?.[channel]?.months ||
         {};
