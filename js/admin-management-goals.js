@@ -60,6 +60,8 @@ function createAdminManagementGoalsInput(value, onInput, options = {}) {
   const input = document.createElement(options.multiline ? "textarea" : "input");
   if (options.multiline) input.rows = options.rows || 3;
   if (options.type) input.type = options.type;
+  if (options.min !== undefined) input.min = options.min;
+  if (options.step !== undefined) input.step = options.step;
   if (options.maxLength) input.maxLength = options.maxLength;
   input.value = value ?? "";
   input.addEventListener("input", () => {
@@ -91,8 +93,7 @@ function confirmAdminManagementGoalsDelete(message) {
 function createEmptyAdminManagementGoal(year) {
   return {
     year,
-    groupSalesTarget: { value: "", unit: "" },
-    partnershipSalesTarget: { value: "", unit: "" },
+    targetAreas: [],
     coreMessage: "",
     strategies: [],
     version: 0,
@@ -139,6 +140,8 @@ function clearAdminManagementGoalsSensitiveView() {
   populateAdminManagementGoalsYearSelect();
   const strategiesEditor = document.getElementById("managementGoalsStrategiesEditor");
   if (strategiesEditor) strategiesEditor.replaceChildren();
+  const targetAreasEditor = document.getElementById("managementGoalsTargetAreasEditor");
+  if (targetAreasEditor) targetAreasEditor.replaceChildren();
 }
 
 function handleAdminManagementGoalsError(error) {
@@ -175,11 +178,79 @@ async function loadAdminManagementGoalsIndex(preferredYear = null, loadSelected 
 function fillAdminManagementGoalsBasicFields() {
   if (!adminManagementGoalDraft) return;
   document.getElementById("managementGoalsEditYear").value = adminManagementGoalDraft.year;
-  document.getElementById("managementGoalsGroupTargetValue").value = adminManagementGoalDraft.groupSalesTarget?.value ?? "";
-  document.getElementById("managementGoalsGroupTargetUnit").value = adminManagementGoalDraft.groupSalesTarget?.unit ?? "";
-  document.getElementById("managementGoalsPartnershipTargetValue").value = adminManagementGoalDraft.partnershipSalesTarget?.value ?? "";
-  document.getElementById("managementGoalsPartnershipTargetUnit").value = adminManagementGoalDraft.partnershipSalesTarget?.unit ?? "";
   document.getElementById("managementGoalsCoreMessage").value = adminManagementGoalDraft.coreMessage ?? "";
+}
+
+function renderAdminManagementGoalsTargetAreas() {
+  const container = document.getElementById("managementGoalsTargetAreasEditor");
+  if (!container) return;
+  container.replaceChildren();
+  if (!adminManagementGoalDraft) return;
+
+  adminManagementGoalDraft.targetAreas.forEach((area, areaIndex) => {
+    const editor = createAdminManagementGoalsElement("article", "management-goals-target-area-editor");
+    const grid = createAdminManagementGoalsElement("div", "management-goals-target-area-editor-grid");
+    grid.appendChild(createAdminManagementGoalsField(
+      "영역명",
+      createAdminManagementGoalsInput(area.name, (value) => { area.name = value; }, { maxLength: 200 }),
+    ));
+    grid.appendChild(createAdminManagementGoalsField(
+      "목표 금액",
+      createAdminManagementGoalsInput(area.value, (value) => { area.value = value; }, { type: "number", min: 0, step: "any" }),
+    ));
+    grid.appendChild(createAdminManagementGoalsField(
+      "단위",
+      createAdminManagementGoalsInput(area.unit, (value) => { area.unit = value; }, { maxLength: 30 }),
+    ));
+    editor.appendChild(grid);
+
+    const actions = createAdminManagementGoalsElement("div", "management-goals-editor-row-actions");
+    const orderActions = createAdminManagementGoalsElement("div", "management-goals-editor-row-actions");
+    const upButton = createAdminManagementGoalsButton("영역 위로", () => {
+      if (areaIndex === 0) return;
+      [adminManagementGoalDraft.targetAreas[areaIndex - 1], adminManagementGoalDraft.targetAreas[areaIndex]] = [
+        adminManagementGoalDraft.targetAreas[areaIndex],
+        adminManagementGoalDraft.targetAreas[areaIndex - 1],
+      ];
+      normalizeAdminManagementGoalsSortOrder(adminManagementGoalDraft.targetAreas);
+      setAdminManagementGoalsDirty(true);
+      renderAdminManagementGoalsTargetAreas();
+      renderAdminManagementGoalsStrategies();
+    });
+    const downButton = createAdminManagementGoalsButton("영역 아래로", () => {
+      if (areaIndex === adminManagementGoalDraft.targetAreas.length - 1) return;
+      [adminManagementGoalDraft.targetAreas[areaIndex], adminManagementGoalDraft.targetAreas[areaIndex + 1]] = [
+        adminManagementGoalDraft.targetAreas[areaIndex + 1],
+        adminManagementGoalDraft.targetAreas[areaIndex],
+      ];
+      normalizeAdminManagementGoalsSortOrder(adminManagementGoalDraft.targetAreas);
+      setAdminManagementGoalsDirty(true);
+      renderAdminManagementGoalsTargetAreas();
+      renderAdminManagementGoalsStrategies();
+    });
+    upButton.disabled = areaIndex === 0;
+    downButton.disabled = areaIndex === adminManagementGoalDraft.targetAreas.length - 1;
+    orderActions.append(upButton, downButton);
+
+    const deleteButton = createAdminManagementGoalsButton("목표 영역 삭제", () => {
+      const hasConnectedStrategy = adminManagementGoalDraft.strategies.some(
+        (strategy) => strategy.targetAreaId === area.id,
+      );
+      if (hasConnectedStrategy) {
+        setAdminManagementGoalsStatus("연결된 전략을 다른 목표 영역으로 재배정한 후 삭제해 주세요.", "error");
+        return;
+      }
+      if (!confirmAdminManagementGoalsDelete("이 목표 영역을 삭제하시겠습니까?")) return;
+      adminManagementGoalDraft.targetAreas.splice(areaIndex, 1);
+      normalizeAdminManagementGoalsSortOrder(adminManagementGoalDraft.targetAreas);
+      setAdminManagementGoalsDirty(true);
+      renderAdminManagementGoalsTargetAreas();
+      renderAdminManagementGoalsStrategies();
+    }, "btn management-goals-danger-button");
+    actions.append(orderActions, deleteButton);
+    editor.appendChild(actions);
+    container.appendChild(editor);
+  });
 }
 
 function renderAdminManagementGoalsDetails(task, detailsContainer) {
@@ -291,6 +362,27 @@ function renderAdminManagementGoalsStrategies() {
   adminManagementGoalDraft.strategies.forEach((strategy, strategyIndex) => {
     const strategyEditor = createAdminManagementGoalsElement("article", "management-goals-strategy-editor");
     const header = createAdminManagementGoalsElement("div", "management-goals-editor-card-header");
+    const areaSelect = document.createElement("select");
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "목표 영역 선택 필요";
+    areaSelect.appendChild(emptyOption);
+    adminManagementGoalDraft.targetAreas.forEach((area) => {
+      const option = document.createElement("option");
+      option.value = area.id;
+      option.textContent = area.name || "이름 없는 목표 영역";
+      areaSelect.appendChild(option);
+    });
+    areaSelect.value = strategy.targetAreaId || "";
+    areaSelect.addEventListener("change", () => {
+      strategy.targetAreaId = areaSelect.value;
+      setAdminManagementGoalsDirty(true);
+    });
+    header.appendChild(createAdminManagementGoalsField(
+      "소속 목표 영역",
+      areaSelect,
+      "field management-goals-strategy-area-field",
+    ));
     header.appendChild(createAdminManagementGoalsField(
       `전략 ${strategyIndex + 1} 제목`,
       createAdminManagementGoalsInput(strategy.title, (value) => { strategy.title = value; }, { multiline: true, rows: 2, maxLength: 1000 }),
@@ -337,8 +429,12 @@ function renderAdminManagementGoalDraft() {
     setAdminManagementGoalsEditorVisible(false);
     return;
   }
+  if (!Array.isArray(adminManagementGoalDraft.targetAreas)) {
+    adminManagementGoalDraft = normalizeManagementGoalForClient(adminManagementGoalDraft);
+  }
   setAdminManagementGoalsEditorVisible(true);
   fillAdminManagementGoalsBasicFields();
+  renderAdminManagementGoalsTargetAreas();
   renderAdminManagementGoalsStrategies();
 }
 
@@ -352,11 +448,16 @@ async function loadAdminManagementGoalYear(year, confirmDiscard = true) {
   setAdminManagementGoalsStatus(`${year}년 경영목표를 불러오는 중입니다.`);
   try {
     const result = await managementGoalsApiRequest(`/management-goals/${year}`);
-    adminManagementGoalDraft = result.goal;
+    const isLegacyDocument = !Array.isArray(result.goal?.targetAreas);
+    adminManagementGoalDraft = normalizeManagementGoalForClient(result.goal);
     setAdminManagementGoalsDirty(false);
     populateAdminManagementGoalsYearSelect(year);
     renderAdminManagementGoalDraft();
-    setAdminManagementGoalsStatus("");
+    setAdminManagementGoalsStatus(
+      isLegacyDocument
+        ? "기존 형식의 경영목표입니다. 전략 소속을 자동 추정하지 않았습니다. 각 전략의 목표 영역을 선택한 뒤 저장해 주세요."
+        : "",
+    );
   } catch (error) {
     handleAdminManagementGoalsError(error);
   }
@@ -385,6 +486,7 @@ function addAdminManagementGoalsStrategy() {
   adminManagementGoalDraft.strategies.push({
     id: createAdminManagementGoalsId("strategy"),
     title: "",
+    targetAreaId: "",
     sortOrder: adminManagementGoalDraft.strategies.length + 1,
     tasks: [],
   });
@@ -392,37 +494,60 @@ function addAdminManagementGoalsStrategy() {
   renderAdminManagementGoalsStrategies();
 }
 
+function addAdminManagementGoalsTargetArea() {
+  if (!adminManagementGoalDraft) return;
+  adminManagementGoalDraft.targetAreas.push({
+    id: createAdminManagementGoalsId("target-area"),
+    name: "",
+    value: "",
+    unit: "",
+    sortOrder: adminManagementGoalDraft.targetAreas.length + 1,
+  });
+  setAdminManagementGoalsDirty(true);
+  renderAdminManagementGoalsTargetAreas();
+  renderAdminManagementGoalsStrategies();
+}
+
 function updateAdminManagementGoalsBasicDraft() {
   if (!adminManagementGoalDraft) return;
-  adminManagementGoalDraft.groupSalesTarget.value = document.getElementById("managementGoalsGroupTargetValue").value;
-  adminManagementGoalDraft.groupSalesTarget.unit = document.getElementById("managementGoalsGroupTargetUnit").value;
-  adminManagementGoalDraft.partnershipSalesTarget.value = document.getElementById("managementGoalsPartnershipTargetValue").value;
-  adminManagementGoalDraft.partnershipSalesTarget.unit = document.getElementById("managementGoalsPartnershipTargetUnit").value;
   adminManagementGoalDraft.coreMessage = document.getElementById("managementGoalsCoreMessage").value;
   setAdminManagementGoalsDirty(true);
 }
 
 function buildAdminManagementGoalsSavePayload() {
   if (!adminManagementGoalDraft) throw new Error("NO_DRAFT");
-  const groupRawValue = String(adminManagementGoalDraft.groupSalesTarget.value);
-  const partnershipRawValue = String(adminManagementGoalDraft.partnershipSalesTarget.value);
-  const groupValue = Number(groupRawValue);
-  const partnershipValue = Number(partnershipRawValue);
-  if (!groupRawValue.trim() || !partnershipRawValue.trim()
-    || !Number.isFinite(groupValue) || groupValue < 0
-    || !Number.isFinite(partnershipValue) || partnershipValue < 0
-    || !String(adminManagementGoalDraft.groupSalesTarget.unit).trim()
-    || !String(adminManagementGoalDraft.partnershipSalesTarget.unit).trim()
+  if (!Array.isArray(adminManagementGoalDraft.targetAreas)
+    || !adminManagementGoalDraft.targetAreas.length
     || !String(adminManagementGoalDraft.coreMessage).trim()) {
     throw new Error("INVALID_BASIC_INPUT");
   }
 
   const payload = JSON.parse(JSON.stringify(adminManagementGoalDraft));
-  payload.groupSalesTarget.value = groupValue;
-  payload.partnershipSalesTarget.value = partnershipValue;
+  delete payload.groupSalesTarget;
+  delete payload.partnershipSalesTarget;
+  payload.schemaVersion = 2;
+  normalizeAdminManagementGoalsSortOrder(payload.targetAreas);
+  const targetAreaIds = new Set();
+  payload.targetAreas.forEach((area) => {
+    const rawValue = String(area.value);
+    const numericValue = Number(rawValue);
+    if (!String(area.id).trim()
+      || targetAreaIds.has(area.id)
+      || !String(area.name).trim()
+      || !rawValue.trim()
+      || !Number.isFinite(numericValue)
+      || numericValue < 0
+      || !String(area.unit).trim()) {
+      throw new Error("INVALID_TARGET_AREA");
+    }
+    targetAreaIds.add(area.id);
+    area.value = numericValue;
+  });
   normalizeAdminManagementGoalsSortOrder(payload.strategies);
   payload.strategies.forEach((strategy) => {
-    if (!String(strategy.title).trim()) throw new Error("INVALID_STRATEGY");
+    if (!String(strategy.title).trim() || !targetAreaIds.has(strategy.targetAreaId)) {
+      throw new Error("INVALID_STRATEGY");
+    }
     normalizeAdminManagementGoalsSortOrder(strategy.tasks);
     strategy.tasks.forEach((task) => {
       if (!String(task.title).trim()) throw new Error("INVALID_TASK");
@@ -440,7 +565,7 @@ async function saveAdminManagementGoal() {
   try {
     payload = buildAdminManagementGoalsSavePayload();
   } catch {
-    setAdminManagementGoalsStatus("연도, 목표 수치·단위, 핵심 문구와 각 제목·세부 실행계획의 필수 내용을 확인해 주세요.", "error");
+    setAdminManagementGoalsStatus("목표 영역의 이름·수치·단위, 전략별 소속 영역, 핵심 문구와 각 필수 내용을 확인해 주세요.", "error");
     return;
   }
 
@@ -493,14 +618,11 @@ function bindAdminManagementGoalsControls() {
   });
   document.getElementById("newManagementGoalsYearBtn")?.addEventListener("click", startNewAdminManagementGoal);
   document.getElementById("activateManagementGoalsYearBtn")?.addEventListener("click", activateAdminManagementGoalYear);
+  document.getElementById("addManagementGoalsTargetAreaBtn")?.addEventListener("click", addAdminManagementGoalsTargetArea);
   document.getElementById("addManagementGoalsStrategyBtn")?.addEventListener("click", addAdminManagementGoalsStrategy);
   document.getElementById("saveManagementGoalsBtn")?.addEventListener("click", saveAdminManagementGoal);
 
   [
-    "managementGoalsGroupTargetValue",
-    "managementGoalsGroupTargetUnit",
-    "managementGoalsPartnershipTargetValue",
-    "managementGoalsPartnershipTargetUnit",
     "managementGoalsCoreMessage",
   ].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", updateAdminManagementGoalsBasicDraft);
