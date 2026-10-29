@@ -267,6 +267,83 @@ test("경영목표 원문은 HTML 해석 없이 모든 계층과 줄바꿈 데�
   assert.doesNotMatch(await readProjectFile("js/management-goals.js"), /innerHTML/);
 });
 
+test("메인 화면은 활성 연도를 기본 표시하고 저장된 연도만 최신순으로 조회한다", async () => {
+  const { context, document } = createContext();
+  registerManagementGoalsMain(document);
+  const requests = [];
+  context.activeGoal = createGoalFixture(2030);
+  context.olderGoal = createGoalFixture(2028);
+  await loadScripts(context, "js/management-goals.js");
+  context.managementGoalsApiRequest = async (path, options = {}) => {
+    requests.push({ path, method: options.method || "GET" });
+    if (path === "/management-goals/active") {
+      return { success: true, activeYear: 2030, goal: context.activeGoal };
+    }
+    if (path === "/management-goals/years") {
+      return { success: true, activeYear: 2030, years: [2028, 2031, 2030, 2028] };
+    }
+    if (path === "/management-goals/2028") {
+      return { success: true, goal: context.olderGoal };
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  };
+  await vm.runInContext("loadActiveManagementGoal()", context);
+
+  const content = document.getElementById("managementGoalsContent");
+  let yearSelect = findNodes(content, (node) => node.id === "managementGoalsMainYearSelect")[0];
+  assert.match(content.textContent, /2030년 경영목표/);
+  assert.deepEqual(yearSelect.children.map((option) => option.value), ["2031", "2030", "2028"]);
+  assert.match(yearSelect.children[1].textContent, /기본/);
+  assert.equal(yearSelect.value, "2030");
+
+  await vm.runInContext("loadManagementGoalYearForMain(2028)", context);
+  yearSelect = findNodes(content, (node) => node.id === "managementGoalsMainYearSelect")[0];
+  assert.match(content.textContent, /2028년 경영목표/);
+  assert.equal(yearSelect.value, "2028");
+  assert.equal(vm.runInContext("managementGoalsActiveYear", context), 2030);
+  assert.equal(requests.some((request) => request.method !== "GET"), false);
+
+  await vm.runInContext("loadActiveManagementGoal()", context);
+  assert.match(content.textContent, /2030년 경영목표/);
+  assert.equal(vm.runInContext("managementGoalsActiveYear", context), 2030);
+});
+
+test("빠른 연도 전환에서는 마지막 요청만 화면을 갱신하고 실패 시 기존 내용을 유지한다", async () => {
+  const { context, document } = createContext();
+  registerManagementGoalsMain(document);
+  const resolvers = new Map();
+  context.initialGoal = createGoalFixture(2030);
+  context.requestSelectedYear = (path) => new Promise((resolve, reject) => {
+    resolvers.set(path, { resolve, reject });
+  });
+  await loadScripts(context, "js/management-goals.js");
+  vm.runInContext(`
+    managementGoalsYearsCache = [2030, 2029, 2028];
+    managementGoalsActiveYear = 2030;
+    renderManagementGoals(initialGoal, managementGoalsYearsCache);
+    managementGoalsApiRequest = (path) => requestSelectedYear(path);
+  `, context);
+
+  const olderRequest = vm.runInContext("loadManagementGoalYearForMain(2029)", context);
+  const latestRequest = vm.runInContext("loadManagementGoalYearForMain(2028)", context);
+  resolvers.get("/management-goals/2028").resolve({ success: true, goal: createGoalFixture(2028) });
+  await latestRequest;
+  resolvers.get("/management-goals/2029").resolve({ success: true, goal: createGoalFixture(2029) });
+  await olderRequest;
+
+  const content = document.getElementById("managementGoalsContent");
+  assert.match(content.textContent, /2028년 경영목표/);
+  assert.doesNotMatch(content.textContent, /2029년 경영목표/);
+
+  const failedRequest = vm.runInContext("loadManagementGoalYearForMain(2029)", context);
+  resolvers.get("/management-goals/2029").reject(
+    vm.runInContext("new ManagementGoalsApiError(404, 'NOT_FOUND')", context),
+  );
+  await failedRequest;
+  assert.match(content.textContent, /2028년 경영목표/);
+  assert.match(document.getElementById("managementGoalsStatus").textContent, /저장되어 있지/);
+});
+
 test("401·403·404·409 및 네트워크 오류 안내 문구를 구분한다", async () => {
   const { context } = createContext();
   await loadScripts(context, "js/management-goals.js");
