@@ -104,16 +104,138 @@ function getSortedManagementGoalsItems(items) {
     : [];
 }
 
-function createManagementGoalsTargetCard(label, target) {
-  const card = createManagementGoalsElement("div", "management-goals-target-card");
-  card.appendChild(createManagementGoalsElement("div", "management-goals-target-label", label));
-  const value = createManagementGoalsElement("div", "management-goals-target-value");
-  value.appendChild(document.createTextNode(String(target?.value ?? "-")));
-  if (target?.unit) {
-    value.appendChild(createManagementGoalsElement("span", "management-goals-target-unit", target.unit));
+function normalizeManagementGoalForClient(goal) {
+  const strategies = getSortedManagementGoalsItems(goal?.strategies).map((strategy) => ({
+    ...strategy,
+    targetAreaId: typeof strategy.targetAreaId === "string" ? strategy.targetAreaId : "",
+  }));
+  let targetAreas;
+
+  if (Array.isArray(goal?.targetAreas)) {
+    targetAreas = getSortedManagementGoalsItems(goal.targetAreas).map((area) => ({ ...area }));
+  } else {
+    targetAreas = [];
+    if (goal?.groupSalesTarget) {
+      targetAreas.push({
+        id: "legacy-group-sales",
+        name: "단체매출",
+        value: goal.groupSalesTarget.value,
+        unit: goal.groupSalesTarget.unit,
+        sortOrder: targetAreas.length + 1,
+      });
+    }
+    if (goal?.partnershipSalesTarget) {
+      targetAreas.push({
+        id: "legacy-partnership-sales",
+        name: "제휴매출",
+        value: goal.partnershipSalesTarget.value,
+        unit: goal.partnershipSalesTarget.unit,
+        sortOrder: targetAreas.length + 1,
+      });
+    }
   }
-  card.appendChild(value);
+
+  return { ...goal, targetAreas, strategies };
+}
+
+function getManagementGoalsAreaGroups(goal) {
+  const targetAreas = getSortedManagementGoalsItems(goal.targetAreas);
+  const areaIds = new Set(targetAreas.map((area) => area.id));
+  const groups = targetAreas.map((area) => ({
+    area,
+    strategies: goal.strategies.filter((strategy) => strategy.targetAreaId === area.id),
+  }));
+  const unassignedStrategies = goal.strategies.filter(
+    (strategy) => !strategy.targetAreaId || !areaIds.has(strategy.targetAreaId),
+  );
+  if (unassignedStrategies.length) {
+    groups.push({
+      area: {
+        id: "",
+        name: "소속 미지정",
+        value: null,
+        unit: "",
+        sortOrder: Number.MAX_SAFE_INTEGER,
+        isUnassigned: true,
+      },
+      strategies: unassignedStrategies,
+    });
+  }
+  return groups;
+}
+
+function appendManagementGoalsTargetValue(container, area) {
+  if (area.isUnassigned) return;
+  const value = createManagementGoalsElement("div", "management-goals-target-value");
+  value.appendChild(document.createTextNode(String(area.value ?? "-")));
+  if (area.unit) {
+    value.appendChild(createManagementGoalsElement("span", "management-goals-target-unit", area.unit));
+  }
+  container.appendChild(value);
+}
+
+function createManagementGoalsAreaSummaryCard(group) {
+  const card = createManagementGoalsElement("article", "management-goals-target-card");
+  if (group.area.isUnassigned) card.className += " is-unassigned";
+  const header = createManagementGoalsElement("header", "management-goals-target-card-header");
+  header.appendChild(createManagementGoalsElement("h2", "management-goals-target-label", group.area.name));
+  appendManagementGoalsTargetValue(header, group.area);
+  card.appendChild(header);
+
+  const strategyList = createManagementGoalsElement("div", "management-goals-target-strategies");
+  if (!group.strategies.length) {
+    strategyList.appendChild(createManagementGoalsElement("p", "management-goals-target-empty", "등록된 전략이 없습니다."));
+  }
+  group.strategies.forEach((strategy, strategyIndex) => {
+    const strategyBlock = createManagementGoalsElement("section", "management-goals-target-strategy");
+    strategyBlock.appendChild(createManagementGoalsElement("h3", "", `전략 ${strategyIndex + 1}. ${strategy.title}`));
+    const taskList = createManagementGoalsElement("ol", "management-goals-summary-list");
+    getSortedManagementGoalsItems(strategy.tasks).forEach((task) => {
+      taskList.appendChild(createManagementGoalsElement("li", "", task.title));
+    });
+    strategyBlock.appendChild(taskList);
+    strategyList.appendChild(strategyBlock);
+  });
+  card.appendChild(strategyList);
   return card;
+}
+
+function createManagementGoalsStrategyDetail(strategy, strategyIndex) {
+  const strategyElement = createManagementGoalsElement("article", "management-goals-strategy");
+  const strategyHeader = createManagementGoalsElement("header", "management-goals-strategy-header");
+  strategyHeader.appendChild(createManagementGoalsElement("h3", "", `전략 ${strategyIndex + 1}. ${strategy.title}`));
+  strategyElement.appendChild(strategyHeader);
+
+  getSortedManagementGoalsItems(strategy.tasks).forEach((task, taskIndex) => {
+    const taskElement = createManagementGoalsElement("section", "management-goals-task");
+    const taskHeading = createManagementGoalsElement("div", "management-goals-task-heading");
+    taskHeading.appendChild(createManagementGoalsElement("h4", "", `${taskIndex + 1}. ${task.title}`));
+    const taskMeta = createManagementGoalsElement("div", "management-goals-task-meta");
+    appendManagementGoalsMeta(taskMeta, "KPI", task.kpi);
+    appendManagementGoalsMeta(taskMeta, "완료 예정", task.dueDateLabel);
+    taskHeading.appendChild(taskMeta);
+    taskElement.appendChild(taskHeading);
+
+    const detailsElement = createManagementGoalsElement("div", "management-goals-details");
+    const details = getSortedManagementGoalsItems(task.details);
+    if (!details.length) {
+      detailsElement.appendChild(createManagementGoalsElement("div", "management-goals-empty-detail", "등록된 세부 실행계획이 없습니다."));
+    }
+    details.forEach((detail, detailIndex) => {
+      const detailElement = createManagementGoalsElement("article", "management-goals-detail");
+      const detailTitle = detail.title || `세부 실행계획 ${detailIndex + 1}`;
+      detailElement.appendChild(createManagementGoalsElement("h5", "management-goals-detail-title", detailTitle));
+      detailElement.appendChild(createManagementGoalsElement("p", "management-goals-detail-content", detail.content));
+      const detailMeta = createManagementGoalsElement("div", "management-goals-detail-meta");
+      appendManagementGoalsMeta(detailMeta, "KPI", detail.kpi);
+      appendManagementGoalsMeta(detailMeta, "완료 예정", detail.dueDateLabel);
+      detailElement.appendChild(detailMeta);
+      detailsElement.appendChild(detailElement);
+    });
+    taskElement.appendChild(detailsElement);
+    strategyElement.appendChild(taskElement);
+  });
+  return strategyElement;
 }
 
 function renderManagementGoals(goal) {
@@ -122,6 +244,8 @@ function renderManagementGoals(goal) {
   content.replaceChildren();
   content.hidden = false;
 
+  const normalizedGoal = normalizeManagementGoalForClient(goal);
+  const areaGroups = getManagementGoalsAreaGroups(normalizedGoal);
   const hero = createManagementGoalsElement("section", "management-goals-hero");
   const accentLine = createManagementGoalsElement("div", "management-goals-accent-line");
   accentLine.setAttribute("aria-hidden", "true");
@@ -129,72 +253,29 @@ function renderManagementGoals(goal) {
   hero.appendChild(accentLine);
 
   const heroBody = createManagementGoalsElement("div", "management-goals-hero-body");
-  const title = createManagementGoalsElement("h1", "management-goals-title", `${goal.year}년 경영목표`);
+  const title = createManagementGoalsElement("h1", "management-goals-title", `${normalizedGoal.year}년 경영목표`);
   title.id = "managementGoalsTitle";
   heroBody.appendChild(title);
 
+  heroBody.appendChild(createManagementGoalsElement("div", "management-goals-core-message", normalizedGoal.coreMessage || ""));
   const targets = createManagementGoalsElement("div", "management-goals-targets");
-  targets.appendChild(createManagementGoalsTargetCard("단체매출 목표", goal.groupSalesTarget));
-  targets.appendChild(createManagementGoalsTargetCard("제휴매출 목표", goal.partnershipSalesTarget));
+  areaGroups.forEach((group) => targets.appendChild(createManagementGoalsAreaSummaryCard(group)));
   heroBody.appendChild(targets);
-  heroBody.appendChild(createManagementGoalsElement("div", "management-goals-core-message", goal.coreMessage || ""));
-
-  const strategies = getSortedManagementGoalsItems(goal.strategies);
-  const summary = createManagementGoalsElement("section", "management-goals-summary");
-  summary.appendChild(createManagementGoalsElement("h2", "management-goals-summary-title", "전략별 실행과제"));
-  const summaryGrid = createManagementGoalsElement("div", "management-goals-summary-grid");
-  strategies.forEach((strategy, strategyIndex) => {
-    const summaryCard = createManagementGoalsElement("article", "management-goals-summary-card");
-    summaryCard.appendChild(createManagementGoalsElement("h3", "", `전략 ${strategyIndex + 1}. ${strategy.title}`));
-    const list = createManagementGoalsElement("ol", "management-goals-summary-list");
-    getSortedManagementGoalsItems(strategy.tasks).forEach((task) => {
-      list.appendChild(createManagementGoalsElement("li", "", task.title));
-    });
-    summaryCard.appendChild(list);
-    summaryGrid.appendChild(summaryCard);
-  });
-  summary.appendChild(summaryGrid);
-  heroBody.appendChild(summary);
   hero.appendChild(heroBody);
   content.appendChild(hero);
 
   const fullList = createManagementGoalsElement("section", "management-goals-full-list");
-  strategies.forEach((strategy, strategyIndex) => {
-    const strategyElement = createManagementGoalsElement("article", "management-goals-strategy");
-    const strategyHeader = createManagementGoalsElement("header", "management-goals-strategy-header");
-    strategyHeader.appendChild(createManagementGoalsElement("h2", "", `전략 ${strategyIndex + 1}. ${strategy.title}`));
-    strategyElement.appendChild(strategyHeader);
-
-    getSortedManagementGoalsItems(strategy.tasks).forEach((task, taskIndex) => {
-      const taskElement = createManagementGoalsElement("section", "management-goals-task");
-      const taskHeading = createManagementGoalsElement("div", "management-goals-task-heading");
-      taskHeading.appendChild(createManagementGoalsElement("h3", "", `${taskIndex + 1}. ${task.title}`));
-      const taskMeta = createManagementGoalsElement("div", "management-goals-task-meta");
-      appendManagementGoalsMeta(taskMeta, "KPI", task.kpi);
-      appendManagementGoalsMeta(taskMeta, "완료 예정", task.dueDateLabel);
-      taskHeading.appendChild(taskMeta);
-      taskElement.appendChild(taskHeading);
-
-      const detailsElement = createManagementGoalsElement("div", "management-goals-details");
-      const details = getSortedManagementGoalsItems(task.details);
-      if (!details.length) {
-        detailsElement.appendChild(createManagementGoalsElement("div", "management-goals-empty-detail", "등록된 세부 실행계획이 없습니다."));
-      }
-      details.forEach((detail, detailIndex) => {
-        const detailElement = createManagementGoalsElement("article", "management-goals-detail");
-        const detailTitle = detail.title || `세부 실행계획 ${detailIndex + 1}`;
-        detailElement.appendChild(createManagementGoalsElement("h4", "management-goals-detail-title", detailTitle));
-        detailElement.appendChild(createManagementGoalsElement("p", "management-goals-detail-content", detail.content));
-        const detailMeta = createManagementGoalsElement("div", "management-goals-detail-meta");
-        appendManagementGoalsMeta(detailMeta, "KPI", detail.kpi);
-        appendManagementGoalsMeta(detailMeta, "완료 예정", detail.dueDateLabel);
-        detailElement.appendChild(detailMeta);
-        detailsElement.appendChild(detailElement);
-      });
-      taskElement.appendChild(detailsElement);
-      strategyElement.appendChild(taskElement);
+  areaGroups.forEach((group) => {
+    const areaSection = createManagementGoalsElement("section", "management-goals-area-detail");
+    if (group.area.isUnassigned) areaSection.className += " is-unassigned";
+    const areaHeader = createManagementGoalsElement("header", "management-goals-area-detail-header");
+    areaHeader.appendChild(createManagementGoalsElement("h2", "", group.area.name));
+    appendManagementGoalsTargetValue(areaHeader, group.area);
+    areaSection.appendChild(areaHeader);
+    group.strategies.forEach((strategy, strategyIndex) => {
+      areaSection.appendChild(createManagementGoalsStrategyDetail(strategy, strategyIndex));
     });
-    fullList.appendChild(strategyElement);
+    fullList.appendChild(areaSection);
   });
   content.appendChild(fullList);
 }
