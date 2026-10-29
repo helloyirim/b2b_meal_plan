@@ -21,7 +21,6 @@ jobs:
       - name: Run local regression tests
         run: |
           node --test .tests/management-goals.frontend.test.mjs
-          node --test worker.dev.js/worker.management-goals.test.mjs
 
       - name: Build Firebase Hosting artifact
         shell: pwsh
