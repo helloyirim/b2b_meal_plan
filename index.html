@@ -1479,7 +1479,7 @@
       <div id="login-overlay">
         <div class="login-card">
           <h2>B2B 업무관리시스템</h2>
-          <p class="login-sub">본아이에프 B2B영업팀</p>
+          <p class="login-sub">B2B영업팀</p>
       
           <div class="login-input-wrap">
             <span class="login-icon">👤</span>
@@ -2961,28 +2961,18 @@
                   <label for="managementGoalsEditYear">적용 연도</label>
                   <input id="managementGoalsEditYear" type="number" readonly />
                 </div>
-                <div class="field">
-                  <label for="managementGoalsGroupTargetValue">단체매출 목표</label>
-                  <input id="managementGoalsGroupTargetValue" type="number" min="0" step="any" />
-                </div>
-                <div class="field">
-                  <label for="managementGoalsGroupTargetUnit">단체매출 단위</label>
-                  <input id="managementGoalsGroupTargetUnit" maxlength="30" placeholder="예: 억" />
-                </div>
-                <div class="field">
-                  <label for="managementGoalsPartnershipTargetValue">제휴매출 목표</label>
-                  <input id="managementGoalsPartnershipTargetValue" type="number" min="0" step="any" />
-                </div>
-                <div class="field">
-                  <label for="managementGoalsPartnershipTargetUnit">제휴매출 단위</label>
-                  <input id="managementGoalsPartnershipTargetUnit" maxlength="30" placeholder="예: 억" />
-                </div>
               </div>
               <div class="field management-goals-message-field">
                 <label for="managementGoalsCoreMessage">핵심 목표 문구</label>
                 <textarea id="managementGoalsCoreMessage" rows="4" maxlength="5000"></textarea>
               </div>
             </div>
+
+            <div class="management-goals-editor-heading">
+              <h3>목표 영역</h3>
+              <button type="button" class="btn" id="addManagementGoalsTargetAreaBtn">목표 영역 추가</button>
+            </div>
+            <div id="managementGoalsTargetAreasEditor"></div>
 
             <div class="management-goals-editor-heading">
               <h3>전략 및 실행과제</h3>
