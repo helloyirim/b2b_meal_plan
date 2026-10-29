@@ -2,6 +2,9 @@ const MANAGEMENT_GOALS_TOKEN_KEY = "managementGoalsToken";
 const MANAGEMENT_GOALS_EXPIRES_AT_KEY = "managementGoalsTokenExpiresAt";
 
 let activeManagementGoalCache = null;
+let managementGoalsYearsCache = [];
+let managementGoalsActiveYear = null;
+let managementGoalsMainRequestSequence = 0;
 
 class ManagementGoalsApiError extends Error {
   constructor(status, message, payload = null) {
@@ -238,7 +241,7 @@ function createManagementGoalsStrategyDetail(strategy, strategyIndex) {
   return strategyElement;
 }
 
-function renderManagementGoals(goal) {
+function renderManagementGoals(goal, availableYears = managementGoalsYearsCache) {
   const content = document.getElementById("managementGoalsContent");
   if (!content) return;
   content.replaceChildren();
@@ -253,9 +256,37 @@ function renderManagementGoals(goal) {
   hero.appendChild(accentLine);
 
   const heroBody = createManagementGoalsElement("div", "management-goals-hero-body");
+  const titleRow = createManagementGoalsElement("div", "management-goals-title-row");
   const title = createManagementGoalsElement("h1", "management-goals-title", `${normalizedGoal.year}년 경영목표`);
   title.id = "managementGoalsTitle";
-  heroBody.appendChild(title);
+  titleRow.appendChild(title);
+
+  const yearPicker = createManagementGoalsElement("label", "management-goals-year-picker");
+  yearPicker.appendChild(createManagementGoalsElement("span", "", "조회 연도"));
+  const yearSelect = document.createElement("select");
+  yearSelect.id = "managementGoalsMainYearSelect";
+  yearSelect.setAttribute("aria-label", "경영목표 조회 연도");
+  const years = [...new Set(
+    [...availableYears, normalizedGoal.year]
+      .map(Number)
+      .filter((year) => Number.isInteger(year)),
+  )].sort((a, b) => b - a);
+  years.forEach((year) => {
+    const option = document.createElement("option");
+    option.value = String(year);
+    option.textContent = `${year}년${year === managementGoalsActiveYear ? " (기본)" : ""}`;
+    yearSelect.appendChild(option);
+  });
+  yearSelect.value = String(normalizedGoal.year);
+  yearSelect.addEventListener("change", () => {
+    const year = Number(yearSelect.value);
+    if (Number.isInteger(year)) {
+      loadManagementGoalYearForMain(year);
+    }
+  });
+  yearPicker.appendChild(yearSelect);
+  titleRow.appendChild(yearPicker);
+  heroBody.appendChild(titleRow);
 
   heroBody.appendChild(createManagementGoalsElement("div", "management-goals-core-message", normalizedGoal.coreMessage || ""));
   const targets = createManagementGoalsElement("div", "management-goals-targets");
@@ -281,26 +312,80 @@ function renderManagementGoals(goal) {
 }
 
 async function loadActiveManagementGoal() {
+  const requestSequence = ++managementGoalsMainRequestSequence;
   const content = document.getElementById("managementGoalsContent");
   if (content) {
     content.hidden = true;
     content.replaceChildren();
   }
   activeManagementGoalCache = null;
+  managementGoalsYearsCache = [];
+  managementGoalsActiveYear = null;
   setManagementGoalsStatus("경영목표를 불러오는 중입니다.");
 
   try {
     const result = await managementGoalsApiRequest("/management-goals/active");
+    if (requestSequence !== managementGoalsMainRequestSequence) return null;
     if (!result.goal) {
       setManagementGoalsStatus("현재 메인 화면에 표시할 경영목표가 지정되어 있지 않습니다.");
       return null;
     }
     activeManagementGoalCache = result.goal;
+    managementGoalsActiveYear = Number.isInteger(result.activeYear) ? result.activeYear : result.goal.year;
+    managementGoalsYearsCache = [result.goal.year];
     setManagementGoalsStatus("");
-    renderManagementGoals(result.goal);
+    renderManagementGoals(result.goal, managementGoalsYearsCache);
+
+    try {
+      const yearsResult = await managementGoalsApiRequest("/management-goals/years");
+      if (requestSequence !== managementGoalsMainRequestSequence) return null;
+      managementGoalsYearsCache = Array.isArray(yearsResult.years)
+        ? [...new Set(yearsResult.years.map(Number).filter(Number.isInteger))].sort((a, b) => b - a)
+        : [result.goal.year];
+      renderManagementGoals(result.goal, managementGoalsYearsCache);
+    } catch (error) {
+      if (requestSequence !== managementGoalsMainRequestSequence) return null;
+      setManagementGoalsStatus(`연도 목록을 불러오지 못했습니다. ${getManagementGoalsErrorMessage(error)}`, "error");
+    }
     return result.goal;
   } catch (error) {
+    if (requestSequence !== managementGoalsMainRequestSequence) return null;
     setManagementGoalsStatus(getManagementGoalsErrorMessage(error), "error");
+    return null;
+  }
+}
+
+async function loadManagementGoalYearForMain(year) {
+  if (!Number.isInteger(year)) return null;
+  const requestSequence = ++managementGoalsMainRequestSequence;
+  const select = document.getElementById("managementGoalsMainYearSelect");
+  if (select) {
+    select.setAttribute("aria-busy", "true");
+    select.classList.add("is-loading");
+  }
+  setManagementGoalsStatus(`${year}년 경영목표를 불러오는 중입니다.`);
+
+  try {
+    const result = await managementGoalsApiRequest(`/management-goals/${year}`);
+    if (requestSequence !== managementGoalsMainRequestSequence) return null;
+    if (!result.goal) {
+      throw new ManagementGoalsApiError(404, "NOT_FOUND");
+    }
+    activeManagementGoalCache = result.goal;
+    setManagementGoalsStatus("");
+    renderManagementGoals(result.goal, managementGoalsYearsCache);
+    return result.goal;
+  } catch (error) {
+    if (requestSequence !== managementGoalsMainRequestSequence) return null;
+    setManagementGoalsStatus(getManagementGoalsErrorMessage(error), "error");
+    const currentSelect = document.getElementById("managementGoalsMainYearSelect");
+    if (currentSelect) {
+      if (activeManagementGoalCache?.year) {
+        currentSelect.value = String(activeManagementGoalCache.year);
+      }
+      currentSelect.setAttribute("aria-busy", "false");
+      currentSelect.classList.remove("is-loading");
+    }
     return null;
   }
 }
