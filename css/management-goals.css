@@ -79,31 +79,36 @@
 
 .management-goals-targets {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: clamp(14px, 2vw, 24px);
-  max-width: 900px;
-  margin: 0 auto clamp(20px, 3vw, 30px);
+  margin: clamp(24px, 4vw, 42px) auto 0;
 }
 
 .management-goals-target-card {
   display: flex;
-  min-height: 150px;
-  padding: clamp(24px, 3vw, 34px);
-  border: 0;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--mg-border);
   border-radius: 18px;
-  background: var(--mg-soft-gray);
+  background: #fff;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+.management-goals-target-card-header {
+  padding: clamp(22px, 2.8vw, 32px);
+  background: var(--mg-soft-gray);
   text-align: center;
 }
 
 .management-goals-target-label {
-  margin-bottom: 12px;
-  color: var(--mg-secondary-text);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+  color: var(--mg-wine);
+  font-size: clamp(18px, 2vw, 23px);
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: -0.025em;
 }
 
 .management-goals-target-value {
@@ -119,6 +124,42 @@
   margin-left: 6px;
   font-size: 0.55em;
   font-weight: 700;
+}
+
+.management-goals-target-strategies {
+  display: grid;
+  gap: 0;
+  padding: 8px clamp(20px, 2.5vw, 28px) 18px;
+}
+
+.management-goals-target-strategy {
+  padding: 18px 0;
+  border-top: 1px solid #eeeef2;
+}
+
+.management-goals-target-strategy:first-child {
+  border-top: 0;
+}
+
+.management-goals-target-strategy h3 {
+  margin: 0 0 10px;
+  color: #333338;
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+.management-goals-target-empty {
+  margin: 0;
+  padding: 18px 0 10px;
+  color: var(--mg-secondary-text);
+  text-align: center;
+}
+
+.management-goals-target-card.is-unassigned .management-goals-target-card-header,
+.management-goals-area-detail.is-unassigned .management-goals-area-detail-header {
+  background: #fff8eb;
 }
 
 .management-goals-core-message {
@@ -221,6 +262,32 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.035);
 }
 
+.management-goals-area-detail {
+  margin-bottom: clamp(36px, 5vw, 58px);
+}
+
+.management-goals-area-detail-header {
+  display: flex;
+  gap: 20px;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 0 4px 14px;
+  border-bottom: 1px solid var(--mg-border);
+}
+
+.management-goals-area-detail-header h2 {
+  margin: 0;
+  color: var(--mg-wine);
+  font-size: clamp(24px, 2.8vw, 34px);
+  letter-spacing: -0.035em;
+}
+
+.management-goals-area-detail-header .management-goals-target-value {
+  flex: 0 0 auto;
+  font-size: clamp(22px, 2.5vw, 32px);
+}
+
 .management-goals-strategy-header {
   padding: clamp(24px, 3vw, 34px);
   border-bottom: 1px solid var(--mg-border);
@@ -228,7 +295,8 @@
   color: var(--mg-wine);
 }
 
-.management-goals-strategy-header h2 {
+.management-goals-strategy-header h2,
+.management-goals-strategy-header h3 {
   margin: 0;
   font-size: clamp(20px, 2vw, 27px);
   font-weight: 800;
@@ -258,7 +326,8 @@
   color: #2c2c2e;
 }
 
-.management-goals-task-heading h3 {
+.management-goals-task-heading h3,
+.management-goals-task-heading h4 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
@@ -342,7 +411,7 @@
 
 .management-goals-form-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(130px, 1fr));
+  grid-template-columns: minmax(180px, 280px);
   gap: 12px;
 }
 
@@ -376,6 +445,21 @@
   overflow: hidden;
 }
 
+.management-goals-target-area-editor {
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid #dce1e6;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.management-goals-target-area-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(130px, 1fr) minmax(100px, 0.7fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .management-goals-editor-card-header {
   padding: 14px 16px;
   background: #f6eded;
@@ -383,6 +467,10 @@
 }
 
 .management-goals-editor-card-header .field { flex: 1 1 360px; }
+
+.management-goals-editor-card-header .management-goals-strategy-area-field {
+  flex: 0 1 260px;
+}
 
 .management-goals-task-editor {
   margin: 14px;
@@ -451,7 +539,8 @@
   }
 
   .management-goals-task-editor-grid,
-  .management-goals-detail-editor-grid {
+  .management-goals-detail-editor-grid,
+  .management-goals-target-area-editor-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -460,7 +549,8 @@
   .management-goals-targets,
   .management-goals-form-grid,
   .management-goals-task-editor-grid,
-  .management-goals-detail-editor-grid {
+  .management-goals-detail-editor-grid,
+  .management-goals-target-area-editor-grid {
     grid-template-columns: 1fr;
   }
 
@@ -470,5 +560,11 @@
   .management-goals-task-heading,
   .management-goals-detail { padding: 16px; }
   .management-goals-meta-row { grid-template-columns: 1fr; }
+  .management-goals-area-detail-header {
+    display: block;
+  }
+  .management-goals-area-detail-header .management-goals-target-value {
+    margin-top: 8px;
+  }
   .management-goals-admin-toolbar > * { width: 100%; }
 }
