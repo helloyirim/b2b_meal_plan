@@ -159,15 +159,18 @@ function findNodes(root, predicate, result = []) {
 
 function createGoalFixture(year = 2030) {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     year,
-    groupSalesTarget: { value: 123, unit: "unit" },
-    partnershipSalesTarget: { value: 456, unit: "unit" },
+    targetAreas: [
+      { id: "area-a", name: "Area A", value: 123, unit: "unit", sortOrder: 1 },
+      { id: "area-b", name: "Area B", value: 456, unit: "unit", sortOrder: 2 },
+    ],
     coreMessage: "Generic message <script>\nSecond & line",
     strategies: [
       {
         id: "strategy-a",
         title: "Strategy A",
+        targetAreaId: "area-a",
         sortOrder: 1,
         tasks: [
           {
@@ -204,11 +207,11 @@ function registerManagementGoalsMain(document) {
 function registerAdminEditor(document) {
   const ids = [
     "adminManagementGoalsStatus", "adminManagementGoalsEditor", "managementGoalsStrategiesEditor",
-    "managementGoalsDirtyStatus", "managementGoalsEditYear", "managementGoalsGroupTargetValue",
-    "managementGoalsGroupTargetUnit", "managementGoalsPartnershipTargetValue",
-    "managementGoalsPartnershipTargetUnit", "managementGoalsCoreMessage", "managementGoalsYearSelect",
+    "managementGoalsTargetAreasEditor", "managementGoalsDirtyStatus", "managementGoalsEditYear",
+    "managementGoalsCoreMessage", "managementGoalsYearSelect",
     "newManagementGoalsYear", "loadManagementGoalsYearBtn", "newManagementGoalsYearBtn",
-    "activateManagementGoalsYearBtn", "addManagementGoalsStrategyBtn", "saveManagementGoalsBtn",
+    "activateManagementGoalsYearBtn", "addManagementGoalsTargetAreaBtn",
+    "addManagementGoalsStrategyBtn", "saveManagementGoalsBtn",
   ];
   ids.forEach((id) => document.register(id, "", id.includes("Button") || id.endsWith("Btn") ? "button" : "input"));
 }
@@ -369,10 +372,15 @@ test("관리자 편집기에서 전략·과제·세부 내용 추가와 순서 �
   registerAdminEditor(document);
   await loadScripts(context, "js/management-goals.js", "js/admin-management-goals.js");
   vm.runInContext("adminManagementGoalDraft = createEmptyAdminManagementGoal(2030)", context);
+  vm.runInContext("addAdminManagementGoalsTargetArea(); addAdminManagementGoalsTargetArea()", context);
   vm.runInContext("addAdminManagementGoalsStrategy(); addAdminManagementGoalsStrategy()", context);
   vm.runInContext(`
+    adminManagementGoalDraft.targetAreas[0] = { ...adminManagementGoalDraft.targetAreas[0], name: 'Area A', value: '100', unit: 'unit' };
+    adminManagementGoalDraft.targetAreas[1] = { ...adminManagementGoalDraft.targetAreas[1], name: 'Area B', value: '200', unit: 'unit' };
     adminManagementGoalDraft.strategies[0].title = 'First';
+    adminManagementGoalDraft.strategies[0].targetAreaId = adminManagementGoalDraft.targetAreas[0].id;
     adminManagementGoalDraft.strategies[1].title = 'Second';
+    adminManagementGoalDraft.strategies[1].targetAreaId = adminManagementGoalDraft.targetAreas[1].id;
     moveAdminManagementGoalsItem(adminManagementGoalDraft.strategies, 1, -1);
   `, context);
   let draft = JSON.parse(vm.runInContext("JSON.stringify(adminManagementGoalDraft)", context));
@@ -385,8 +393,6 @@ test("관리자 편집기에서 전략·과제·세부 내용 추가와 순서 �
   let addDetail = findNodes(container, (node) => node.tagName === "BUTTON" && node.textContent === "세부 실행계획 추가")[0];
   addDetail.click();
   vm.runInContext(`
-    adminManagementGoalDraft.groupSalesTarget = { value: '100', unit: 'unit' };
-    adminManagementGoalDraft.partnershipSalesTarget = { value: '200', unit: 'unit' };
     adminManagementGoalDraft.coreMessage = 'Core <text>\\nline';
     adminManagementGoalDraft.strategies[0].tasks[0].title = 'Task';
     adminManagementGoalDraft.strategies[0].tasks[0].kpi = 'KPI';
@@ -395,7 +401,10 @@ test("관리자 편집기에서 전략·과제·세부 내용 추가와 순서 �
     adminManagementGoalDraft.strategies[1].tasks = [];
   `, context);
   const payload = JSON.parse(vm.runInContext("JSON.stringify(buildAdminManagementGoalsSavePayload())", context));
-  assert.equal(payload.groupSalesTarget.value, 100);
+  assert.equal(payload.schemaVersion, 2);
+  assert.equal(payload.targetAreas[0].value, 100);
+  assert.equal(payload.targetAreas.length, 2);
+  assert.equal(payload.strategies[0].targetAreaId, payload.targetAreas[1].id);
   assert.equal(payload.strategies[0].tasks[0].kpi, "KPI");
   assert.equal(payload.strategies[0].tasks[0].details[0].content, "Detail\ncontent");
 });
@@ -456,6 +465,52 @@ test("관리자 저장과 활성 연도 지정 요청은 입력 draft와 version
   await vm.runInContext("activateAdminManagementGoalYear()", context);
   const activeRequest = context.requests.find((request) => request.path === "/management-goals/active" && request.options.method === "POST");
   assert.equal(activeRequest.options.body.year, 2030);
+});
+
+test("기존 v1 문서는 목표 수치를 보존하고 전략 소속을 자동 추정하지 않는다", async () => {
+  const { context, document } = createContext();
+  registerManagementGoalsMain(document);
+  await loadScripts(context, "js/management-goals.js");
+  context.legacyFixture = {
+    schemaVersion: 1,
+    year: 2026,
+    groupSalesTarget: { value: 500, unit: "unit" },
+    partnershipSalesTarget: { value: 510, unit: "unit" },
+    coreMessage: "Legacy message",
+    strategies: [{ id: "legacy-strategy", title: "Legacy strategy", sortOrder: 1, tasks: [] }],
+    version: 1,
+  };
+  const normalized = JSON.parse(vm.runInContext("JSON.stringify(normalizeManagementGoalForClient(legacyFixture))", context));
+  assert.deepEqual(normalized.targetAreas.map((area) => area.value), [500, 510]);
+  assert.equal(normalized.strategies[0].targetAreaId, "");
+  vm.runInContext("renderManagementGoals(legacyFixture)", context);
+  const renderedTexts = findNodes(document.getElementById("managementGoalsContent"), (node) => Boolean(node.textContent))
+    .map((node) => node.textContent);
+  assert.ok(renderedTexts.includes("소속 미지정"));
+  assert.ok(renderedTexts.some((text) => text.includes("Legacy strategy")));
+});
+
+test("연결된 전략이 있는 목표 영역 삭제를 차단한다", async () => {
+  const { context, document } = createContext({ confirmValue: true });
+  registerManagementGoalsMain(document);
+  registerAdminEditor(document);
+  await loadScripts(context, "js/management-goals.js", "js/admin-management-goals.js");
+  context.fixture = createGoalFixture();
+  vm.runInContext("adminManagementGoalDraft = JSON.parse(JSON.stringify(fixture)); renderAdminManagementGoalDraft()", context);
+  const deleteButton = findNodes(
+    document.getElementById("managementGoalsTargetAreasEditor"),
+    (node) => node.tagName === "BUTTON" && node.textContent === "목표 영역 삭제",
+  )[0];
+  deleteButton.click();
+  assert.equal(vm.runInContext("adminManagementGoalDraft.targetAreas.length", context), 2);
+  assert.match(document.getElementById("adminManagementGoalsStatus").textContent, /재배정/);
+
+  const unlinkedDeleteButton = findNodes(
+    document.getElementById("managementGoalsTargetAreasEditor"),
+    (node) => node.tagName === "BUTTON" && node.textContent === "목표 영역 삭제",
+  )[1];
+  unlinkedDeleteButton.click();
+  assert.equal(vm.runInContext("adminManagementGoalDraft.targetAreas.length", context), 1);
 });
 
 test("기존 관리자 탭과 신규 세 번째 탭 전환 및 미저장 경고 훅을 유지한다", async () => {
