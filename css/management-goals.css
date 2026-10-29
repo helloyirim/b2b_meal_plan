@@ -68,13 +68,60 @@
 }
 
 .management-goals-title {
-  margin: 0 0 clamp(28px, 4vw, 44px);
+  grid-column: 2;
+  margin: 0;
   color: var(--mg-wine);
   font-size: clamp(30px, 3.4vw, 46px);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.045em;
   text-align: center;
+}
+
+.management-goals-title-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+  gap: 20px;
+  align-items: center;
+  margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+.management-goals-year-picker {
+  display: flex;
+  grid-column: 3;
+  gap: 9px;
+  align-items: center;
+  justify-self: end;
+  color: var(--mg-secondary-text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.management-goals-year-picker select {
+  min-width: 132px;
+  height: 42px;
+  padding: 0 34px 0 14px;
+  border: 1px solid #d8d8dd;
+  border-radius: 12px;
+  background-color: rgba(245, 245, 247, 0.92);
+  color: #1d1d1f;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.management-goals-year-picker select:hover,
+.management-goals-year-picker select:focus {
+  border-color: #a7a7ad;
+  background-color: #fff;
+  outline: none;
+}
+
+.management-goals-year-picker select.is-loading {
+  color: var(--mg-secondary-text);
+  cursor: progress;
 }
 
 .management-goals-targets {
@@ -556,6 +603,18 @@
 
   .management-goals-detail-content-field { grid-column: auto; }
   .management-goals-hero-body { padding: 20px 16px; }
+  .management-goals-title-row {
+    display: flex;
+    gap: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .management-goals-year-picker {
+    justify-content: center;
+  }
+  .management-goals-year-picker select {
+    min-width: 150px;
+  }
   .management-goals-strategy-header,
   .management-goals-task-heading,
   .management-goals-detail { padding: 16px; }
