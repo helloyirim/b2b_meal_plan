@@ -3,11 +3,13 @@
   --mg-wine: #780000;
   --mg-green: #579c32;
   --mg-blue-gray: #506480;
-  --mg-soft-pink: #fff0f0;
-  --mg-soft-gray: #f2f3f5;
-  max-width: 1440px;
+  --mg-soft-pink: #fff4f5;
+  --mg-soft-gray: #f5f5f7;
+  --mg-border: #e8e8ed;
+  --mg-secondary-text: #6e6e73;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 8px 0 48px;
+  padding: 12px 0 64px;
   color: #1d1d1f;
 }
 
@@ -44,9 +46,9 @@
 .management-goals-accent-line {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  height: 8px;
+  height: 4px;
   overflow: hidden;
-  border-radius: 8px 8px 0 0;
+  border-radius: 18px 18px 0 0;
 }
 
 .management-goals-accent-line span:nth-child(1) { background: var(--mg-orange); }
@@ -55,50 +57,61 @@
 
 .management-goals-hero {
   overflow: hidden;
-  border: 1px solid #e2e4e8;
-  border-radius: 14px;
+  border: 1px solid var(--mg-border);
+  border-radius: 20px;
   background: #fff;
-  box-shadow: 0 8px 24px rgba(25, 35, 45, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.035);
 }
 
 .management-goals-hero-body {
-  padding: clamp(22px, 3vw, 42px);
+  padding: clamp(32px, 5vw, 64px);
 }
 
 .management-goals-title {
-  margin: 0 0 24px;
+  margin: 0 0 clamp(28px, 4vw, 44px);
   color: var(--mg-wine);
-  font-size: clamp(28px, 3vw, 44px);
-  line-height: 1.2;
-  letter-spacing: -0.04em;
+  font-size: clamp(30px, 3.4vw, 46px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.045em;
+  text-align: center;
 }
 
 .management-goals-targets {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 18px;
+  gap: clamp(14px, 2vw, 24px);
+  max-width: 900px;
+  margin: 0 auto clamp(20px, 3vw, 30px);
 }
 
 .management-goals-target-card {
-  padding: 20px;
-  border: 1px solid #e1e3e7;
-  border-radius: 12px;
+  display: flex;
+  min-height: 150px;
+  padding: clamp(24px, 3vw, 34px);
+  border: 0;
+  border-radius: 18px;
   background: var(--mg-soft-gray);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .management-goals-target-label {
-  margin-bottom: 8px;
-  color: #616975;
-  font-size: 14px;
-  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--mg-secondary-text);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .management-goals-target-value {
-  color: #25282d;
-  font-size: clamp(28px, 4vw, 46px);
+  color: #1d1d1f;
+  font-size: clamp(32px, 4vw, 48px);
   font-weight: 800;
-  line-height: 1.15;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
   overflow-wrap: anywhere;
 }
 
@@ -109,49 +122,58 @@
 }
 
 .management-goals-core-message {
-  padding: 20px 22px;
-  border-left: 5px solid var(--mg-wine);
-  border-radius: 8px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(24px, 3.5vw, 38px) clamp(20px, 4vw, 48px);
+  border: 0;
+  border-radius: 18px;
   background: var(--mg-soft-pink);
-  color: #9b1c1c;
-  font-size: clamp(17px, 2vw, 22px);
+  color: #8f1d2c;
+  font-size: clamp(17px, 2vw, 23px);
   font-weight: 700;
-  line-height: 1.65;
+  line-height: 1.7;
+  letter-spacing: -0.015em;
+  text-align: center;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .management-goals-summary {
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid #e6e8eb;
+  margin-top: clamp(42px, 6vw, 70px);
+  padding-top: 0;
+  border-top: 0;
 }
 
 .management-goals-summary-title {
-  margin: 0 0 16px;
+  margin: 0 0 22px;
   color: var(--mg-wine);
-  font-size: 20px;
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  text-align: center;
 }
 
 .management-goals-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(16px, 2vw, 24px);
 }
 
 .management-goals-summary-card {
-  padding: 17px 18px;
-  border: 1px solid #dce1e7;
-  border-top: 4px solid var(--mg-blue-gray);
-  border-radius: 9px;
+  padding: clamp(22px, 2.5vw, 30px);
+  border: 1px solid var(--mg-border);
+  border-radius: 18px;
   background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
 }
 
 .management-goals-summary-card h3 {
-  margin: 0 0 10px;
+  margin: 0 0 16px;
   color: var(--mg-wine);
-  font-size: 17px;
+  font-size: 19px;
+  font-weight: 800;
   line-height: 1.45;
+  letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
 
@@ -166,9 +188,13 @@
   counter-increment: management-task;
   position: relative;
   padding: 7px 0 7px 30px;
-  border-top: 1px solid #edf0f2;
+  border-top: 0;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.management-goals-summary-list li + li {
+  border-top: 1px solid #eeeef2;
 }
 
 .management-goals-summary-list li::before {
@@ -183,48 +209,61 @@
 }
 
 .management-goals-full-list {
-  margin-top: 26px;
+  margin-top: clamp(42px, 6vw, 70px);
 }
 
 .management-goals-strategy {
-  margin-bottom: 28px;
+  margin-bottom: clamp(22px, 3vw, 32px);
   overflow: hidden;
-  border: 1px solid #d8dde3;
-  border-radius: 12px;
+  border: 1px solid var(--mg-border);
+  border-radius: 20px;
   background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.035);
 }
 
 .management-goals-strategy-header {
-  padding: 18px 22px;
-  background: var(--mg-wine);
-  color: #fff;
+  padding: clamp(24px, 3vw, 34px);
+  border-bottom: 1px solid var(--mg-border);
+  background: #fbfbfd;
+  color: var(--mg-wine);
 }
 
 .management-goals-strategy-header h2 {
   margin: 0;
   font-size: clamp(20px, 2vw, 27px);
+  font-weight: 800;
   line-height: 1.45;
+  letter-spacing: -0.025em;
   overflow-wrap: anywhere;
 }
 
 .management-goals-task {
   display: grid;
   grid-template-columns: minmax(230px, 0.8fr) minmax(0, 2.2fr);
-  border-top: 1px solid #dfe3e7;
+  gap: clamp(16px, 2vw, 28px);
+  margin: clamp(16px, 2vw, 24px);
+  padding: clamp(18px, 2.5vw, 28px);
+  border: 0;
+  border-radius: 16px;
+  background: var(--mg-soft-gray);
 }
 
-.management-goals-task:first-child { border-top: 0; }
+.management-goals-task + .management-goals-task {
+  margin-top: 0;
+}
 
 .management-goals-task-heading {
-  padding: 20px;
-  background: #eef1f5;
-  color: #27374b;
+  padding: 0;
+  background: transparent;
+  color: #2c2c2e;
 }
 
 .management-goals-task-heading h3 {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
+  font-weight: 700;
   line-height: 1.55;
+  letter-spacing: -0.015em;
   overflow-wrap: anywhere;
 }
 
@@ -253,26 +292,35 @@
   overflow-wrap: anywhere;
 }
 
-.management-goals-details { min-width: 0; }
+.management-goals-details {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e6e6ea;
+  border-radius: 14px;
+  background: #fff;
+}
 
 .management-goals-detail {
-  padding: 20px 22px;
-  border-top: 1px solid #e5e8eb;
+  padding: clamp(18px, 2vw, 24px);
+  border-top: 1px solid #eeeef2;
 }
 
 .management-goals-detail:first-child { border-top: 0; }
 
 .management-goals-detail-title {
-  margin: 0 0 9px;
-  color: var(--mg-blue-gray);
-  font-size: 16px;
+  margin: 0 0 10px;
+  color: #333338;
+  font-size: 17px;
+  font-weight: 700;
   line-height: 1.5;
+  letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
 
 .management-goals-detail-content {
   margin: 0;
-  line-height: 1.75;
+  color: #45454a;
+  line-height: 1.8;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
