@@ -85,7 +85,12 @@
         localStorage.removeItem("b2b_plans_cache");
         localStorage.removeItem("b2b_menus_cache");
 
-        showPage("page-calendar");
+        const currentUser = getCurrentUser();
+        if (currentUser.role === "VIEWER") {
+          showPage("page-calendar");
+        } else {
+          showPage("page-management-goals");
+        }
         setTimeout(applyViewerMode, 300);
 
         //10. loadSalesReportFromServer() 실행 순서 수정
