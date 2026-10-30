@@ -8,6 +8,10 @@
 
         document.getElementById(id).classList.add("active");
 
+        if (id === "page-management-goals") {
+          document.getElementById("nav-management-goals")?.classList.add("active");
+          loadActiveManagementGoal();
+        }
         if (id === "page-generate") {
           document.getElementById("nav-meal-main").classList.add("active");
           document.getElementById("nav-gen").classList.add("active");
@@ -86,20 +90,39 @@
           "adminTabSales"
         );
 
+        const managementGoalsButton = document.getElementById(
+          "adminTabManagementGoalsButton"
+        );
+
+        const managementGoalsContent = document.getElementById(
+          "adminTabManagementGoals"
+        );
+
         if (
           !accountButton ||
           !salesButton ||
+          !managementGoalsButton ||
           !accountContent ||
-          !salesContent
+          !salesContent ||
+          !managementGoalsContent
+        ) {
+          return;
+        }
+
+        if (
+          managementGoalsContent.classList.contains("active") &&
+          tabName !== "management-goals" &&
+          !canLeaveAdminManagementGoals()
         ) {
           return;
         }
 
         const isSalesTab = tabName === "sales";
+        const isManagementGoalsTab = tabName === "management-goals";
 
         accountButton.classList.toggle(
           "active",
-          !isSalesTab
+          !isSalesTab && !isManagementGoalsTab
         );
 
         salesButton.classList.toggle(
@@ -107,14 +130,24 @@
           isSalesTab
         );
 
+        managementGoalsButton.classList.toggle(
+          "active",
+          isManagementGoalsTab
+        );
+
         accountContent.classList.toggle(
           "active",
-          !isSalesTab
+          !isSalesTab && !isManagementGoalsTab
         );
 
         salesContent.classList.toggle(
           "active",
           isSalesTab
+        );
+
+        managementGoalsContent.classList.toggle(
+          "active",
+          isManagementGoalsTab
         );
 
         if (isSalesTab) {
@@ -137,6 +170,8 @@
                 getNextSalesChannelSortOrder();
             }
           }
+        } else if (isManagementGoalsTab) {
+          initAdminManagementGoalsPage();
         } else {
           renderAdminUsers();
         }
