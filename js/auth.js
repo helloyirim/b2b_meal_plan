@@ -31,6 +31,13 @@
           const result = await response.json();
 
           sessionStorage.setItem("currentUser", JSON.stringify(result.user));
+          if (result.token && result.expiresAt) {
+            sessionStorage.setItem("managementGoalsToken", result.token);
+            sessionStorage.setItem("managementGoalsTokenExpiresAt", result.expiresAt);
+          } else {
+            sessionStorage.removeItem("managementGoalsToken");
+            sessionStorage.removeItem("managementGoalsTokenExpiresAt");
+          }
           alert(`${result.user.name}님 환영합니다.`);
           location.reload();
         } catch (e) {
@@ -77,7 +84,7 @@
         showSalesPage("all");
 
         // 상품매출보고 외 메뉴는 보이되 클릭 막기
-        ["nav-calendar", "nav-gen", "nav-his", "nav-set"].forEach((id) => {
+        ["nav-management-goals", "nav-calendar", "nav-gen", "nav-his", "nav-set"].forEach((id) => {
           const el = document.getElementById(id);
           if (!el) return;
 
@@ -106,6 +113,8 @@
       function logout() {
         if (confirm("로그아웃 하시겠습니까?")) {
           sessionStorage.removeItem("currentUser");
+          sessionStorage.removeItem("managementGoalsToken");
+          sessionStorage.removeItem("managementGoalsTokenExpiresAt");
           location.reload();
         }
       }

@@ -1,0 +1,391 @@
+const MANAGEMENT_GOALS_TOKEN_KEY = "managementGoalsToken";
+const MANAGEMENT_GOALS_EXPIRES_AT_KEY = "managementGoalsTokenExpiresAt";
+
+let activeManagementGoalCache = null;
+let managementGoalsYearsCache = [];
+let managementGoalsActiveYear = null;
+let managementGoalsMainRequestSequence = 0;
+
+class ManagementGoalsApiError extends Error {
+  constructor(status, message, payload = null) {
+    super(message);
+    this.name = "ManagementGoalsApiError";
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
+function getManagementGoalsToken() {
+  const token = sessionStorage.getItem(MANAGEMENT_GOALS_TOKEN_KEY) || "";
+  const expiresAt = sessionStorage.getItem(MANAGEMENT_GOALS_EXPIRES_AT_KEY) || "";
+  if (!token || !expiresAt) return "";
+
+  const expiresTime = Date.parse(expiresAt);
+  if (!Number.isFinite(expiresTime) || expiresTime <= Date.now()) return "";
+  return token;
+}
+
+async function managementGoalsApiRequest(path, options = {}) {
+  const token = getManagementGoalsToken();
+  if (!token) {
+    throw new ManagementGoalsApiError(401, "AUTH_REQUIRED");
+  }
+
+  const headers = new Headers(options.headers || {});
+  headers.set("Authorization", `Bearer ${token}`);
+  if (options.body !== undefined) headers.set("Content-Type", "application/json");
+
+  let response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method: options.method || "GET",
+      headers,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    });
+  } catch (error) {
+    throw new ManagementGoalsApiError(0, "NETWORK_ERROR", { cause: error });
+  }
+
+  const responseText = await response.text();
+  let payload = null;
+  if (responseText) {
+    try {
+      payload = JSON.parse(responseText);
+    } catch {
+      payload = { message: responseText };
+    }
+  }
+
+  if (!response.ok) {
+    throw new ManagementGoalsApiError(
+      response.status,
+      payload?.message || `HTTP_${response.status}`,
+      payload,
+    );
+  }
+
+  return payload || {};
+}
+
+function getManagementGoalsErrorMessage(error) {
+  if (error instanceof ManagementGoalsApiError) {
+    if (error.status === 401) return "로그인 세션이 없거나 만료되었습니다. 다시 로그인해 주세요.";
+    if (error.status === 403) return "경영목표를 변경할 권한이 없습니다.";
+    if (error.status === 404) return "해당 연도의 경영목표가 저장되어 있지 않습니다.";
+    if (error.status === 409) return "다른 사용자가 먼저 변경했습니다. 최신 데이터를 다시 불러온 후 작업해 주세요.";
+    if (error.status === 0) return "서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.";
+  }
+  return "경영목표를 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+}
+
+function setManagementGoalsStatus(message = "", type = "") {
+  const status = document.getElementById("managementGoalsStatus");
+  if (!status) return;
+  status.textContent = message;
+  status.classList.toggle("is-error", type === "error");
+  status.classList.toggle("is-success", type === "success");
+}
+
+function createManagementGoalsElement(tagName, className = "", text = null) {
+  const element = document.createElement(tagName);
+  if (className) element.className = className;
+  if (text !== null && text !== undefined) element.textContent = String(text);
+  return element;
+}
+
+function appendManagementGoalsMeta(container, label, value) {
+  if (typeof value !== "string" || !value) return;
+  const row = createManagementGoalsElement("div", "management-goals-meta-row");
+  row.appendChild(createManagementGoalsElement("span", "management-goals-meta-label", label));
+  row.appendChild(createManagementGoalsElement("span", "management-goals-meta-value", value));
+  container.appendChild(row);
+}
+
+function getSortedManagementGoalsItems(items) {
+  return Array.isArray(items)
+    ? [...items].sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
+    : [];
+}
+
+function normalizeManagementGoalForClient(goal) {
+  const strategies = getSortedManagementGoalsItems(goal?.strategies).map((strategy) => ({
+    ...strategy,
+    targetAreaId: typeof strategy.targetAreaId === "string" ? strategy.targetAreaId : "",
+  }));
+  let targetAreas;
+
+  if (Array.isArray(goal?.targetAreas)) {
+    targetAreas = getSortedManagementGoalsItems(goal.targetAreas).map((area) => ({ ...area }));
+  } else {
+    targetAreas = [];
+    if (goal?.groupSalesTarget) {
+      targetAreas.push({
+        id: "legacy-group-sales",
+        name: "단체매출",
+        value: goal.groupSalesTarget.value,
+        unit: goal.groupSalesTarget.unit,
+        sortOrder: targetAreas.length + 1,
+      });
+    }
+    if (goal?.partnershipSalesTarget) {
+      targetAreas.push({
+        id: "legacy-partnership-sales",
+        name: "제휴매출",
+        value: goal.partnershipSalesTarget.value,
+        unit: goal.partnershipSalesTarget.unit,
+        sortOrder: targetAreas.length + 1,
+      });
+    }
+  }
+
+  return { ...goal, targetAreas, strategies };
+}
+
+function getManagementGoalsAreaGroups(goal) {
+  const targetAreas = getSortedManagementGoalsItems(goal.targetAreas);
+  const areaIds = new Set(targetAreas.map((area) => area.id));
+  const groups = targetAreas.map((area) => ({
+    area,
+    strategies: goal.strategies.filter((strategy) => strategy.targetAreaId === area.id),
+  }));
+  const unassignedStrategies = goal.strategies.filter(
+    (strategy) => !strategy.targetAreaId || !areaIds.has(strategy.targetAreaId),
+  );
+  if (unassignedStrategies.length) {
+    groups.push({
+      area: {
+        id: "",
+        name: "소속 미지정",
+        value: null,
+        unit: "",
+        sortOrder: Number.MAX_SAFE_INTEGER,
+        isUnassigned: true,
+      },
+      strategies: unassignedStrategies,
+    });
+  }
+  return groups;
+}
+
+function appendManagementGoalsTargetValue(container, area) {
+  if (area.isUnassigned) return;
+  const value = createManagementGoalsElement("div", "management-goals-target-value");
+  value.appendChild(document.createTextNode(String(area.value ?? "-")));
+  if (area.unit) {
+    value.appendChild(createManagementGoalsElement("span", "management-goals-target-unit", area.unit));
+  }
+  container.appendChild(value);
+}
+
+function createManagementGoalsAreaSummaryCard(group) {
+  const card = createManagementGoalsElement("article", "management-goals-target-card");
+  if (group.area.isUnassigned) card.className += " is-unassigned";
+  const header = createManagementGoalsElement("header", "management-goals-target-card-header");
+  header.appendChild(createManagementGoalsElement("h2", "management-goals-target-label", group.area.name));
+  appendManagementGoalsTargetValue(header, group.area);
+  card.appendChild(header);
+
+  const strategyList = createManagementGoalsElement("div", "management-goals-target-strategies");
+  if (!group.strategies.length) {
+    strategyList.appendChild(createManagementGoalsElement("p", "management-goals-target-empty", "등록된 전략이 없습니다."));
+  }
+  group.strategies.forEach((strategy, strategyIndex) => {
+    const strategyBlock = createManagementGoalsElement("section", "management-goals-target-strategy");
+    strategyBlock.appendChild(createManagementGoalsElement("h3", "", `전략 ${strategyIndex + 1}. ${strategy.title}`));
+    const taskList = createManagementGoalsElement("ol", "management-goals-summary-list");
+    getSortedManagementGoalsItems(strategy.tasks).forEach((task) => {
+      taskList.appendChild(createManagementGoalsElement("li", "", task.title));
+    });
+    strategyBlock.appendChild(taskList);
+    strategyList.appendChild(strategyBlock);
+  });
+  card.appendChild(strategyList);
+  return card;
+}
+
+function createManagementGoalsStrategyDetail(strategy, strategyIndex) {
+  const strategyElement = createManagementGoalsElement("article", "management-goals-strategy");
+  const strategyHeader = createManagementGoalsElement("header", "management-goals-strategy-header");
+  strategyHeader.appendChild(createManagementGoalsElement("h3", "", `전략 ${strategyIndex + 1}. ${strategy.title}`));
+  strategyElement.appendChild(strategyHeader);
+
+  getSortedManagementGoalsItems(strategy.tasks).forEach((task, taskIndex) => {
+    const taskElement = createManagementGoalsElement("section", "management-goals-task");
+    const taskHeading = createManagementGoalsElement("div", "management-goals-task-heading");
+    taskHeading.appendChild(createManagementGoalsElement("h4", "", `${taskIndex + 1}. ${task.title}`));
+    const taskMeta = createManagementGoalsElement("div", "management-goals-task-meta");
+    appendManagementGoalsMeta(taskMeta, "KPI", task.kpi);
+    appendManagementGoalsMeta(taskMeta, "완료 예정", task.dueDateLabel);
+    taskHeading.appendChild(taskMeta);
+    taskElement.appendChild(taskHeading);
+
+    const detailsElement = createManagementGoalsElement("div", "management-goals-details");
+    const details = getSortedManagementGoalsItems(task.details);
+    if (!details.length) {
+      detailsElement.appendChild(createManagementGoalsElement("div", "management-goals-empty-detail", "등록된 세부 실행계획이 없습니다."));
+    }
+    details.forEach((detail, detailIndex) => {
+      const detailElement = createManagementGoalsElement("article", "management-goals-detail");
+      const detailTitle = detail.title || `세부 실행계획 ${detailIndex + 1}`;
+      detailElement.appendChild(createManagementGoalsElement("h5", "management-goals-detail-title", detailTitle));
+      detailElement.appendChild(createManagementGoalsElement("p", "management-goals-detail-content", detail.content));
+      const detailMeta = createManagementGoalsElement("div", "management-goals-detail-meta");
+      appendManagementGoalsMeta(detailMeta, "KPI", detail.kpi);
+      appendManagementGoalsMeta(detailMeta, "완료 예정", detail.dueDateLabel);
+      detailElement.appendChild(detailMeta);
+      detailsElement.appendChild(detailElement);
+    });
+    taskElement.appendChild(detailsElement);
+    strategyElement.appendChild(taskElement);
+  });
+  return strategyElement;
+}
+
+function renderManagementGoals(goal, availableYears = managementGoalsYearsCache) {
+  const content = document.getElementById("managementGoalsContent");
+  if (!content) return;
+  content.replaceChildren();
+  content.hidden = false;
+
+  const normalizedGoal = normalizeManagementGoalForClient(goal);
+  const areaGroups = getManagementGoalsAreaGroups(normalizedGoal);
+  const hero = createManagementGoalsElement("section", "management-goals-hero");
+  const accentLine = createManagementGoalsElement("div", "management-goals-accent-line");
+  accentLine.setAttribute("aria-hidden", "true");
+  accentLine.append(document.createElement("span"), document.createElement("span"), document.createElement("span"));
+  hero.appendChild(accentLine);
+
+  const heroBody = createManagementGoalsElement("div", "management-goals-hero-body");
+  const titleRow = createManagementGoalsElement("div", "management-goals-title-row");
+  const title = createManagementGoalsElement("h1", "management-goals-title", `${normalizedGoal.year}년 경영목표`);
+  title.id = "managementGoalsTitle";
+  titleRow.appendChild(title);
+
+  const yearPicker = createManagementGoalsElement("label", "management-goals-year-picker");
+  yearPicker.appendChild(createManagementGoalsElement("span", "", "조회 연도"));
+  const yearSelect = document.createElement("select");
+  yearSelect.id = "managementGoalsMainYearSelect";
+  yearSelect.setAttribute("aria-label", "경영목표 조회 연도");
+  const years = [...new Set(
+    [...availableYears, normalizedGoal.year]
+      .map(Number)
+      .filter((year) => Number.isInteger(year)),
+  )].sort((a, b) => b - a);
+  years.forEach((year) => {
+    const option = document.createElement("option");
+    option.value = String(year);
+    option.textContent = `${year}년${year === managementGoalsActiveYear ? " (기본)" : ""}`;
+    yearSelect.appendChild(option);
+  });
+  yearSelect.value = String(normalizedGoal.year);
+  yearSelect.addEventListener("change", () => {
+    const year = Number(yearSelect.value);
+    if (Number.isInteger(year)) {
+      loadManagementGoalYearForMain(year);
+    }
+  });
+  yearPicker.appendChild(yearSelect);
+  titleRow.appendChild(yearPicker);
+  heroBody.appendChild(titleRow);
+
+  heroBody.appendChild(createManagementGoalsElement("div", "management-goals-core-message", normalizedGoal.coreMessage || ""));
+  const targets = createManagementGoalsElement("div", "management-goals-targets");
+  areaGroups.forEach((group) => targets.appendChild(createManagementGoalsAreaSummaryCard(group)));
+  heroBody.appendChild(targets);
+  hero.appendChild(heroBody);
+  content.appendChild(hero);
+
+  const fullList = createManagementGoalsElement("section", "management-goals-full-list");
+  areaGroups.forEach((group) => {
+    const areaSection = createManagementGoalsElement("section", "management-goals-area-detail");
+    if (group.area.isUnassigned) areaSection.className += " is-unassigned";
+    const areaHeader = createManagementGoalsElement("header", "management-goals-area-detail-header");
+    areaHeader.appendChild(createManagementGoalsElement("h2", "", group.area.name));
+    appendManagementGoalsTargetValue(areaHeader, group.area);
+    areaSection.appendChild(areaHeader);
+    group.strategies.forEach((strategy, strategyIndex) => {
+      areaSection.appendChild(createManagementGoalsStrategyDetail(strategy, strategyIndex));
+    });
+    fullList.appendChild(areaSection);
+  });
+  content.appendChild(fullList);
+}
+
+async function loadActiveManagementGoal() {
+  const requestSequence = ++managementGoalsMainRequestSequence;
+  const content = document.getElementById("managementGoalsContent");
+  if (content) {
+    content.hidden = true;
+    content.replaceChildren();
+  }
+  activeManagementGoalCache = null;
+  managementGoalsYearsCache = [];
+  managementGoalsActiveYear = null;
+  setManagementGoalsStatus("경영목표를 불러오는 중입니다.");
+
+  try {
+    const result = await managementGoalsApiRequest("/management-goals/active");
+    if (requestSequence !== managementGoalsMainRequestSequence) return null;
+    if (!result.goal) {
+      setManagementGoalsStatus("현재 메인 화면에 표시할 경영목표가 지정되어 있지 않습니다.");
+      return null;
+    }
+    activeManagementGoalCache = result.goal;
+    managementGoalsActiveYear = Number.isInteger(result.activeYear) ? result.activeYear : result.goal.year;
+    managementGoalsYearsCache = [result.goal.year];
+    setManagementGoalsStatus("");
+    renderManagementGoals(result.goal, managementGoalsYearsCache);
+
+    try {
+      const yearsResult = await managementGoalsApiRequest("/management-goals/years");
+      if (requestSequence !== managementGoalsMainRequestSequence) return null;
+      managementGoalsYearsCache = Array.isArray(yearsResult.years)
+        ? [...new Set(yearsResult.years.map(Number).filter(Number.isInteger))].sort((a, b) => b - a)
+        : [result.goal.year];
+      renderManagementGoals(result.goal, managementGoalsYearsCache);
+    } catch (error) {
+      if (requestSequence !== managementGoalsMainRequestSequence) return null;
+      setManagementGoalsStatus(`연도 목록을 불러오지 못했습니다. ${getManagementGoalsErrorMessage(error)}`, "error");
+    }
+    return result.goal;
+  } catch (error) {
+    if (requestSequence !== managementGoalsMainRequestSequence) return null;
+    setManagementGoalsStatus(getManagementGoalsErrorMessage(error), "error");
+    return null;
+  }
+}
+
+async function loadManagementGoalYearForMain(year) {
+  if (!Number.isInteger(year)) return null;
+  const requestSequence = ++managementGoalsMainRequestSequence;
+  const select = document.getElementById("managementGoalsMainYearSelect");
+  if (select) {
+    select.setAttribute("aria-busy", "true");
+    select.classList.add("is-loading");
+  }
+  setManagementGoalsStatus(`${year}년 경영목표를 불러오는 중입니다.`);
+
+  try {
+    const result = await managementGoalsApiRequest(`/management-goals/${year}`);
+    if (requestSequence !== managementGoalsMainRequestSequence) return null;
+    if (!result.goal) {
+      throw new ManagementGoalsApiError(404, "NOT_FOUND");
+    }
+    activeManagementGoalCache = result.goal;
+    setManagementGoalsStatus("");
+    renderManagementGoals(result.goal, managementGoalsYearsCache);
+    return result.goal;
+  } catch (error) {
+    if (requestSequence !== managementGoalsMainRequestSequence) return null;
+    setManagementGoalsStatus(getManagementGoalsErrorMessage(error), "error");
+    const currentSelect = document.getElementById("managementGoalsMainYearSelect");
+    if (currentSelect) {
+      if (activeManagementGoalCache?.year) {
+        currentSelect.value = String(activeManagementGoalCache.year);
+      }
+      currentSelect.setAttribute("aria-busy", "false");
+      currentSelect.classList.remove("is-loading");
+    }
+    return null;
+  }
+}

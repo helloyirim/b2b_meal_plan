@@ -10,6 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="css/management-goals.css" />
     <style>
       :root {
         --bg-body: #F5F5F7;
@@ -1496,10 +1497,18 @@
 
     <aside class="sidebar">
       <h2>B2B 업무관리시스템</h2>
+
+      <div
+        class="nav-item active"
+        id="nav-management-goals"
+        onclick="showPage('page-management-goals')"
+      >
+        🎯 경영목표
+      </div>
     
       <!-- 단체캘린더 -->
       <div
-        class="nav-item active"
+        class="nav-item"
         id="nav-calendar"
         onclick="showPage('page-calendar')"
       >
@@ -1615,7 +1624,14 @@
 
     <main class="main-content">
 
-      <div id="page-calendar" class="page active">
+      <div id="page-management-goals" class="page active">
+        <section class="management-goals-page" aria-labelledby="managementGoalsTitle">
+          <div id="managementGoalsStatus" class="management-goals-status" role="status"></div>
+          <div id="managementGoalsContent" class="management-goals-content" hidden></div>
+        </section>
+      </div>
+
+      <div id="page-calendar" class="page">
         <div class="calendar-dashboard">
           <div class="calendar-topbar">
             <h1 class="calendar-page-title">월간 단체 납품 보고</h1>
@@ -2543,6 +2559,15 @@
           >
             매출보고 관리
           </button>
+
+          <button
+            type="button"
+            id="adminTabManagementGoalsButton"
+            class="admin-tab-button"
+            onclick="showAdminTab('management-goals')"
+          >
+            경영목표 관리
+          </button>
         </div>
       
         <!-- 계정 관리 탭 -->
@@ -2901,6 +2926,66 @@
           </table>
           </div>
         </div>
+
+        <div
+          id="adminTabManagementGoals"
+          class="admin-tab-content"
+        >
+          <div class="admin-section-header">
+            <div class="admin-section-title">경영목표 관리</div>
+            <div class="admin-section-description">
+              연도별 경영목표와 전략·실행과제·세부 실행계획을 관리합니다.
+            </div>
+          </div>
+
+          <div class="management-goals-admin-toolbar card">
+            <div class="field management-goals-year-field">
+              <label for="managementGoalsYearSelect">저장된 연도</label>
+              <select id="managementGoalsYearSelect"></select>
+            </div>
+            <button type="button" class="btn" id="loadManagementGoalsYearBtn">연도 불러오기</button>
+            <div class="field management-goals-new-year-field">
+              <label for="newManagementGoalsYear">신규 연도</label>
+              <input id="newManagementGoalsYear" type="number" min="2000" max="2100" placeholder="예: 2027" />
+            </div>
+            <button type="button" class="btn" id="newManagementGoalsYearBtn">신규 작성</button>
+            <button type="button" class="btn" id="activateManagementGoalsYearBtn">메인 표시 연도로 지정</button>
+          </div>
+
+          <div id="adminManagementGoalsStatus" class="management-goals-admin-status" role="status"></div>
+
+          <div id="adminManagementGoalsEditor" class="management-goals-admin-editor" hidden>
+            <div class="card management-goals-basic-editor">
+              <div class="management-goals-form-grid">
+                <div class="field">
+                  <label for="managementGoalsEditYear">적용 연도</label>
+                  <input id="managementGoalsEditYear" type="number" readonly />
+                </div>
+              </div>
+              <div class="field management-goals-message-field">
+                <label for="managementGoalsCoreMessage">핵심 목표 문구</label>
+                <textarea id="managementGoalsCoreMessage" rows="4" maxlength="5000"></textarea>
+              </div>
+            </div>
+
+            <div class="management-goals-editor-heading">
+              <h3>목표 영역</h3>
+              <button type="button" class="btn" id="addManagementGoalsTargetAreaBtn">목표 영역 추가</button>
+            </div>
+            <div id="managementGoalsTargetAreasEditor"></div>
+
+            <div class="management-goals-editor-heading">
+              <h3>전략 및 실행과제</h3>
+              <button type="button" class="btn" id="addManagementGoalsStrategyBtn">전략 추가</button>
+            </div>
+            <div id="managementGoalsStrategiesEditor"></div>
+
+            <div class="management-goals-admin-actions">
+              <span id="managementGoalsDirtyStatus" class="management-goals-dirty-status"></span>
+              <button type="button" class="btn btn-save" id="saveManagementGoalsBtn">연도 전체 저장</button>
+            </div>
+          </div>
+        </div>
       </div>
 
     </main>
@@ -2910,6 +2995,8 @@
 <script src="js/common.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/navigation.js"></script>
+<script src="js/management-goals.js"></script>
+<script src="js/admin-management-goals.js"></script>
 <script src="js/meal-library.js"></script>
 <script src="js/meal-history.js"></script>
 <script src="js/meal-planner.js"></script>
