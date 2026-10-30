@@ -1,6 +1,33 @@
 let currentSalesChannel = "all";
 let currentSalesProducts = [];
 
+const SALES_CHANNEL_FIXED_COLORS = {
+  naver: "#2DB400",
+  coupang: "#E94B22",
+};
+
+function getSalesChannelColor(channelId) {
+  const normalizedId = String(channelId || "").trim();
+
+  if (SALES_CHANNEL_FIXED_COLORS[normalizedId]) {
+    return SALES_CHANNEL_FIXED_COLORS[normalizedId];
+  }
+
+  let hash = 2166136261;
+
+  for (let index = 0; index < normalizedId.length; index++) {
+    hash ^= normalizedId.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  const unsignedHash = hash >>> 0;
+  const hue = unsignedHash % 360;
+  const saturation = 62 + ((unsignedHash >>> 8) % 10);
+  const lightness = 42 + ((unsignedHash >>> 16) % 8);
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
 /**
  * 채널 저장용 빈 데이터 구조 생성
  *
@@ -1032,34 +1059,19 @@ function renderSalesDailyChart(rows) {
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  const NAVER_COLOR = "#2DB400";
-  const COUPANG_COLOR = "#E94B22";
   const SINGLE_COLOR = "#1d5fd1";
-  const CHANNEL_COLORS = [
-    "#1d5fd1",
-    "#8b5cf6",
-    "#f59e0b",
-    "#06b6d4",
-    "#ec4899",
-    "#64748b",
-  ];
   const activeSalesChannels =
     currentSalesChannel === "all"
       ? getActiveSalesChannels()
       : [];
-  const getChannelChartColor = (channel, index) => {
-    if (channel.id === "naver") return NAVER_COLOR;
-    if (channel.id === "coupang") return COUPANG_COLOR;
-    return CHANNEL_COLORS[index % CHANNEL_COLORS.length];
-  };
 
   const legend = document.getElementById("salesChartLegend");
   if (legend) {
     if (currentSalesChannel === "all") {
       legend.innerHTML = activeSalesChannels
         .map(
-          (channel, index) => `
-            <span style="color:${getChannelChartColor(channel, index)}; font-weight:800;">
+          (channel) => `
+            <span style="color:${getSalesChannelColor(channel.id)}; font-weight:800;">
               ■ ${escapeHtml(getSalesChannelShortName(channel.id))}
             </span>
           `
@@ -1103,7 +1115,7 @@ function renderSalesDailyChart(rows) {
     if (currentSalesChannel === "all") {
       let stackedHeight = 0;
 
-      activeSalesChannels.forEach((channel, channelIndex) => {
+      activeSalesChannels.forEach((channel) => {
         const channelSales = Number(
           row.channelSales?.[channel.id] || 0
         );
@@ -1111,7 +1123,7 @@ function renderSalesDailyChart(rows) {
           ? (channelSales / maxSales) * chartHeight
           : 0;
 
-        ctx.fillStyle = getChannelChartColor(channel, channelIndex);
+        ctx.fillStyle = getSalesChannelColor(channel.id);
         ctx.fillRect(
           x,
           baseY - stackedHeight - channelHeight,
@@ -1443,6 +1455,7 @@ function renderSalesChannelSummary() {
           ? channel.id
           : "";
       const shortName = getSalesChannelShortName(channel.id);
+      const channelColor = getSalesChannelColor(channel.id);
       const badge =
         channel.id === "naver"
           ? "N"
@@ -1454,11 +1467,11 @@ function renderSalesChannelSummary() {
 
       return `
         <div class="channel-summary-row">
-          <div class="channel-badge ${channelClass}">${escapeHtml(badge)}</div>
+          <div class="channel-badge ${channelClass}" style="background:${channelColor}">${escapeHtml(badge)}</div>
           <div>${escapeHtml(shortName)}</div>
           <div class="channel-summary-amount">
             ${sales.toLocaleString()}원
-            <span class="channel-summary-ratio ${channelClass}">${ratio}%</span>
+            <span class="channel-summary-ratio ${channelClass}" style="color:${channelColor}">${ratio}%</span>
           </div>
         </div>
       `;
