@@ -1002,7 +1002,7 @@
       }
       async function loadMenusFromServer() {
         try {
-          const data = await apiGet("/menus");
+          const data = await apiGet("/menus?includeImages=false");
 
           const validMenus = Array.isArray(data)
             ? data.filter(
@@ -1120,6 +1120,8 @@
               <div class="lib-card" onclick="addToGrid('${String(m.id)}')">
                 <img
                   src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}"
+                  loading="lazy"
+                  decoding="async"
                   style="width:40px; height:40px; border-radius:4px; object-fit:cover;"
                 >
                 <div>
@@ -1150,7 +1152,7 @@
             (m) => `
                 <tr style="border-bottom:1px solid #eee;">
                     <td style="padding:12px 10px;">
-                        <img src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;">
+                        <img src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}" loading="lazy" decoding="async" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;">
                     </td>
                     <td style="font-weight:600;">${escapeHtml(m.name || "")}</td>
                     <td style="color:var(--text-sub);">${escapeHtml(m.brand || "")}</td>
@@ -1165,6 +1167,9 @@
       }
       async function saveMenu() {
         const id = document.getElementById("edit-id").value;
+        const existingMenu = id
+          ? menus.find((menu) => String(menu.id) === String(id))
+          : null;
 
         const obj = {
           id: id ? id : String(Date.now()),
@@ -1184,10 +1189,14 @@
 
           // 화면용 로컬 메모리 menus도 갱신
           const idx = menus.findIndex((m) => String(m.id) === String(obj.id));
+          const displayObj = {
+            ...obj,
+            img: obj.img || existingMenu?.img || existingMenu?.image || "",
+          };
           if (idx > -1) {
-            menus[idx] = obj;
+            menus[idx] = displayObj;
           } else {
-            menus.push(obj);
+            menus.push(displayObj);
           }
 
           alert("저장되었습니다.");
@@ -1210,10 +1219,11 @@
         document.getElementById("edit-price").value = m.price || "";
         document.getElementById("edit-allergy").value = m.allergy || "";
         document.getElementById("edit-memo").value = m.memo || "";
-        document.getElementById("edit-img-base64").value = m.img || "";
+        document.getElementById("edit-img-base64").value = "";
 
-        if (m.img) {
-          document.getElementById("edit-preview").src = m.img;
+        const imageSource = m.img || m.image || "";
+        if (imageSource) {
+          document.getElementById("edit-preview").src = imageSource;
           document.getElementById("edit-preview").style.display = "block";
           document.getElementById("preview-text").style.display = "none";
         } else {
