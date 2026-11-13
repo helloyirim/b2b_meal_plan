@@ -78,7 +78,7 @@
       // =========================
       // 초기 실행
       // =========================
-      window.addEventListener("load", async () => {
+      document.addEventListener("DOMContentLoaded", async () => {
         const authed = initAuth();
         if (!authed) return;
 
