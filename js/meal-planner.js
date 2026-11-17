@@ -156,11 +156,24 @@
         const menuId = item.menuId || item.id;
         const found = menus.find((m) => String(m.id) === String(menuId));
 
-        return found || item;
+        return found || {
+          ...item,
+          menuId: String(menuId),
+          missingMenu: true,
+        };
       }
       function renderCell(m) {
         m = resolveMenuData(m);
         if (!m) return "";
+        if (m.missingMenu) {
+          return `
+                <div class="meal-content missing-menu" data-missing-menu-id="${escapeHtml(m.menuId)}">
+                    <span class="meal-title" style="color:#c0392b;">삭제된 메뉴</span>
+                    <div class="extra-info" style="display:block; color:#777;">메뉴 ID: ${escapeHtml(m.menuId)}</div>
+                    <div class="extra-info" style="display:block; color:#777;">다른 메뉴로 교체해 주세요.</div>
+                </div>
+            `;
+        }
 
         return `
                 <div class="meal-content">
@@ -178,7 +191,7 @@
       function updateStats() {
         const meals = Object.values(mealPlan)
           .map(resolveMenuData)
-          .filter(Boolean);
+          .filter((menu) => menu && !menu.missingMenu);
 
         const uniqueCount = new Set(meals.map(m => m.name)).size;
 
@@ -205,6 +218,16 @@
       async function savePlan() {
         if (Object.keys(mealPlan).length === 0) {
           return alert("저장할 식단이 없습니다.");
+        }
+
+        const missingMenuCells = Object.entries(mealPlan).filter(([, item]) => {
+          const menuId = item?.menuId || item?.id;
+          return !menus.some((menu) => String(menu.id) === String(menuId));
+        });
+        if (missingMenuCells.length > 0) {
+          return alert(
+            `삭제된 메뉴가 포함된 칸이 ${missingMenuCells.length}개 있습니다. 해당 칸을 다른 메뉴로 교체한 후 저장해 주세요.`,
+          );
         }
 
         const planName = prompt("식단 이름을 입력해주세요:");
@@ -273,7 +296,6 @@
           alert("식단 불러오기에 실패했습니다.");
         }
       }
-
 
 
 
