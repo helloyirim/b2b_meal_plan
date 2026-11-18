@@ -1,4 +1,6 @@
       let menus = [];
+      let menusLoadState = "idle";
+      const pendingMenuDeleteIds = new Set();
 
       const initialMenus = [
         // 본도시락 - 봄 시즌 및 상시 메뉴
@@ -1000,7 +1002,7 @@
       function getDefaultImage(src) {
         return src && src.trim() ? src : "https://via.placeholder.com/150";
       }
-      async function loadMenusFromServer() {
+      async function loadMenusFromServer({ preserveCurrentOnError = false } = {}) {
         try {
           const data = await apiGet("/menus");
 
@@ -1016,22 +1018,23 @@
               )
             : [];
 
-          const mergedMap = new Map();
+          if (!Array.isArray(data)) {
+            throw new Error("메뉴 응답이 배열이 아닙니다.");
+          }
 
-          [...initialMenus, ...validMenus].forEach((menu) => {
-            const key = String(menu.id || `${menu.name}_${menu.brand}`);
-            mergedMap.set(key, menu);
-          });
-
-          menus = Array.from(mergedMap.values());
+          // 운영 서버 메뉴를 유일한 정본으로 사용한다. 정상적인 빈 배열도 그대로 유지한다.
+          menus = validMenus;
+          menusLoadState = "loaded";
         } catch (e) {
           console.error("메뉴 로딩 실패:", e);
-          menus = [...initialMenus];
+          if (!preserveCurrentOnError) menus = [];
+          menusLoadState = preserveCurrentOnError ? "stale" : "failed";
         }
 
         populateLibBrandFilter();
         renderLib();
         renderMgmt();
+        return menusLoadState === "loaded";
       }
       async function saveMenuItemToServer(menuItem) {
         try {
@@ -1040,6 +1043,143 @@
         } catch (e) {
           console.error("서버 저장 실패:", e);
           throw e;
+        }
+      }
+      function getMenuAuthToken() {
+        const token = sessionStorage.getItem("managementGoalsToken") || "";
+        const expiresAt = Date.parse(
+          sessionStorage.getItem("managementGoalsTokenExpiresAt") || "",
+        );
+        return token && Number.isFinite(expiresAt) && expiresAt > Date.now()
+          ? token
+          : "";
+      }
+      async function menuAuthenticatedRequest(path, options = {}) {
+        const token = getMenuAuthToken();
+        if (!token) {
+          const error = new Error("로그인 세션이 만료되었습니다.");
+          error.status = 401;
+          throw error;
+        }
+
+        const headers = new Headers(options.headers || {});
+        headers.set("Authorization", `Bearer ${token}`);
+        const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+        const text = await response.text();
+        let data = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { message: text };
+        }
+        if (!response.ok) {
+          const error = new Error(data.message || `요청 실패: ${response.status}`);
+          error.status = response.status;
+          error.code = data.message || "REQUEST_FAILED";
+          error.data = data;
+          throw error;
+        }
+        return data;
+      }
+      function getMenuUsage(id) {
+        return menuAuthenticatedRequest(
+          `/menus/${encodeURIComponent(String(id))}/usage`,
+        );
+      }
+      function requestMenuDeletion(id, fingerprint, collectionFingerprint, confirmInUse) {
+        const params = new URLSearchParams({
+          expectedFingerprint: fingerprint,
+          expectedCollectionFingerprint: collectionFingerprint,
+        });
+        if (confirmInUse) params.set("confirmInUse", "true");
+        return menuAuthenticatedRequest(
+          `/menus/${encodeURIComponent(String(id))}?${params.toString()}`,
+          { method: "DELETE" },
+        );
+      }
+      function confirmUsedMenuDeletion(menu, usage) {
+        const planCount = Number(usage.planCount || 0);
+        const cellCount = Number(usage.usageCount || 0);
+        return confirm(
+          `'${menu.name}' 메뉴가 기존 저장 식단 ${planCount}건, ${cellCount}개 칸에서 사용 중입니다.\n\n` +
+            "삭제하면 해당 식단에서 메뉴 정보가 표시되지 않으며 다른 메뉴로 교체해야 다시 저장할 수 있습니다.\n\n" +
+            "계속 삭제하시겠습니까?",
+        );
+      }
+      async function deleteMenu(id) {
+        const menuId = String(id);
+        if (pendingMenuDeleteIds.has(menuId)) return;
+
+        const menu = menus.find((item) => String(item.id) === menuId);
+        if (!menu || menusLoadState !== "loaded") return;
+
+        const currentUser = getCurrentUser();
+        if (!currentUser || !["USER", "ADMIN"].includes(currentUser.role)) {
+          alert("메뉴 삭제 권한이 없습니다.");
+          return;
+        }
+
+        pendingMenuDeleteIds.add(menuId);
+        renderMgmt();
+        try {
+          const usage = await getMenuUsage(menuId);
+          let confirmInUse = Boolean(usage.inUse);
+          const accepted = confirmInUse
+            ? confirmUsedMenuDeletion(menu, usage)
+            : confirm(
+                `'${menu.name}' 메뉴를 삭제하시겠습니까?\n삭제된 메뉴와 이미지는 복구할 수 없습니다.`,
+              );
+          if (!accepted) return;
+
+          try {
+            await requestMenuDeletion(
+              menuId,
+              usage.fingerprint,
+              usage.collectionFingerprint,
+              confirmInUse,
+            );
+          } catch (error) {
+            // 사용 여부 확인 이후 새 식단에서 사용된 경우 서버의 최신 결과로 다시 경고한다.
+            if (error.status !== 409 || error.code !== "MENU_IN_USE") throw error;
+            if (!confirmUsedMenuDeletion(menu, error.data)) return;
+            confirmInUse = true;
+            await requestMenuDeletion(
+              menuId,
+              error.data.fingerprint || usage.fingerprint,
+              error.data.collectionFingerprint || usage.collectionFingerprint,
+              confirmInUse,
+            );
+          }
+
+          // 서버 성공 후에만 로컬 상태를 변경한다.
+          menus = menus.filter((item) => String(item.id) !== menuId);
+          if (String(document.getElementById("edit-id")?.value || "") === menuId) {
+            resetMenuForm();
+          }
+          populateLibBrandFilter();
+          renderMgmt();
+          renderLib();
+
+          const refreshed = await loadMenusFromServer({ preserveCurrentOnError: true });
+          if (!refreshed) {
+            alert(
+              "메뉴는 삭제되었지만 최신 목록을 다시 불러오지 못했습니다. 새로고침 후 확인해 주세요.",
+            );
+          }
+        } catch (error) {
+          console.error("메뉴 삭제 실패:", error);
+          if (error.status === 409 && ["MENU_CHANGED", "MENUS_CHANGED"].includes(error.code)) {
+            alert("메뉴 목록이 다른 사용자에 의해 변경되었습니다. 목록을 새로 불러온 후 다시 시도해 주세요.");
+          } else if (error.status === 401) {
+            alert("로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
+          } else if (error.status === 403) {
+            alert("메뉴 삭제 권한이 없습니다.");
+          } else {
+            alert("메뉴 삭제에 실패했습니다. 기존 데이터는 유지됩니다.");
+          }
+        } finally {
+          pendingMenuDeleteIds.delete(menuId);
+          renderMgmt();
         }
       }
       function populateLibBrandFilter() {
@@ -1085,6 +1225,15 @@
       function renderLib() {
         const list = document.getElementById("lib-list");
         if (!list) return;
+
+        if (menusLoadState === "failed") {
+          list.innerHTML = `
+            <div style="padding:20px; text-align:center; color:#c0392b; font-size:13px;">
+              메뉴를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.
+            </div>
+          `;
+          return;
+        }
 
         const keyword =
           document.getElementById("lib-search-input")?.value.trim().toLowerCase() || "";
@@ -1140,14 +1289,26 @@
         const searchEl = document.getElementById("mgmt-search");
         if (!list) return;
 
+        if (menusLoadState === "failed") {
+          list.innerHTML = `
+            <tr><td colspan="5" style="padding:20px; text-align:center; color:#c0392b;">
+              메뉴를 불러오지 못해 등록·수정·삭제를 사용할 수 없습니다.
+            </td></tr>
+          `;
+          return;
+        }
+
         const val = (searchEl?.value || "").toLowerCase();
         const filtered = menus.filter((m) =>
           (m.name || "").toLowerCase().includes(val),
         );
 
         list.innerHTML = filtered
-          .map(
-            (m) => `
+          .map((m) => {
+            const menuId = String(m.id);
+            const deleting = pendingMenuDeleteIds.has(menuId);
+            const disabled = deleting || menusLoadState !== "loaded";
+            return `
                 <tr style="border-bottom:1px solid #eee;">
                     <td style="padding:12px 10px;">
                         <img src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;">
@@ -1156,14 +1317,18 @@
                     <td style="color:var(--text-sub);">${escapeHtml(m.brand || "")}</td>
                     <td>${(m.price || 0).toLocaleString()}원</td>
                     <td style="text-align:center;">
-                        <button class="btn btn-grey" style="padding:6px 12px; font-size:12px;" onclick="editMenu('${String(m.id)}')">수정</button>
+                        <button class="btn btn-grey" style="padding:6px 12px; font-size:12px;" onclick="editMenu('${menuId}')" ${disabled ? "disabled" : ""}>수정</button>
+                        <button class="btn btn-red" style="padding:6px 12px; font-size:12px; margin-left:4px;" onclick="deleteMenu('${menuId}')" ${disabled ? "disabled" : ""}>${deleting ? "삭제 중..." : "삭제"}</button>
                     </td>
                 </tr>
-            `,
-          )
+            `;
+          })
           .join("");
       }
       async function saveMenu() {
+        if (menusLoadState !== "loaded") {
+          return alert("최신 메뉴 목록을 확인할 수 없어 저장할 수 없습니다.");
+        }
         const id = document.getElementById("edit-id").value;
 
         const obj = {
