@@ -216,11 +216,11 @@ function registerAdminEditor(document) {
   ids.forEach((id) => document.register(id, "", id.includes("Button") || id.endsWith("Btn") ? "button" : "input"));
 }
 
-test("경영목표 API 요청에만 저장된 Bearer 토큰을 첨부한다", async () => {
-  let capturedRequest = null;
+test("경영목표와 사용자 관리 API만 저장된 Bearer 토큰을 첨부한다", async () => {
+  const capturedRequests = [];
   const { context, sessionStorage } = createContext({
     fetchImpl: async (url, options) => {
-      capturedRequest = { url, options };
+      capturedRequests.push({ url, options });
       return new Response(JSON.stringify({ success: true, activeYear: null, goal: null }), { status: 200 });
     },
   });
@@ -228,11 +228,17 @@ test("경영목표 API 요청에만 저장된 Bearer 토큰을 첨부한다", as
   sessionStorage.setItem("managementGoalsTokenExpiresAt", new Date(Date.now() + 60000).toISOString());
   await loadScripts(context, "js/management-goals.js");
   await vm.runInContext("managementGoalsApiRequest('/management-goals/active')", context);
-  assert.equal(capturedRequest.url, "https://mock.invalid/management-goals/active");
-  assert.equal(capturedRequest.options.headers.get("Authorization"), "Bearer mock-token");
+  assert.equal(capturedRequests[0].url, "https://mock.invalid/management-goals/active");
+  assert.equal(capturedRequests[0].options.headers.get("Authorization"), "Bearer mock-token");
 
-  const apiSource = await readProjectFile("js/api.js");
-  assert.doesNotMatch(apiSource, /Authorization/);
+  await loadScripts(context, "js/api.js");
+  await vm.runInContext("apiGet('/menus')", context);
+  assert.equal(capturedRequests[1].url, "https://b2b-meal-api-dev.wispy-river-05a7.workers.dev/menus");
+  assert.equal(capturedRequests[1].options, undefined);
+
+  await vm.runInContext("apiAuthGet('/users')", context);
+  assert.equal(capturedRequests[2].url, "https://b2b-meal-api-dev.wispy-river-05a7.workers.dev/users");
+  assert.equal(capturedRequests[2].options.headers.get("Authorization"), "Bearer mock-token");
 });
 
 test("토큰이 없거나 만료되면 네트워크 요청 전 401로 차단한다", async () => {
@@ -378,7 +384,7 @@ test("로그인 성공 시 기존 사용자와 신규 토큰을 저장하고 로
   assert.deepEqual(JSON.parse(sessionStorage.getItem("currentUser")), loginResult.user);
   assert.equal(sessionStorage.getItem("managementGoalsToken"), loginResult.token);
   assert.equal(sessionStorage.getItem("managementGoalsTokenExpiresAt"), loginResult.expiresAt);
-  vm.runInContext("logout()", context);
+  await vm.runInContext("logout()", context);
   assert.equal(sessionStorage.getItem("currentUser"), null);
   assert.equal(sessionStorage.getItem("managementGoalsToken"), null);
   assert.equal(sessionStorage.getItem("managementGoalsTokenExpiresAt"), null);
@@ -419,8 +425,10 @@ test("ADMIN·USER는 경영목표, VIEWER는 기존 캘린더 후 조회전용 �
   for (const role of ["ADMIN", "USER", "VIEWER"]) {
     const { context, document } = createContext();
     const calls = [];
-    let loadHandler = null;
-    context.window.addEventListener = (type, handler) => { if (type === "load") loadHandler = handler; };
+    let domContentLoadedHandler = null;
+    document.addEventListener = (type, handler) => {
+      if (type === "DOMContentLoaded") domContentLoadedHandler = handler;
+    };
     context.initAuth = () => true;
     context.getCurrentUser = () => ({ id: "test", role });
     context.showPage = (id) => calls.push(id);
@@ -437,7 +445,7 @@ test("ADMIN·USER는 경영목표, VIEWER는 기존 캘린더 후 조회전용 �
     context.loadSalesReportFromServer = async () => {};
     document.register("resetSalesRawBtn", "", "button");
     await loadScripts(context, "js/app.js");
-    await loadHandler();
+    await domContentLoadedHandler();
     assert.equal(calls[0], role === "VIEWER" ? "page-calendar" : "page-management-goals");
     assert.ok(calls.includes("viewer-mode"));
   }
