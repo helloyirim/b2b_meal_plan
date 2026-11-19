@@ -425,9 +425,12 @@ test("ADMIN·USER는 경영목표, VIEWER는 기존 캘린더 후 조회전용 �
   for (const role of ["ADMIN", "USER", "VIEWER"]) {
     const { context, document } = createContext();
     const calls = [];
-    let domContentLoadedHandler = null;
+    let initializationHandler = null;
     document.addEventListener = (type, handler) => {
-      if (type === "DOMContentLoaded") domContentLoadedHandler = handler;
+      if (type === "DOMContentLoaded") initializationHandler = handler;
+    };
+    context.addEventListener = (type, handler) => {
+      if (type === "load") initializationHandler = handler;
     };
     context.initAuth = () => true;
     context.getCurrentUser = () => ({ id: "test", role });
@@ -445,7 +448,8 @@ test("ADMIN·USER는 경영목표, VIEWER는 기존 캘린더 후 조회전용 �
     context.loadSalesReportFromServer = async () => {};
     document.register("resetSalesRawBtn", "", "button");
     await loadScripts(context, "js/app.js");
-    await domContentLoadedHandler();
+    assert.equal(typeof initializationHandler, "function");
+    await initializationHandler();
     assert.equal(calls[0], role === "VIEWER" ? "page-calendar" : "page-management-goals");
     assert.ok(calls.includes("viewer-mode"));
   }
