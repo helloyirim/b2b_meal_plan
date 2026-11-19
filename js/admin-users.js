@@ -5,7 +5,7 @@
 
       async function loadAdminUsers() {
         try {
-          const data = await apiGet("/users");
+          const data = await apiAuthGet("/users");
           adminUsersCache = Array.isArray(data) ? data : [];
           return adminUsersCache;
         } catch (e) {
@@ -81,7 +81,7 @@
         if (pw) payload.pw = pw;
 
         try {
-          await apiPost("/users/item", payload);
+          await apiAuthPost("/users/item", payload);
           alert("계정이 저장되었습니다.");
 
           document.getElementById("adminUserId").value = "";
@@ -100,15 +100,10 @@
       }
 
       async function deleteAdminUser(id) {
-        if (id === "yirim.yu") {
-          alert("기본 관리자 계정은 삭제할 수 없습니다.");
-          return;
-        }
-
         if (!confirm(`${id} 계정을 삭제하시겠습니까?`)) return;
 
         try {
-          await apiDelete(`/users/${encodeURIComponent(id)}`);
+          await apiAuthDelete(`/users/${encodeURIComponent(id)}`);
           alert("계정이 삭제되었습니다.");
           await renderAdminUsers();
         } catch (e) {

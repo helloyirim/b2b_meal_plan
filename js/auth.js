@@ -4,7 +4,7 @@
 
       function isAdmin() {
         const user = getCurrentUser();
-        return user && user.id === "yirim.yu" && user.role === "ADMIN";
+        return user && user.role === "ADMIN";
       }
 
       async function checkLogin() {
@@ -110,11 +110,23 @@
           });
       }
 
-      function logout() {
+      async function logout() {
         if (confirm("로그아웃 하시겠습니까?")) {
-          sessionStorage.removeItem("currentUser");
-          sessionStorage.removeItem("managementGoalsToken");
-          sessionStorage.removeItem("managementGoalsTokenExpiresAt");
-          location.reload();
+          const token = sessionStorage.getItem("managementGoalsToken") || "";
+          try {
+            if (token) {
+              await fetch(`${API_URL}/auth/logout`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+              });
+            }
+          } catch (error) {
+            console.warn("서버 로그아웃 요청 실패:", error);
+          } finally {
+            sessionStorage.removeItem("currentUser");
+            sessionStorage.removeItem("managementGoalsToken");
+            sessionStorage.removeItem("managementGoalsTokenExpiresAt");
+            location.reload();
+          }
         }
       }
