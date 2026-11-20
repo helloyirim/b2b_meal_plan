@@ -1002,6 +1002,63 @@
       function getDefaultImage(src) {
         return src && src.trim() ? src : "https://via.placeholder.com/150";
       }
+      const authenticatedMenuImageCache = new Map();
+      let menuImageObserver = null;
+
+      function isAuthenticatedMenuImageUrl(src) {
+        try {
+          const url = new URL(src, location.href);
+          return url.origin === new URL(API_URL).origin && /^\/menus\/[^/]+\/image$/.test(url.pathname);
+        } catch {
+          return false;
+        }
+      }
+
+      function getMenuImageAttributes(src) {
+        const resolved = getDefaultImage(src || "");
+        if (!isAuthenticatedMenuImageUrl(resolved)) {
+          return `src="${escapeHtml(resolved)}"`;
+        }
+        return `src="https://via.placeholder.com/150" data-auth-menu-image="${escapeHtml(resolved)}"`;
+      }
+
+      async function loadAuthenticatedMenuImage(img) {
+        const source = img.dataset.authMenuImage;
+        if (!source || img.dataset.authMenuLoading === "true") return;
+        img.dataset.authMenuLoading = "true";
+        try {
+          let objectUrl = authenticatedMenuImageCache.get(source);
+          if (!objectUrl) {
+            const response = await fetch(source, { headers: createAuthenticatedApiHeaders() });
+            if (!response.ok) throw new Error(`MENU_IMAGE_${response.status}`);
+            objectUrl = URL.createObjectURL(await response.blob());
+            authenticatedMenuImageCache.set(source, objectUrl);
+          }
+          img.src = objectUrl;
+          delete img.dataset.authMenuImage;
+        } catch (error) {
+          console.warn("메뉴 이미지 로딩 실패:", error);
+        } finally {
+          delete img.dataset.authMenuLoading;
+        }
+      }
+
+      function hydrateAuthenticatedMenuImages(root = document) {
+        const images = root.querySelectorAll?.("img[data-auth-menu-image]") || [];
+        if (!("IntersectionObserver" in window)) {
+          images.forEach(loadAuthenticatedMenuImage);
+          return;
+        }
+        if (!menuImageObserver) {
+          menuImageObserver = new IntersectionObserver((entries) => {
+            entries.filter((entry) => entry.isIntersecting).forEach((entry) => {
+              menuImageObserver.unobserve(entry.target);
+              loadAuthenticatedMenuImage(entry.target);
+            });
+          }, { rootMargin: "200px" });
+        }
+        images.forEach((img) => menuImageObserver.observe(img));
+      }
       async function loadMenusFromServer({ preserveCurrentOnError = false } = {}) {
         try {
           const data = await apiGet("/menus?includeImages=false");
@@ -1037,6 +1094,7 @@
         return menusLoadState === "loaded";
       }
       async function saveMenuItemToServer(menuItem) {
+        if (!requireMenuPermission("menuManagement", "write")) throw new Error("FORBIDDEN");
         try {
           await apiPost("/menus/item", menuItem);
           console.log("클라우드 메뉴 단건 저장 완료");
@@ -1098,6 +1156,7 @@
         );
       }
       async function deleteMenu(id) {
+        if (!requireMenuPermission("menuManagement", "write")) return;
         const menuId = String(id);
         if (pendingMenuDeleteIds.has(menuId)) return;
         const menu = menus.find((item) => String(item.id) === menuId);
@@ -1236,7 +1295,7 @@
             (m) => `
               <div class="lib-card" onclick="addToGrid('${String(m.id)}')">
                 <img
-                  src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}"
+                  ${getMenuImageAttributes(m.img || m.image || "")}
                   loading="lazy"
                   decoding="async"
                   style="width:40px; height:40px; border-radius:4px; object-fit:cover;"
@@ -1253,6 +1312,7 @@
             `,
           )
           .join("");
+        hydrateAuthenticatedMenuImages(list);
       }
       function renderMgmt() {
         const list = document.getElementById("mgmt-list");
@@ -1272,11 +1332,11 @@
           .map((m) => {
             const menuId = String(m.id);
             const deleting = pendingMenuDeleteIds.has(menuId);
-            const disabled = deleting || menusLoadState !== "loaded";
+            const disabled = deleting || menusLoadState !== "loaded" || !canWriteMenu("menuManagement");
             return `
                 <tr style="border-bottom:1px solid #eee;">
                     <td style="padding:12px 10px;">
-                        <img src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}" loading="lazy" decoding="async" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;">
+                        <img ${getMenuImageAttributes(m.img || m.image || "")} loading="lazy" decoding="async" style="width:45px; height:45px; border-radius:4px; object-fit:cover; background:#f0f0f0; border:1px solid #eee;">
                     </td>
                     <td style="font-weight:600;">${escapeHtml(m.name || "")}</td>
                     <td style="color:var(--text-sub);">${escapeHtml(m.brand || "")}</td>
@@ -1289,8 +1349,10 @@
             `;
           })
           .join("");
+        hydrateAuthenticatedMenuImages(list);
       }
       async function saveMenu() {
+        if (!requireMenuPermission("menuManagement", "write")) return;
         if (menusLoadState !== "loaded") {
           return alert("최신 메뉴 목록을 확인할 수 없어 저장할 수 없습니다.");
         }
@@ -1338,6 +1400,7 @@
         }
       }
       function editMenu(id) {
+        if (!requireMenuPermission("menuManagement", "write")) return;
         const m = menus.find((x) => String(x.id) === String(id));
         if (!m) return;
 

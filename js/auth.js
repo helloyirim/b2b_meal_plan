@@ -46,11 +46,29 @@
         }
       }
 
-      function initAuth() {
-        const session = getCurrentUser();
+      async function initAuth() {
+        let session = getCurrentUser();
         const overlay = document.getElementById("login-overlay");
 
-        if (!session || !session.id) {
+        const token = getApiSessionToken();
+        if (!session || !session.id || !token) {
+          overlay.style.display = "flex";
+          return false;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/auth/me`, {
+            headers: createAuthenticatedApiHeaders(),
+          });
+          if (!response.ok) throw new Error(`AUTH_ME_FAILED_${response.status}`);
+          const result = await response.json();
+          session = result.user || {};
+          sessionStorage.setItem("currentUser", JSON.stringify(session));
+        } catch (error) {
+          console.warn("로그인 세션 확인 실패:", error);
+          sessionStorage.removeItem("currentUser");
+          sessionStorage.removeItem("managementGoalsToken");
+          sessionStorage.removeItem("managementGoalsTokenExpiresAt");
           overlay.style.display = "flex";
           return false;
         }
@@ -67,40 +85,17 @@
             }
         }
 
-        if (session.role === "USER") {
-          const historyNav = document.getElementById("nav-his");
-          const settingsNav = document.getElementById("nav-set");
-          showPage("page-generate");
-        }
-
         return true;
       }
 
       function applyViewerMode() {
-        const session = getCurrentUser();
-        if (session.role !== "VIEWER") return;
+        applyMenuPermissionNavigation();
+        applyReadOnlyMenuControls();
 
-        // 상품 매출보고로 강제 이동
-        showSalesPage("all");
-
-        // 상품매출보고 외 메뉴는 보이되 클릭 막기
-        ["nav-management-goals", "nav-calendar", "nav-gen", "nav-his", "nav-set"].forEach((id) => {
-          const el = document.getElementById(id);
-          if (!el) return;
-
-          el.style.opacity = "0.45";
-          el.style.cursor = "not-allowed";
-          el.onclick = () => {
-            alert("조회전용 계정은 상품 매출보고만 확인 가능합니다.");
-          };
-        });
-
-        // 입력 버튼 숨김
         const salesBtn = document.getElementById("openSalesModalBtn");
-        if (salesBtn) salesBtn.style.display = "none";
+        if (salesBtn) salesBtn.style.display = canWriteMenu("sales") ? "" : "none";
 
-        // 상품/월 조회용 컨트롤은 살리고, 나머지 입력은 막기
-        document.querySelectorAll("#page-sales input, #page-sales textarea, #page-sales select, #page-sales button")
+        if (!canWriteMenu("sales")) document.querySelectorAll("#page-sales input, #page-sales textarea, #page-sales select, #page-sales button")
           .forEach((el) => {
             if (el.closest(".calendar-month-nav")) return;
             if (el.id === "salesProductAll") return;

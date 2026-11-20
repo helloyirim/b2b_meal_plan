@@ -124,6 +124,7 @@ function selectChannelDailySalesTab(
 // =========================
 
 function showChannelDailySalesPage() {
+  if (!requireMenuPermission("sales", "read")) return;
   showPage(
     "page-channel-daily-sales"
   );

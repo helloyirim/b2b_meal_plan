@@ -3,6 +3,7 @@
 // =========================
 
 function showProductDailySalesPage() {
+  if (!requireMenuPermission("sales", "read")) return;
   showPage("page-product-daily-sales");
 
   document

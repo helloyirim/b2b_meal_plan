@@ -25,12 +25,14 @@
       }
 
       async function savePlanToServer(plan) {
+        if (!requireMenuPermission("mealCreate", "write")) throw new Error("FORBIDDEN");
         const result = await apiPost("/plans", plan);
         await loadPlansFromServer();
         return result;
       }
 
       async function deletePlan(id) {
+        if (!requireMenuPermission("mealManagement", "write")) return;
         if (!confirm("삭제하시겠습니까?")) return;
 
         try {
@@ -67,7 +69,7 @@
                     <b>${escapeHtml(p.name || "")}</b>
                     <span>${escapeHtml(p.date || "")}</span><br>
                     <span>저장자: ${escapeHtml(p.savedBy?.name || "알 수 없음")}</span>
-                    <button class="btn-red delete-btn" onclick="event.stopPropagation(); deletePlan(${p.id})">삭제</button>
+                    <button class="btn-red delete-btn" onclick="event.stopPropagation(); deletePlan(${p.id})" ${canWriteMenu("mealManagement") ? "" : "disabled title=\"조회 전용 메뉴에서는 삭제할 수 없습니다.\""}>삭제</button>
                 </div>
             `,
           )
@@ -99,7 +101,7 @@
                             저장자: ${escapeHtml(plan.savedBy?.name || "알 수 없음")} / 저장일시: ${escapeHtml(plan.date || "")}
                         </div>
                     </div>
-                    <button class="btn btn-save" onclick="loadPlan(${plan.id})">이 식단 불러오기</button>
+                    <button class="btn btn-save" onclick="loadPlan(${plan.id})" ${canReadMenu("mealCreate") ? "" : "disabled title=\"식단 생성 접근 권한이 없습니다.\""}>이 식단 불러오기</button>
                 </div>
                 <div class="show-brand show-price">${renderStaticGrid(plan)}</div>
             `;

@@ -73,6 +73,7 @@ async function loadSalesReportFromServer() {
 
 //8. saveSalesReportToServer() 수정
 async function saveSalesReportToServer(reportData) {
+  if (!requireMenuPermission("sales", "write")) throw new Error("FORBIDDEN");
   const productId = reportData.productId || "blackgoat_30";
   const channel = reportData.channel || "naver";
   const monthKey = `${reportData.year}-${String(reportData.month).padStart(2, "0")}`;
@@ -409,6 +410,7 @@ function buildSalesMonthlyRows() {
 }
 
 function showSalesPage(channel = "all") {
+  if (!requireMenuPermission("sales", "read")) return;
   currentSalesChannel = channel;
 
   showPage("page-sales");
@@ -686,6 +688,7 @@ function updateSalesReportTitle() {
 }
 
 function openSalesModal() {
+  if (!requireMenuPermission("sales", "write")) return;
   // RAW 입력창을 열 때 현재 관리자 채널 목록으로 다시 생성
   renderSalesRawChannelSelect();
 
@@ -913,6 +916,7 @@ function buildSalesReportData(rawRows, start, end, channel = "naver", productId 
 }
 
 function applySalesRaw() {
+  if (!requireMenuPermission("sales", "write")) return;
   const raw = document.getElementById("salesRawInput").value;
   const channel = document.getElementById("salesRawChannel").value;
   const productId = document.getElementById("salesRawProduct").value;
@@ -1250,6 +1254,7 @@ function setSalesNoteSaveStatus(text, type = "") {
 }
 
 function saveSalesSpecialNote() {
+  if (!requireMenuPermission("sales", "write", false)) return;
   const noteEl =
     document.getElementById("salesSpecialNote");
 
@@ -1309,6 +1314,7 @@ function saveSalesSpecialNote() {
 }
 
 function saveSalesSpecialNote() {
+  if (!requireMenuPermission("sales", "write", false)) return;
   const noteEl =
     document.getElementById("salesSpecialNote");
 

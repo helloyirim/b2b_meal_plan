@@ -1,4 +1,7 @@
       function showPage(id) {
+        const menuKey = getMenuKeyForPage(id);
+        if (menuKey && !requireMenuPermission(menuKey, "read")) return false;
+
         document
           .querySelectorAll(".page")
           .forEach((p) => p.classList.remove("active"));
@@ -7,6 +10,7 @@
           .forEach((n) => n.classList.remove("active"));
 
         document.getElementById(id).classList.add("active");
+        applyPagePermissionState(id);
 
         if (id === "page-management-goals") {
           document.getElementById("nav-management-goals")?.classList.add("active");
@@ -60,7 +64,8 @@
         if (id === "page-admin") {
           if (!isAdmin()) {
             alert("관리자만 접근 가능합니다.");
-            showPage("page-calendar");
+            const fallbackPage = getFirstAccessiblePage();
+            if (fallbackPage) showPage(fallbackPage);
             return;
           }
 
@@ -71,9 +76,14 @@
           showAdminTab("account");
         }
 
+        return true;
       }
 
       function showAdminTab(tabName = "account") {
+        if (!isAdmin()) {
+          alert("관리자만 접근 가능합니다.");
+          return;
+        }
         const accountButton = document.getElementById(
           "adminTabAccountButton"
         );

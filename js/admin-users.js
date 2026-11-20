@@ -3,6 +3,38 @@
       // =========================
       let adminUsersCache = [];
 
+      function setAdminUserPermissionInputs(role, permissions) {
+        const normalized = normalizeMenuPermissions(role, permissions);
+        document.querySelectorAll("[data-menu-permission]").forEach((select) => {
+          const key = select.dataset.menuPermission;
+          const writeOption = select.querySelector('option[value="write"]');
+          if (writeOption) {
+            const adminOnlyWrite = key === "managementGoals" && role !== "ADMIN";
+            writeOption.disabled = adminOnlyWrite;
+            writeOption.hidden = adminOnlyWrite;
+          }
+          select.value = normalized[key];
+          select.disabled = role === "ADMIN";
+        });
+      }
+
+      function readAdminUserPermissionInputs(role) {
+        if (role === "ADMIN") return getDefaultMenuPermissions("ADMIN");
+        const permissions = {};
+        document.querySelectorAll("[data-menu-permission]").forEach((select) => {
+          permissions[select.dataset.menuPermission] = select.value;
+        });
+        return normalizeMenuPermissions(role, permissions);
+      }
+
+      function resetAdminUserForm() {
+        document.getElementById("adminUserId").value = "";
+        document.getElementById("adminUserName").value = "";
+        document.getElementById("adminUserPw").value = "";
+        document.getElementById("adminUserRole").value = "USER";
+        setAdminUserPermissionInputs("USER");
+      }
+
       async function loadAdminUsers() {
         try {
           const data = await apiAuthGet("/users");
@@ -38,7 +70,7 @@
               <tr style="border-bottom:1px solid #eee;">
                 <td style="padding:10px; font-weight:700;">${escapeHtml(user.id || "")}</td>
                 <td style="padding:10px;">${escapeHtml(user.name || "")}</td>
-                <td style="padding:10px;">${escapeHtml(getRoleLabel(user.role))}</td>
+                <td style="padding:10px;">${escapeHtml(getRoleLabel(user.role))}<div style="margin-top:4px; font-size:11px; color:#777;">${escapeHtml(MENU_PERMISSION_KEYS.map((key) => `${MENU_PERMISSION_LABELS[key]}:${normalizeMenuPermissions(user.role, user.menuPermissions)[key]}`).join(" · "))}</div></td>
                 <td style="padding:10px; text-align:center;">
                   <button class="btn btn-grey" onclick="editAdminUser('${escapeHtml(user.id)}')">수정</button>
                   <button class="btn-red" onclick="deleteAdminUser('${escapeHtml(user.id)}')">삭제</button>
@@ -64,6 +96,7 @@
         document.getElementById("adminUserName").value = user.name || "";
         document.getElementById("adminUserPw").value = "";
         document.getElementById("adminUserRole").value = user.role || "USER";
+        setAdminUserPermissionInputs(user.role || "USER", user.menuPermissions);
       }
 
       async function saveAdminUser() {
@@ -77,17 +110,19 @@
           return;
         }
 
-        const payload = { id, name, role };
+        const payload = {
+          id,
+          name,
+          role,
+          menuPermissions: readAdminUserPermissionInputs(role),
+        };
         if (pw) payload.pw = pw;
 
         try {
           await apiAuthPost("/users/item", payload);
           alert("계정이 저장되었습니다.");
 
-          document.getElementById("adminUserId").value = "";
-          document.getElementById("adminUserName").value = "";
-          document.getElementById("adminUserPw").value = "";
-          document.getElementById("adminUserRole").value = "USER";
+          resetAdminUserForm();
 
           await renderAdminUsers();
         } catch (e) {
@@ -111,3 +146,13 @@
           alert("계정 삭제에 실패했습니다. API에 /users/:id 삭제 경로가 필요합니다.");
         }
       }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const roleSelect = document.getElementById("adminUserRole");
+        roleSelect?.addEventListener("change", () => {
+          const currentId = document.getElementById("adminUserId")?.value || "";
+          const existing = adminUsersCache.find((user) => String(user.id) === String(currentId));
+          setAdminUserPermissionInputs(roleSelect.value, existing?.menuPermissions);
+        });
+        setAdminUserPermissionInputs(roleSelect?.value || "USER");
+      });

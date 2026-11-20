@@ -17,11 +17,13 @@
       }
 
       async function saveDeliveryEventToServer(eventData) {
+        if (!requireMenuPermission("calendar", "write")) throw new Error("FORBIDDEN");
         await apiPost("/delivery-events/item", eventData);
         await loadDeliveryEventsFromServer();
       }
 
       async function deleteDeliveryEventFromServer(id) {
+        if (!requireMenuPermission("calendar", "write")) throw new Error("FORBIDDEN");
         await apiDelete(`/delivery-events/${id}`);
         await loadDeliveryEventsFromServer();
       }
@@ -80,6 +82,7 @@ function bindDeliveryCalendarEvents() {
 }
 
 function openNewDeliveryModal() {
+  if (!requireMenuPermission("calendar", "write")) return;
   resetDeliveryForm();
   openModal();
 }
@@ -463,6 +466,7 @@ async function handleDeliverySubmit(e) {
 }
 
 function loadDeliveryEventToForm(id) {
+  if (!requireMenuPermission("calendar", "write")) return;
   const events = getEvents();
   const event = events.find((item) => item.id === id);
   if (!event) return;

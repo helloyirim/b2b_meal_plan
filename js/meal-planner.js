@@ -90,6 +90,7 @@
 
         html += `</tbody></table>`;
         container.innerHTML = html;
+        hydrateAuthenticatedMenuImages(container);
 
         // 현재 선택 셀이 안 보이는 요일이면 첫 번째 셀 선택
         if (!document.getElementById(currentCellId)) {
@@ -102,6 +103,7 @@
         updateStats();
       }
       function selectCell(id) {
+        if (!requireMenuPermission("mealCreate", "write")) return;
         if (document.getElementById(currentCellId)) {
           document.getElementById(currentCellId).classList.remove("selected");
         }
@@ -111,6 +113,7 @@
         }
       }
       function addToGrid(mid) {
+        if (!requireMenuPermission("mealCreate", "write")) return;
         const menu = menus.find((m) => String(m.id) === String(mid));
         if (!menu) return;
 
@@ -121,7 +124,10 @@
         const targetCell = document.getElementById(currentCellId);
         if (targetCell) {
           const content = targetCell.querySelector(".cell-content");
-          if (content) content.innerHTML = renderCell(menu);
+          if (content) {
+            content.innerHTML = renderCell(menu);
+            hydrateAuthenticatedMenuImages(content);
+          }
         }
 
         updateStats();
@@ -178,7 +184,7 @@
         return `
                 <div class="meal-content">
                     <div class="meal-thumb">
-                        <img src="${escapeHtml(getDefaultImage(m.img || m.image || ""))}">
+                        <img ${getMenuImageAttributes(m.img || m.image || "")}>
                     </div>
                     <span class="meal-title">${escapeHtml(m.name || "")}</span>
                     <div class="extra-info info-brand">${escapeHtml(m.brand || "")}</div>
@@ -216,6 +222,7 @@
           : container.classList.remove(cls);
       }
       async function savePlan() {
+        if (!requireMenuPermission("mealCreate", "write")) return;
         if (Object.keys(mealPlan).length === 0) {
           return alert("저장할 식단이 없습니다.");
         }
@@ -268,6 +275,7 @@
       }
 
       async function loadPlan(id) {
+        if (!requireMenuPermission("mealCreate", "read")) return;
         try {
           const plans = historyPlansCache.length
             ? historyPlansCache
@@ -296,6 +304,4 @@
           alert("식단 불러오기에 실패했습니다.");
         }
       }
-
-
 

@@ -75,6 +75,34 @@
         font-weight:700
       }
 
+      .nav-item.menu-access-disabled {
+        opacity: 0.38;
+        filter: grayscale(1);
+        cursor: not-allowed !important;
+        user-select: none;
+      }
+
+      .nav-item.menu-access-disabled::after {
+        content: " 🔒";
+        font-size: 11px;
+      }
+
+      .menu-permission-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+        gap: 12px;
+        margin: 4px 0 18px;
+        padding: 16px;
+        border-radius: 12px;
+        background: #f6f7f9;
+      }
+
+      .menu-permission-grid .field { width: auto; }
+
+      @media (max-width: 760px) {
+        .menu-permission-grid { grid-template-columns: 1fr; }
+      }
+
       .main-content {
         margin-left: 220px;
         width: calc(100% - 220px);
@@ -2639,6 +2667,15 @@
                 계정 저장
               </button>
             </div>
+
+            <div id="adminUserMenuPermissions" class="menu-permission-grid">
+              <div class="field"><label for="adminUserPermissionManagementGoals">경영목표</label><select id="adminUserPermissionManagementGoals" data-menu-permission="managementGoals"><option value="none">접근 불가</option><option value="read">조회</option><option value="write">수정</option></select></div>
+              <div class="field"><label for="adminUserPermissionCalendar">단체캘린더</label><select id="adminUserPermissionCalendar" data-menu-permission="calendar"><option value="none">접근 불가</option><option value="read">조회</option><option value="write">수정</option></select></div>
+              <div class="field"><label for="adminUserPermissionSales">상품 매출보고</label><select id="adminUserPermissionSales" data-menu-permission="sales"><option value="none">접근 불가</option><option value="read">조회</option><option value="write">수정</option></select></div>
+              <div class="field"><label for="adminUserPermissionMealCreate">식단 생성</label><select id="adminUserPermissionMealCreate" data-menu-permission="mealCreate"><option value="none">접근 불가</option><option value="read">조회</option><option value="write">수정</option></select></div>
+              <div class="field"><label for="adminUserPermissionMealManagement">식단 관리</label><select id="adminUserPermissionMealManagement" data-menu-permission="mealManagement"><option value="none">접근 불가</option><option value="read">조회</option><option value="write">수정</option></select></div>
+              <div class="field"><label for="adminUserPermissionMenuManagement">메뉴 관리</label><select id="adminUserPermissionMenuManagement" data-menu-permission="menuManagement"><option value="none">접근 불가</option><option value="read">조회</option><option value="write">수정</option></select></div>
+            </div>
       
             <table
               style="
@@ -2991,9 +3028,10 @@
     </main>
 
     <script src="js/pdf.js"></script>
-<script src="js/api.js"></script>
-<script src="js/common.js"></script>
-<script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/menu-permissions.js"></script>
+  <script src="js/auth.js"></script>
 <script src="js/navigation.js"></script>
 <script src="js/management-goals.js"></script>
 <script src="js/admin-management-goals.js"></script>

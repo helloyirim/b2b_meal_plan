@@ -78,35 +78,44 @@
       // =========================
       // 초기 실행
       // =========================
-      window.addEventListener("load", async () => {
-        const authed = initAuth();
+      document.addEventListener("DOMContentLoaded", async () => {
+        const authed = await initAuth();
         if (!authed) return;
 
         localStorage.removeItem("b2b_plans_cache");
         localStorage.removeItem("b2b_menus_cache");
 
-        const currentUser = getCurrentUser();
-        if (currentUser.role === "VIEWER") {
-          showPage("page-calendar");
+        applyMenuPermissionNavigation();
+        const initialPage = getFirstAccessiblePage();
+        if (initialPage) {
+          showPage(initialPage);
         } else {
-          showPage("page-management-goals");
+          document.querySelectorAll(".page").forEach((page) => page.classList.remove("active"));
+          alert("접근 가능한 메뉴가 없습니다.");
         }
         setTimeout(applyViewerMode, 300);
 
         //10. loadSalesReportFromServer() 실행 순서 수정
-        loadMenusFromServer();
-        loadPlansFromServer();
+        if (canReadMenu("mealCreate") || canReadMenu("mealManagement") || canReadMenu("menuManagement")) {
+          loadMenusFromServer();
+        }
+        if (canReadMenu("mealCreate") || canReadMenu("mealManagement")) {
+          loadPlansFromServer();
+        }
 
-        await loadSalesProductsFromServer();
-        await loadSalesChannelsFromServer();
+        if (canReadMenu("sales")) {
+          await loadSalesProductsFromServer();
+          await loadSalesChannelsFromServer();
 
-        renderSalesProductFilter();
-        renderSalesRawProductSelect();
-        renderSalesChannelNavigation();
-        renderSalesRawChannelSelect();
-        renderChannelDailySalesTabs();
+          renderSalesProductFilter();
+          renderSalesRawProductSelect();
+          renderSalesChannelNavigation();
+          renderSalesRawChannelSelect();
+          renderChannelDailySalesTabs();
+          applyMenuPermissionNavigation();
 
-        await loadSalesReportFromServer();
+          await loadSalesReportFromServer();
+        }
 
         const resetSalesRawBtn = document.getElementById("resetSalesRawBtn");
 

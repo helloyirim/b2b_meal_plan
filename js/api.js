@@ -18,8 +18,14 @@ function createAuthenticatedApiHeaders(headers = {}) {
 }
 
 async function apiGet(path = "") {
-  const response = await fetch(`${API_URL}${path}`);
-  if (!response.ok) throw new Error(`GET 실패: ${response.status}`);
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: createAuthenticatedApiHeaders(),
+  });
+  if (!response.ok) {
+    const error = new Error(`GET 실패: ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
   return response.json();
 }
 
@@ -28,18 +34,20 @@ async function apiPost(path = "", body = {}) {
 
   const response = await fetch(url, {
     method: "POST",
-    headers: {
+    headers: createAuthenticatedApiHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify(body),
   });
 
   const responseText = await response.text();
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       `POST ${path} 실패 / 상태코드: ${response.status} / 응답: ${responseText}`
     );
+    error.status = response.status;
+    throw error;
   }
 
   if (!responseText) {
@@ -58,8 +66,13 @@ async function apiPost(path = "", body = {}) {
 async function apiDelete(path = "") {
   const response = await fetch(`${API_URL}${path}`, {
     method: "DELETE",
+    headers: createAuthenticatedApiHeaders(),
   });
-  if (!response.ok) throw new Error(`DELETE 실패: ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(`DELETE 실패: ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
   return response.json().catch(() => ({}));
 }
 
