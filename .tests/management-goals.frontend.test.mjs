@@ -39,6 +39,7 @@ class FakeNode {
     this.classList = new FakeClassList(this);
     this.listeners = new Map();
     this.attributes = new Map();
+    this.dataset = {};
     this.style = {};
     this.hidden = false;
     this.disabled = false;
@@ -100,6 +101,8 @@ class FakeDocument {
 
   createElement(tagName) { return new FakeNode(tagName); }
   createTextNode(text) { return new FakeNode("#text", text); }
+  addEventListener() {}
+  querySelector() { return null; }
   getElementById(id) { return this.elements.get(id) || null; }
   register(id, className = "", tagName = "div") {
     const element = new FakeNode(tagName);
@@ -216,7 +219,7 @@ function registerAdminEditor(document) {
   ids.forEach((id) => document.register(id, "", id.includes("Button") || id.endsWith("Btn") ? "button" : "input"));
 }
 
-test("경영목표와 사용자 관리 API만 저장된 Bearer 토큰을 첨부한다", async () => {
+test("경영목표와 일반 업무 API 모두 저장된 Bearer 토큰을 첨부한다", async () => {
   const capturedRequests = [];
   const { context, sessionStorage } = createContext({
     fetchImpl: async (url, options) => {
@@ -234,7 +237,7 @@ test("경영목표와 사용자 관리 API만 저장된 Bearer 토큰을 첨부�
   await loadScripts(context, "js/api.js");
   await vm.runInContext("apiGet('/menus')", context);
   assert.equal(capturedRequests[1].url, "https://b2b-meal-api-dev.wispy-river-05a7.workers.dev/menus");
-  assert.equal(capturedRequests[1].options, undefined);
+  assert.equal(capturedRequests[1].options.headers.get("Authorization"), "Bearer mock-token");
 
   await vm.runInContext("apiAuthGet('/users')", context);
   assert.equal(capturedRequests[2].url, "https://b2b-meal-api-dev.wispy-river-05a7.workers.dev/users");
@@ -390,18 +393,50 @@ test("로그인 성공 시 기존 사용자와 신규 토큰을 저장하고 로
   assert.equal(sessionStorage.getItem("managementGoalsTokenExpiresAt"), null);
 });
 
-test("VIEWER에게 신규 경영목표 메뉴도 기존 조회전용 제한을 적용한다", async () => {
+test("VIEWER의 접근 불가 메뉴를 숨기지 않고 비활성화한다", async () => {
   const { context, document, sessionStorage, alerts } = createContext();
   sessionStorage.setItem("currentUser", JSON.stringify({ id: "viewer", name: "Viewer", role: "VIEWER" }));
   document.register("nav-management-goals", "nav-item");
   for (const id of ["nav-calendar", "nav-gen", "nav-his", "nav-set"]) document.register(id, "nav-item");
-  context.showSalesPage = () => {};
-  await loadScripts(context, "js/auth.js");
+  await loadScripts(context, "js/menu-permissions.js", "js/auth.js");
   vm.runInContext("applyViewerMode()", context);
   const goalsNav = document.getElementById("nav-management-goals");
-  assert.equal(goalsNav.style.cursor, "not-allowed");
-  goalsNav.click();
-  assert.match(alerts.at(-1), /매출보고만/);
+  assert.equal(goalsNav.classList.contains("menu-access-disabled"), true);
+  assert.equal(goalsNav.attributes.get("aria-disabled"), "true");
+  assert.equal(goalsNav.title, "접근 권한이 없습니다");
+});
+
+test("계정별 none·read·write 권한이 메뉴 표시와 직접 진입 판단에 적용된다", async () => {
+  const { context, document, sessionStorage } = createContext();
+  sessionStorage.setItem("currentUser", JSON.stringify({
+    id: "custom-user",
+    name: "Custom User",
+    role: "USER",
+    menuPermissions: {
+      managementGoals: "none",
+      calendar: "read",
+      sales: "none",
+      mealCreate: "write",
+      mealManagement: "read",
+      menuManagement: "none",
+    },
+  }));
+  ["nav-management-goals", "nav-calendar", "nav-sales-all", "nav-gen", "nav-his", "nav-set"]
+    .forEach((id) => document.register(id, "nav-item"));
+  await loadScripts(context, "js/auth.js", "js/menu-permissions.js");
+  vm.runInContext("applyMenuPermissionNavigation()", context);
+
+  assert.equal(document.getElementById("nav-management-goals").classList.contains("menu-access-disabled"), true);
+  assert.equal(document.getElementById("nav-calendar").classList.contains("menu-access-disabled"), false);
+  assert.equal(document.getElementById("nav-sales-all").classList.contains("menu-access-disabled"), true);
+  assert.equal(vm.runInContext("canReadMenu('calendar')", context), true);
+  assert.equal(vm.runInContext("canWriteMenu('calendar')", context), false);
+  assert.equal(vm.runInContext("canWriteMenu('mealCreate')", context), true);
+  assert.equal(vm.runInContext("getFirstAccessiblePage()", context), "page-calendar");
+  assert.equal(
+    vm.runInContext("normalizeMenuPermissions('USER', { managementGoals: 'write' }).managementGoals", context),
+    "read",
+  );
 });
 
 test("경영목표 페이지와 기존 배송 캘린더 이동 훅을 모두 유지한다", async () => {
@@ -412,7 +447,8 @@ test("경영목표 페이지와 기존 배송 캘린더 이동 훅을 모두 유
   context.calendarLoads = 0;
   context.loadActiveManagementGoal = () => { context.managementLoads += 1; };
   context.initDeliveryCalendarPage = () => { context.calendarLoads += 1; };
-  await loadScripts(context, "js/navigation.js");
+  context.getCurrentUser = () => ({ role: "ADMIN" });
+  await loadScripts(context, "js/menu-permissions.js", "js/navigation.js");
   vm.runInContext("showPage('page-management-goals')", context);
   assert.equal(document.getElementById("page-management-goals").classList.contains("active"), true);
   assert.equal(context.managementLoads, 1);
@@ -421,7 +457,7 @@ test("경영목표 페이지와 기존 배송 캘린더 이동 훅을 모두 유
   assert.equal(context.calendarLoads, 1);
 });
 
-test("ADMIN·USER는 경영목표, VIEWER는 기존 캘린더 후 조회전용 정책을 유지한다", async () => {
+test("역할별 기존 기본 권한에 따라 첫 접근 가능 화면을 유지한다", async () => {
   for (const role of ["ADMIN", "USER", "VIEWER"]) {
     const { context, document } = createContext();
     const calls = [];
@@ -432,8 +468,11 @@ test("ADMIN·USER는 경영목표, VIEWER는 기존 캘린더 후 조회전용 �
     context.addEventListener = (type, handler) => {
       if (type === "load") initializationHandler = handler;
     };
-    context.initAuth = () => true;
+    context.initAuth = async () => true;
     context.getCurrentUser = () => ({ id: "test", role });
+    context.applyMenuPermissionNavigation = () => {};
+    context.canReadMenu = (key) => role !== "VIEWER" || key === "sales";
+    context.getFirstAccessiblePage = () => role === "VIEWER" ? "page-sales" : "page-management-goals";
     context.showPage = (id) => calls.push(id);
     context.applyViewerMode = () => calls.push("viewer-mode");
     context.loadMenusFromServer = () => {};
@@ -450,7 +489,7 @@ test("ADMIN·USER는 경영목표, VIEWER는 기존 캘린더 후 조회전용 �
     await loadScripts(context, "js/app.js");
     assert.equal(typeof initializationHandler, "function");
     await initializationHandler();
-    assert.equal(calls[0], role === "VIEWER" ? "page-calendar" : "page-management-goals");
+    assert.equal(calls[0], role === "VIEWER" ? "page-sales" : "page-management-goals");
     assert.ok(calls.includes("viewer-mode"));
   }
 });
@@ -614,6 +653,7 @@ test("기존 관리자 탭과 신규 세 번째 탭 전환 및 미저장 경고 
   context.renderAdminSalesProducts = () => {};
   context.renderAdminSalesChannels = () => {};
   context.getNextSalesChannelSortOrder = () => 1;
+  context.isAdmin = () => true;
   context.initAdminManagementGoalsPage = () => { context.managementTabInitialized = true; };
   context.canLeaveAdminManagementGoals = () => true;
   await loadScripts(context, "js/navigation.js");
