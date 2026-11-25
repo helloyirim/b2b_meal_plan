@@ -68,7 +68,8 @@ function normalizeMenuPermissions(role, permissions) {
   return Object.fromEntries(MENU_PERMISSION_KEYS.map((key) => {
     const value = permissions[key];
     const normalized = ["none", "read", "write"].includes(value) ? value : defaults[key];
-    return [key, key === "managementGoals" && normalized === "write" ? "read" : normalized];
+    const writeRestricted = role === "VIEWER" || key === "managementGoals";
+    return [key, writeRestricted && normalized === "write" ? "read" : normalized];
   }));
 }
 

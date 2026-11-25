@@ -9,9 +9,9 @@
           const key = select.dataset.menuPermission;
           const writeOption = select.querySelector('option[value="write"]');
           if (writeOption) {
-            const adminOnlyWrite = key === "managementGoals" && role !== "ADMIN";
-            writeOption.disabled = adminOnlyWrite;
-            writeOption.hidden = adminOnlyWrite;
+            const writeRestricted = role === "VIEWER" || (key === "managementGoals" && role !== "ADMIN");
+            writeOption.disabled = writeRestricted;
+            writeOption.hidden = writeRestricted;
           }
           select.value = normalized[key];
           select.disabled = role === "ADMIN";

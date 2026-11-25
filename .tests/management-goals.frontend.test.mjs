@@ -432,6 +432,7 @@ test("계정별 none·read·write 권한이 메뉴 표시와 직접 진입 판�
   assert.equal(vm.runInContext("canReadMenu('calendar')", context), true);
   assert.equal(vm.runInContext("canWriteMenu('calendar')", context), false);
   assert.equal(vm.runInContext("canWriteMenu('mealCreate')", context), true);
+  assert.equal(vm.runInContext("normalizeMenuPermissions('VIEWER', { calendar: 'write' }).calendar", context), "read");
   assert.equal(vm.runInContext("getFirstAccessiblePage()", context), "page-calendar");
   assert.equal(
     vm.runInContext("normalizeMenuPermissions('USER', { managementGoals: 'write' }).managementGoals", context),
@@ -439,6 +440,12 @@ test("계정별 none·read·write 권한이 메뉴 표시와 직접 진입 판�
   );
 });
 
+test("관리자 계정 편집기는 VIEWER의 모든 수정 선택지를 숨기고 비활성화한다", async () => {
+  const source = await readProjectFile("js/admin-users.js");
+  assert.match(source, /role === "VIEWER" \|\| \(key === "managementGoals" && role !== "ADMIN"\)/);
+  assert.match(source, /writeOption\.disabled = writeRestricted/);
+  assert.match(source, /writeOption\.hidden = writeRestricted/);
+});
 test("경영목표 페이지와 기존 배송 캘린더 이동 훅을 모두 유지한다", async () => {
   const { context, document } = createContext();
   ["page-management-goals", "page-calendar"].forEach((id) => document.register(id, "page"));
